@@ -1,0 +1,44 @@
+@page "/account/preferences"
+@model DentalLabOS.Web.Pages.Account.PreferencesModel
+@{
+    ViewData["Title"] = L["Nav.Preferences"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/account">@L["Account.Title"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Preferences"]</span></nav>
+        <h1>@L["Nav.Preferences"] <span class="screen-id">SYS-02</span></h1>
+        <p class="lead">@L["Prefs.Lead"]</p>
+    </div>
+</div>
+<form method="post" class="card" data-guard>
+    <div class="card-body">
+        <div class="form-section">
+            <div class="form-section-title"><h3>@L["Prefs.Theme"]</h3><p>@L["Prefs.ThemeHint"]</p></div>
+            <div class="form-grid cols-3">
+                @foreach (var t in UiPreferences.Themes)
+                {
+                    <label class="card" style="padding: var(--space-4); cursor: pointer; display:flex; gap: var(--space-3); align-items:center">
+                        <input type="radio" asp-for="Theme" value="@t" style="accent-color: var(--primary)" />
+                        <icon name="@(t == "light" ? "sun" : t == "dark" ? "moon" : "monitor")" />
+                        <span class="fw-600">@L[$"Prefs.Theme.{t}"]</span>
+                    </label>
+                }
+            </div>
+        </div>
+        <div class="form-section">
+            <div class="form-section-title"><h3>@L["Prefs.Language"]</h3><p>@L["Prefs.LanguageHint"]</p></div>
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Culture">@L["Prefs.Language"]</label>
+                    <select class="select" asp-for="Culture">
+                        <option value="ar-EG">العربية (مصر)</option>
+                        <option value="en-US">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,37 @@
+@page "/platform/plans"
+@model DentalLabOS.Web.Pages.Platform.PlansModel
+@{
+    ViewData["Title"] = L["Nav.Plans"];
+    string Lim(long v) => v == 0 ? "∞" : v.ToString("N0");
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Plans"] <span class="screen-id">PLT-06</span></h1>
+        <p class="lead">@L["Platform.Plans.Lead"]</p>
+    </div>
+</div>
+<div class="alert alert-warning mb-6"><icon name="triangle-alert" /><div>@L["Platform.Plans.PricingNote"]</div></div>
+<div class="grid grid-3">
+    @foreach (var p in Model.Plans)
+    {
+        <section class="card">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <h2>@p.Name</h2>
+                    <span class="badge badge-brand">@L["Platform.Plans.Tenants", p.TenantCount]</span>
+                </div>
+                <div class="stat-value">@p.MonthlyPrice.ToString("N0") <small>EGP / @L["Plan.Month"]</small></div>
+                <hr />
+                <ul class="checklist">
+                    <li><span class="item"><icon name="users" /> @L["Plan.Users", Lim(p.MaxUsers)]</span></li>
+                    <li><span class="item"><icon name="building-2" /> @L["Plan.Branches", Lim(p.MaxBranches)]</span></li>
+                    <li><span class="item"><icon name="clipboard-list" /> @L["Plan.WorkOrders", Lim(p.MaxMonthlyWorkOrders)]</span></li>
+                    <li><span class="item"><icon name="server" /> @L["Plan.Storage", p.MaxStorageBytes == 0 ? "∞" : (p.MaxStorageBytes / 1024 / 1024 / 1024).ToString()]</span></li>
+                    <li><span class="item"><icon name="@(p.IncludesAccounting ? "circle-check" : "x")" /> @L["Plan.Accounting"]</span></li>
+                    <li><span class="item"><icon name="@(p.IncludesPortal ? "circle-check" : "x")" /> @L["Plan.Portal"]</span></li>
+                    <li><span class="item"><icon name="@(p.IncludesAi ? "circle-check" : "x")" /> @L["Plan.Ai"]</span></li>
+                </ul>
+            </div>
+        </section>
+    }
+</div>

@@ -1,0 +1,59 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "PLT-06",
+  "module": "platform",
+  "titleKey": "Nav.Plans",
+  "route": "/platform/plans",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "platform.tenants.read",
+    "access": "permission"
+  },
+  "entities": [
+    "SubscriptionPlan"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/plans",
+      "purpose": "Plans"
+    }
+  ],
+  "rules": [
+    "Prices are placeholders until commercial launch"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "PLT-06.renders"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "price",
+    "users",
+    "branches",
+    "workOrders",
+    "storage",
+    "features",
+    "tenants"
+  ]
+}

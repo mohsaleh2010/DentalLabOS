@@ -1,0 +1,26 @@
+@page "/admin/audit"
+@model DentalLabOS.Web.Pages.Admin.AuditModel
+@{
+    ViewData["Title"] = L["Nav.Audit"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Audit"] <span class="screen-id">ADM-25</span></h1>
+        <p class="lead">@L["Audit.Lead"]</p>
+    </div>
+</div>
+<form class="card mb-4" method="get">
+    <div class="toolbar" style="border:0">
+        <select class="select" name="action" aria-label="@L["Audit.Action"]">
+            <option value="">@L["Audit.AllActions"]</option>
+            @foreach (var a in new[] { "Create", "Update", "Delete", "Login", "LoginFailed", "PermissionChange", "RoleAssignment", "Invite", "InviteAccepted" })
+            {
+                <option value="@a" selected="@(Model.Action == a)">@L[$"AuditAction.{a}"]</option>
+            }
+        </select>
+        <input class="input" type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" aria-label="@L["Fields.From"]" style="width:auto; min-height:38px" />
+        <input class="input" type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" aria-label="@L["Fields.To"]" style="width:auto; min-height:38px" />
+        <button class="btn" type="submit"><icon name="filter" /> @L["Common.Filter"]</button>
+    </div>
+</form>
+<partial name="_AuditTable" model="(Model.Result, Model.PageUrl)" />

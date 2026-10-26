@@ -1,0 +1,21 @@
+@page "/error/{code:int?}"
+@model DentalLabOS.Web.Pages.Common.ErrorModel
+@{
+    Layout = "_BareLayout";
+    ViewData["Title"] = L[$"Error.{Model.Key}.Title"];
+}
+<div class="status-page">
+    <div>
+        <div class="code">@Model.Code</div>
+        <h1>@L[$"Error.{Model.Key}.Title"]</h1>
+        <p>@L[$"Error.{Model.Key}.Text"]</p>
+        @if (Model.RequestId is not null)
+        {
+            <p class="text-xs mt-4">@L["Error.Reference"] <code class="ltr">@Model.RequestId</code></p>
+        }
+        <div class="actions">
+            <a class="btn btn-primary" href="/"><icon name="house" /> @L["Error.Home"]</a>
+            <a class="btn" href="javascript:history.back()"><icon name="arrow-right" class="icon-dir" /> @L["Error.Back"]</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,62 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "PLT-12",
+  "module": "platform",
+  "titleKey": "Nav.PlatformAudit",
+  "route": "/platform/audit",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "platform.audit.read",
+    "access": "permission"
+  },
+  "entities": [
+    "AuditLog"
+  ],
+  "api": [],
+  "rules": [
+    "Shows only platform-level entries (TenantId is null)",
+    "Audit entries are append-only"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "secrets": [
+      "masked fields"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "PLT-12.happy",
+    "PLT-12.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "when",
+    "who",
+    "action",
+    "entity",
+    "details",
+    "ip"
+  ],
+  "filters": [
+    "action",
+    "from",
+    "to"
+  ]
+}

@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          # Throwaway password for the ephemeral CI container only (not used by any environment).
+          MSSQL_SA_PASSWORD: ${{ secrets.CI_SQL_PASSWORD || 'Ci_Only_Passw0rd!' }}
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 12
+    env:
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+      DLOS_TEST_SQL: Server=localhost,1433;User Id=sa;Password=${{ secrets.CI_SQL_PASSWORD || 'Ci_Only_Passw0rd!' }};TrustServerCertificate=true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore DentalLabOS.sln
+
+      - name: Build (warnings are errors)
+        run: dotnet build DentalLabOS.sln --no-restore -c Release
+
+      - name: Check for vulnerable packages
+        run: |
+          dotnet list DentalLabOS.sln package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          ! grep -E "(High|Critical)" vuln.txt
+
+      - name: Pending model changes have a migration
+        run: |
+          dotnet tool restore
+          dotnet ef migrations has-pending-model-changes -p src/DentalLabOS.Infrastructure -s src/DentalLabOS.Web --no-build --configuration Release
+        env:
+          ConnectionStrings__DentalLabOS: Server=localhost;Database=unused;TrustServerCertificate=true
+
+      - name: Unit tests
+        run: dotnet test tests/DentalLabOS.UnitTests --no-build -c Release --logger trx
+
+      - name: Architecture & screen registry tests
+        run: dotnet test tests/DentalLabOS.ArchitectureTests --no-build -c Release --logger trx
+
+      - name: Integration tests (SQL Server)
+        run: dotnet test tests/DentalLabOS.IntegrationTests --no-build -c Release --logger trx
+
+      - name: Screen registry is up to date
+        run: |
+          python3 tools/screens/generate.py
+          python3 tools/i18n/build.py
+          git diff --exit-code -- docs/ai/SCREEN_REGISTRY.md src/DentalLabOS.SharedUI/Resources
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: "**/TestResults/*.trx"

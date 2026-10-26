@@ -1,0 +1,102 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-04",
+  "module": "admin",
+  "titleKey": "Nav.Departments",
+  "route": "/admin/departments",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.departments.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "Department",
+    "Branch"
+  ],
+  "api": [],
+  "rules": [
+    "Code unique per lab",
+    "Production departments become work-order stages (phase 3)"
+  ],
+  "states": [
+    "loading",
+    "empty",
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-04.happy",
+    "ADM-04.permissionDenied",
+    "ADM-04.crossTenant",
+    "ADM-04.concurrency"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/admin/departments",
+    "/admin/departments/{id}"
+  ],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "required": true,
+      "maxLength": 16
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "branchId",
+      "type": "lookup",
+      "source": "branches"
+    },
+    {
+      "name": "isProduction",
+      "type": "boolean"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ],
+  "columns": [
+    "code",
+    "name",
+    "branch",
+    "type",
+    "status"
+  ],
+  "filters": [
+    "search",
+    "branch"
+  ]
+}

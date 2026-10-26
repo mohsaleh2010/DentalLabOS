@@ -1,0 +1,15 @@
+<dialog id="confirm-dialog" class="dialog" data-default-title="@L["Common.ConfirmTitle"]" aria-labelledby="confirm-title">
+    <form method="dialog">
+        <div class="dialog-body">
+            <span class="dialog-icon"><icon name="triangle-alert" /></span>
+            <div>
+                <h3 id="confirm-title" data-confirm-title></h3>
+                <p data-confirm-text></p>
+            </div>
+        </div>
+        <div class="dialog-actions">
+            <button class="btn" value="cancel">@L["Common.Cancel"]</button>
+            <button class="btn btn-danger" value="ok">@L["Common.Confirm"]</button>
+        </div>
+    </form>
+</dialog>

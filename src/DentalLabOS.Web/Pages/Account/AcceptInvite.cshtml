@@ -1,0 +1,45 @@
+@page "/invite/accept"
+@model DentalLabOS.Web.Pages.Account.AcceptInviteModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = L["Auth.Invite.Title"];
+}
+@if (Model.Preview is null)
+{
+    <div class="empty">
+        <div class="empty-art"><icon name="mail" class="icon-xl" /></div>
+        <h3>@L["Auth.Invite.InvalidTitle"]</h3>
+        <p>@L["Auth.Invite.InvalidText"]</p>
+        <a class="btn mt-2" href="/login">@L["Auth.Login.Submit"]</a>
+    </div>
+}
+else
+{
+    <h1>@L["Auth.Invite.Title"]</h1>
+    <p class="lead">@L["Auth.Invite.Lead", Model.Preview.LabName]</p>
+    <div class="card mb-6">
+        <div class="card-body" style="padding: var(--space-4)">
+            <dl class="dl">
+                <div><dt>@L["Fields.FullName"]</dt><dd>@Model.Preview.FullName</dd></div>
+                <div><dt>@L["Fields.Email"]</dt><dd class="ltr">@Model.Preview.Email</dd></div>
+                <div><dt>@L["Fields.Role"]</dt><dd><span class="badge badge-brand">@Model.Preview.RoleName</span></dd></div>
+            </dl>
+        </div>
+    </div>
+    <partial name="_ValidationSummary" />
+    <form method="post" class="stack" novalidate>
+        <input type="hidden" asp-for="Token" />
+        <div class="field">
+            <label class="label" asp-for="Password">@L["Fields.NewPassword"]<span class="req">*</span></label>
+            <input class="input input-ltr" asp-for="Password" type="password" autocomplete="new-password" dir="ltr" required />
+            <span class="hint">@L["Auth.PasswordPolicy"]</span>
+            <span class="field-error" asp-validation-for="Password"></span>
+        </div>
+        <div class="field">
+            <label class="label" asp-for="ConfirmPassword">@L["Fields.ConfirmPassword"]<span class="req">*</span></label>
+            <input class="input input-ltr" asp-for="ConfirmPassword" type="password" autocomplete="new-password" dir="ltr" required />
+            <span class="field-error" asp-validation-for="ConfirmPassword"></span>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit"><span class="spinner"></span><span class="btn-text">@L["Auth.Invite.Submit"]</span></button>
+    </form>
+}

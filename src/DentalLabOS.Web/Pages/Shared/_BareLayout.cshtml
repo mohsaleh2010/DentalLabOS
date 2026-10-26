@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="@UiPreferences.Lang" dir="@(UiPreferences.IsRtl ? "rtl" : "ltr")" data-theme="@UiPreferences.Theme(Context)">
+<head>
+    <partial name="_Head" />
+    <title>@ViewData["Title"] · @L["App.Name"]</title>
+</head>
+<body>
+@RenderBody()
+</body>
+</html>

@@ -1,0 +1,47 @@
+@page "/admin/branches/{id}"
+@model DentalLabOS.Web.Pages.Admin.Branches.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? L["Admin.Branches.New"] : L["Admin.Branches.Edit"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/admin/branches">@L["Nav.Branches"]</a><icon name="chevron-left" class="icon-dir" /><span>@ViewData["Title"]</span></nav>
+        <h1>@ViewData["Title"] <span class="screen-id">ADM-03</span></h1>
+    </div>
+</div>
+<form method="post" class="card" style="max-width: 860px" data-guard novalidate>
+    <div class="card-body">
+        <partial name="_ValidationSummary" />
+        <input type="hidden" asp-for="Input.RowVersion" />
+        <div class="form-grid cols-2">
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" required maxlength="200" />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Code">@L["Fields.Code"]<span class="req">*</span></label>
+                <input class="input input-ltr" asp-for="Input.Code" dir="ltr" required maxlength="20" />
+                <span class="hint">@L["Fields.CodeHint"]</span>
+                <span class="field-error" asp-validation-for="Input.Code"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Phone">@L["Fields.Phone"]</label>
+                <input class="input input-ltr" asp-for="Input.Phone" type="tel" dir="ltr" />
+                <span class="field-error" asp-validation-for="Input.Phone"></span>
+            </div>
+            <div class="field span-2">
+                <label class="label" asp-for="Input.Address">@L["Fields.Address"]</label>
+                <textarea class="textarea" asp-for="Input.Address" maxlength="500"></textarea>
+            </div>
+            @if (!Model.IsNew)
+            {
+                <label class="switch span-2"><input type="checkbox" asp-for="Input.IsActive" disabled="@Model.IsMain" /> @L["Common.Active"] @if (Model.IsMain) {<span class="hint">@L["Admin.Branches.MainAlwaysActive"]</span>}</label>
+            }
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+            <a class="btn btn-ghost" href="/admin/branches">@L["Common.Cancel"]</a>
+        </div>
+    </div>
+</form>

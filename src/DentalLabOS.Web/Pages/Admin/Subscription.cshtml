@@ -1,0 +1,19 @@
+@page "/admin/subscription"
+@model DentalLabOS.Web.Pages.Admin.SubscriptionModel
+@{
+    ViewData["Title"] = L["Nav.Subscription"];
+    var d = Model.Data;
+    int Pct(int used, int max) => max <= 0 ? 0 : (int)Math.Round(used * 100.0 / max);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Subscription"] <span class="screen-id">ADM-26</span></h1>
+        <p class="lead">@L["Admin.Subscription.Lead"]</p>
+    </div>
+</div>
+<div class="stats">
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Fields.Plan"].Value" param-Value="@d.PlanName" param-IconName="@("sparkles")" param-Footnote="@(d.SubscriptionEndsOn is { } e ? L["Plan.EndsOn", e.ToString("d MMM yyyy", CultureInfo.CurrentCulture)].Value : null)" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Admin.Stat.Users"].Value" param-Value="@d.ActiveUsers.ToString()" param-Suffix="@(d.MaxUsers > 0 ? $"/ {d.MaxUsers}" : "/ ∞")" param-IconName="@("users")" param-Tone="@("violet")" param-Percent="@(d.MaxUsers > 0 ? Pct(d.ActiveUsers + d.PendingInvitations, d.MaxUsers) : (int?)null)" param-Footnote="@L["Admin.Subscription.UsersFoot"].Value" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Nav.Branches"].Value" param-Value="@d.Branches.ToString()" param-Suffix="@(d.MaxBranches > 0 ? $"/ {d.MaxBranches}" : "/ ∞")" param-IconName="@("building-2")" param-Tone="@("info")" param-Percent="@(d.MaxBranches > 0 ? Pct(d.Branches, d.MaxBranches) : (int?)null)" />
+</div>
+<div class="alert mt-6"><icon name="info" /><div>@L["Admin.Subscription.Note"]</div></div>

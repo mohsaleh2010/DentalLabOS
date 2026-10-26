@@ -1,0 +1,79 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "PLT-04",
+  "module": "platform",
+  "titleKey": "Platform.Tenant.Profile",
+  "route": "/platform/tenants/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "platform.tenants.read",
+    "access": "permission",
+    "actions": {
+      "suspend": "platform.tenants.manage",
+      "activate": "platform.tenants.manage"
+    }
+  },
+  "entities": [
+    "Tenant",
+    "TenantSubscription"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/tenants/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/platform/tenants/{id}/status",
+      "purpose": "Suspend / reactivate"
+    }
+  ],
+  "rules": [
+    "Suspending requires a reason and ends all lab sessions on the next request",
+    "No data is deleted on suspension"
+  ],
+  "states": [
+    "notFound",
+    "validationError"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "StatusChange"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "tenant.status",
+      "tenant.plan"
+    ]
+  },
+  "tests": [
+    "PLT-04.happy",
+    "PLT-04.suspendBlocksLogin",
+    "PLT-04.reasonRequired"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "reason",
+      "type": "textarea",
+      "required": true,
+      "maxLength": 500
+    }
+  ],
+  "notes": "Covers PLT-04 (details) and PLT-05 (suspend/reactivate dialog)."
+}

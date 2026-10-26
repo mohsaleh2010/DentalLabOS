@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DentalLabOS.Infrastructure\DentalLabOS.Infrastructure.csproj" />
+    <ProjectReference Include="..\DentalLabOS.SharedUI\DentalLabOS.SharedUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.18.3" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <UserSecretsId>dentallabos-api</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

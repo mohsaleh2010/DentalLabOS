@@ -1,0 +1,53 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-01",
+  "module": "admin",
+  "titleKey": "Admin.Dashboard.Title",
+  "route": "/admin",
+  "pattern": "DashboardPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.dashboard.read",
+    "access": "permission"
+  },
+  "entities": [
+    "Branch",
+    "Department",
+    "UserProfile",
+    "AppRole",
+    "AuditLog",
+    "TenantSubscription"
+  ],
+  "api": [],
+  "rules": [
+    "Setup checklist is computed from real data",
+    "Cards are limited by the user's permissions"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "setup.steps",
+      "subscription.status"
+    ]
+  },
+  "tests": [
+    "ADM-01.happy",
+    "ADM-01.crossTenant"
+  ],
+  "relatedScreens": []
+}

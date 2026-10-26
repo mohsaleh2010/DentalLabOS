@@ -1,0 +1,46 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SYS-05",
+  "module": "system",
+  "titleKey": "Search.Title",
+  "route": "/search",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "authenticated"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [
+    "Global search returns only records the user may view (planned with later modules)"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SYS-05.renders"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "type",
+    "number",
+    "title"
+  ]
+}

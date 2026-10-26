@@ -1,0 +1,47 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SYS-01",
+  "module": "system",
+  "titleKey": "Account.Title",
+  "route": "/account",
+  "pattern": "DetailsTabs",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "authenticated"
+  },
+  "entities": [
+    "ApplicationUser",
+    "UserProfile"
+  ],
+  "api": [],
+  "rules": [
+    "Shows the effective permissions resolved on the server"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "user.roles",
+      "user.permissions"
+    ]
+  },
+  "tests": [
+    "SYS-01.renders"
+  ],
+  "relatedScreens": []
+}

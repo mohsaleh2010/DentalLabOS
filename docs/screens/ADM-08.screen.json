@@ -1,0 +1,74 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-08",
+  "module": "admin",
+  "titleKey": "Nav.Roles",
+  "route": "/admin/roles",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.roles.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "AppRole"
+  ],
+  "api": [],
+  "rules": [
+    "System roles cannot be deleted",
+    "Custom roles can copy permissions from an existing role"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-08.happy",
+    "ADM-08.permissionDenied",
+    "ADM-08.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 100
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "maxLength": 300
+    },
+    {
+      "name": "copyFromRoleId",
+      "type": "lookup",
+      "source": "roles"
+    }
+  ],
+  "columns": [
+    "name",
+    "type",
+    "users",
+    "permissions"
+  ]
+}

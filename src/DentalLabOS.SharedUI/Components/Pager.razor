@@ -1,0 +1,60 @@
+@* Server-side pagination links. UrlTemplate contains "{page}" which is replaced per link. *@
+@if (TotalPages > 1 || ShowSummaryAlways)
+{
+    <nav class="pager" aria-label="@AriaLabel">
+        <span>@Summary</span>
+        @if (TotalPages > 1)
+        {
+            <div class="pager-links">
+                @if (Page > 1)
+                {
+                    <a href="@Url(Page - 1)" aria-label="@PreviousLabel"><Icon Name="chevron-right" Class="icon-sm icon-dir" /></a>
+                }
+                else
+                {
+                    <span class="is-disabled" aria-hidden="true"><Icon Name="chevron-right" Class="icon-sm icon-dir" /></span>
+                }
+                @foreach (var p in Window())
+                {
+                    if (p == Page)
+                    {
+                        <span aria-current="page">@p</span>
+                    }
+                    else
+                    {
+                        <a href="@Url(p)">@p</a>
+                    }
+                }
+                @if (Page < TotalPages)
+                {
+                    <a href="@Url(Page + 1)" aria-label="@NextLabel"><Icon Name="chevron-left" Class="icon-sm icon-dir" /></a>
+                }
+                else
+                {
+                    <span class="is-disabled" aria-hidden="true"><Icon Name="chevron-left" Class="icon-sm icon-dir" /></span>
+                }
+            </div>
+        }
+    </nav>
+}
+
+@code {
+    [Parameter] public int Page { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; }
+    [Parameter, EditorRequired] public string UrlTemplate { get; set; } = default!;
+    [Parameter] public string Summary { get; set; } = string.Empty;
+    [Parameter] public string AriaLabel { get; set; } = "Pagination";
+    [Parameter] public string PreviousLabel { get; set; } = "Previous";
+    [Parameter] public string NextLabel { get; set; } = "Next";
+    [Parameter] public bool ShowSummaryAlways { get; set; } = true;
+
+    private string Url(int page) => UrlTemplate.Replace("{page}", page.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+    private IEnumerable<int> Window()
+    {
+        var start = Math.Max(1, Page - 2);
+        var end = Math.Min(TotalPages, start + 4);
+        start = Math.Max(1, end - 4);
+        return Enumerable.Range(start, end - start + 1);
+    }
+}

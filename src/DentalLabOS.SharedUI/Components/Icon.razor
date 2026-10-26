@@ -1,0 +1,12 @@
+@* Renders an icon from the shared Lucide sprite. Decorative by default (hidden from screen readers). *@
+<svg class="icon @Class" aria-hidden="@(Label is null ? "true" : null)" role="@(Label is null ? null : "img")" aria-label="@Label" focusable="false">
+    <use href="@($"{SpriteUrl}#i-{Name}")"></use>
+</svg>
+
+@code {
+    public const string SpriteUrl = "/_content/DentalLabOS.SharedUI/icons/sprite.svg";
+
+    [Parameter, EditorRequired] public string Name { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Label { get; set; }
+}

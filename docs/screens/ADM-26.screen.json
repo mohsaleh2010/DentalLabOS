@@ -1,0 +1,45 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-26",
+  "module": "admin",
+  "titleKey": "Nav.Subscription",
+  "route": "/admin/subscription",
+  "pattern": "DashboardPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.subscription.read",
+    "access": "permission"
+  },
+  "entities": [
+    "TenantSubscription",
+    "SubscriptionPlan"
+  ],
+  "api": [],
+  "rules": [
+    "Read-only for the lab; changes are made by the platform team"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-26.happy",
+    "ADM-26.permissionDenied"
+  ],
+  "relatedScreens": []
+}

@@ -1,0 +1,118 @@
+@page "/platform/tenants/new"
+@model DentalLabOS.Web.Pages.Platform.Tenants.NewModel
+@{
+    ViewData["Title"] = L["Platform.Tenants.New"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/platform/tenants">@L["Nav.Tenants"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Platform.Tenants.New"]</span></nav>
+        <h1>@L["Platform.Tenants.New"] <span class="screen-id">PLT-03</span></h1>
+        <p class="lead">@L["Platform.Wizard.Lead"]</p>
+    </div>
+</div>
+
+@if (Model.Created is { } created)
+{
+    <section class="card" style="max-width: 820px">
+        <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="stat-icon"><icon name="circle-check" /></span>
+                <div><h2>@L["Platform.Wizard.DoneTitle"]</h2><p class="muted text-sm" style="margin:0">@L["Platform.Wizard.DoneText"]</p></div>
+            </div>
+            <div class="field">
+                <span class="label">@L["Platform.Wizard.InviteLink"]</span>
+                <div class="token-box"><code id="invite-link">@Model.InviteUrl</code><button class="btn btn-sm" type="button" data-copy="#invite-link" data-copied-text="@L["Common.Copied"]"><icon name="copy" class="icon-sm" /> @L["Common.Copy"]</button></div>
+                <span class="hint">@L["Platform.Wizard.InviteHint", created.InviteExpiresAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)]</span>
+            </div>
+            <div class="form-actions">
+                <a class="btn btn-primary" href="/platform/tenants/@created.TenantId">@L["Platform.Wizard.OpenTenant"]</a>
+                <a class="btn" href="/platform/tenants/new">@L["Platform.Wizard.Another"]</a>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <ol class="steps" aria-label="@L["Platform.Wizard.Steps"]">
+        <li class="is-current">@L["Platform.Wizard.Step1"]</li>
+        <li class="is-current">@L["Platform.Wizard.Step2"]</li>
+        <li class="is-current">@L["Platform.Wizard.Step3"]</li>
+    </ol>
+    <form method="post" class="card" data-guard novalidate>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <div class="form-section">
+                <div class="form-section-title"><h3>1. @L["Platform.Wizard.Step1"]</h3><p>@L["Platform.Wizard.Step1Hint"]</p></div>
+                <div class="form-grid cols-2">
+                    <div class="field">
+                        <label class="label" asp-for="Input.Name">@L["Fields.LabName"]<span class="req">*</span></label>
+                        <input class="input" asp-for="Input.Name" required maxlength="200" />
+                        <span class="field-error" asp-validation-for="Input.Name"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.Slug">@L["Fields.Slug"]<span class="req">*</span></label>
+                        <input class="input input-ltr" asp-for="Input.Slug" dir="ltr" required pattern="[a-z0-9-]{3,40}" placeholder="smile-lab" />
+                        <span class="hint">@L["Fields.SlugHint"]</span>
+                        <span class="field-error" asp-validation-for="Input.Slug"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.ContactPhone">@L["Fields.Phone"]</label>
+                        <input class="input input-ltr" asp-for="Input.ContactPhone" dir="ltr" type="tel" />
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.MainBranchName">@L["Fields.MainBranchName"]</label>
+                        <input class="input" asp-for="Input.MainBranchName" />
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.DefaultCulture">@L["Prefs.Language"]</label>
+                        <select class="select" asp-for="Input.DefaultCulture"><option value="ar-EG">العربية (مصر)</option><option value="en-US">English</option></select>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.BaseCurrencyCode">@L["Fields.Currency"]</label>
+                        <select class="select" asp-for="Input.BaseCurrencyCode"><option>EGP</option><option>SAR</option><option>AED</option><option>USD</option></select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="form-section-title"><h3>2. @L["Platform.Wizard.Step2"]</h3><p>@L["Platform.Wizard.Step2Hint"]</p></div>
+                <div class="form-grid cols-2">
+                    <div class="field">
+                        <label class="label" asp-for="Input.PlanId">@L["Fields.Plan"]<span class="req">*</span></label>
+                        <select class="select" asp-for="Input.PlanId" required>
+                            @foreach (var p in Model.Plans)
+                            {
+                                <option value="@p.Id">@p.Name — @L["Plan.Limits", p.MaxUsers == 0 ? "∞" : p.MaxUsers.ToString(), p.MaxBranches == 0 ? "∞" : p.MaxBranches.ToString()]</option>
+                            }
+                        </select>
+                        <span class="field-error" asp-validation-for="Input.PlanId"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.TrialDays">@L["Fields.TrialDays"]</label>
+                        <input class="input" asp-for="Input.TrialDays" type="number" min="0" max="90" />
+                        <span class="hint">@L["Fields.TrialDaysHint"]</span>
+                        <span class="field-error" asp-validation-for="Input.TrialDays"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="form-section-title"><h3>3. @L["Platform.Wizard.Step3"]</h3><p>@L["Platform.Wizard.Step3Hint"]</p></div>
+                <div class="form-grid cols-2">
+                    <div class="field">
+                        <label class="label" asp-for="Input.OwnerFullName">@L["Fields.FullName"]<span class="req">*</span></label>
+                        <input class="input" asp-for="Input.OwnerFullName" required />
+                        <span class="field-error" asp-validation-for="Input.OwnerFullName"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.OwnerEmail">@L["Fields.Email"]<span class="req">*</span></label>
+                        <input class="input input-ltr" asp-for="Input.OwnerEmail" type="email" dir="ltr" required />
+                        <span class="field-error" asp-validation-for="Input.OwnerEmail"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><span class="spinner"></span><span class="btn-text">@L["Platform.Wizard.Submit"]</span></button>
+                <a class="btn btn-ghost" href="/platform/tenants">@L["Common.Cancel"]</a>
+            </div>
+        </div>
+    </form>
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SYS-07",
+  "module": "system",
+  "titleKey": "Error.500.Title",
+  "route": "/error/{code}",
+  "pattern": "StatusPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "anonymous"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [
+    "403/404/409/500/503 pages never reveal whether a record of another lab exists"
+  ],
+  "states": [
+    "forbidden",
+    "notFound",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SYS-07.renders"
+  ],
+  "relatedScreens": []
+}

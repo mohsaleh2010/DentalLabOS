@@ -1,0 +1,54 @@
+@page "/admin/users/{id:guid}"
+@model DentalLabOS.Web.Pages.Admin.Users.DetailsModel
+@{
+    var u = Model.UserInfo;
+    ViewData["Title"] = u.FullName;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/admin/users">@L["Nav.Users"]</a><icon name="chevron-left" class="icon-dir" /><span>@u.FullName</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@u.FullName <partial name="_StatusBadge" model="StatusUi.Active(u.IsActive)" /> <span class="screen-id">ADM-06</span></h1>
+        <p class="lead ltr">@u.Email</p>
+    </div>
+</div>
+<partial name="_ValidationSummary" />
+<div class="grid grid-main">
+    <form method="post" asp-page-handler="Roles" class="card" data-guard>
+        <div class="card-header"><h2>@L["Fields.Roles"]</h2><span class="sub">@L["Admin.Users.RolesHint"]</span></div>
+        <div class="card-body">
+            <div class="matrix-grid" style="padding:0">
+                @foreach (var role in Model.Roles)
+                {
+                    <label class="check"><input type="checkbox" name="roleIds" value="@role.Id" checked="@Model.RoleIds.Contains(role.Id)" disabled="@(!Model.CanManage)" /> @role.Name</label>
+                }
+            </div>
+            @if (Model.CanManage)
+            {
+                <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button></div>
+            }
+        </div>
+    </form>
+    <section class="card" style="align-self:start">
+        <div class="card-header"><h2>@L["Admin.Users.Account"]</h2></div>
+        <div class="card-body">
+            <dl class="dl">
+                <div><dt>@L["Account.LastLogin"]</dt><dd>@(u.LastLoginAtUtc?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? L["Admin.Users.NeverLoggedIn"].Value)</dd></div>
+            </dl>
+            @if (Model.CanManage)
+            {
+                <form method="post" asp-page-handler="Active" class="mt-4">
+                    <input type="hidden" name="active" value="@((!u.IsActive).ToString().ToLowerInvariant())" />
+                    @if (u.IsActive)
+                    {
+                        <button class="btn btn-danger btn-block" type="submit" data-confirm="@L["Admin.Users.DeactivateConfirm", u.FullName]"><icon name="ban" /> @L["Admin.Users.Deactivate"]</button>
+                        <p class="hint mt-2">@L["Admin.Users.DeactivateHint"]</p>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary btn-block" type="submit"><icon name="circle-check" /> @L["Admin.Users.Activate"]</button>
+                    }
+                </form>
+            }
+        </div>
+    </section>
+</div>

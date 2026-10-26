@@ -1,0 +1,58 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SYS-02",
+  "module": "system",
+  "titleKey": "Nav.Preferences",
+  "route": "/account/preferences",
+  "pattern": "FormPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "authenticated"
+  },
+  "entities": [
+    "ApplicationUser"
+  ],
+  "api": [],
+  "rules": [
+    "Language switches layout direction (RTL for Arabic)",
+    "Preferences are stored on the account and in a cookie"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SYS-02.happy"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "culture",
+      "type": "enum",
+      "required": true,
+      "source": "ar-EG|en-US"
+    },
+    {
+      "name": "theme",
+      "type": "enum",
+      "required": true,
+      "source": "light|dark|system"
+    }
+  ]
+}

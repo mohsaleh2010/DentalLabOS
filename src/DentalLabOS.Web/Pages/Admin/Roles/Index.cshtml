@@ -1,0 +1,60 @@
+@page "/admin/roles"
+@model DentalLabOS.Web.Pages.Admin.Roles.IndexModel
+@{
+    ViewData["Title"] = L["Nav.Roles"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Roles"] <span class="screen-id">ADM-08</span></h1>
+        <p class="lead">@L["Admin.Roles.Lead"]</p>
+    </div>
+</div>
+<div class="grid grid-main">
+    <section class="card">
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Role"]</th><th>@L["Fields.Type"]</th><th class="num">@L["Admin.Roles.Permissions"]</th><th class="num">@L["Fields.Users"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var r in Model.Roles)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon" style="width:34px;height:34px"><icon name="@(r.SystemKey == "owner" ? "key-round" : "shield-check")" class="icon-sm" /></span><span><strong>@r.Name</strong>@if (r.Description is not null) {<span>@r.Description</span>}</span></div></td>
+                        <td data-label="@L["Fields.Type"]">@if (r.IsSystemRole) {<span class="badge badge-info">@L["Admin.Roles.System"]</span>} else {<span class="badge badge-violet">@L["Admin.Roles.Custom"]</span>}</td>
+                        <td class="num" data-label="@L["Admin.Roles.Permissions"]">@r.PermissionCount</td>
+                        <td class="num" data-label="@L["Fields.Users"]">@r.UserCount</td>
+                        <td class="actions"><a class="btn btn-sm" href="/admin/roles/@r.Id/permissions"><icon name="shield-check" class="icon-sm" /> @L["Admin.Roles.Matrix"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <form method="post" class="card" style="align-self:start" novalidate>
+        <div class="card-header"><h2>@L["Admin.Roles.New"]</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <div class="form-grid">
+                <div class="field">
+                    <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                    <input class="input" asp-for="Input.Name" required maxlength="100" />
+                    <span class="field-error" asp-validation-for="Input.Name"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.Description">@L["Fields.Description"]</label>
+                    <input class="input" asp-for="Input.Description" maxlength="500" />
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.CopyFromRoleId">@L["Admin.Roles.CopyFrom"]</label>
+                    <select class="select" asp-for="Input.CopyFromRoleId">
+                        <option value="">@L["Admin.Roles.CopyNone"]</option>
+                        @foreach (var r in Model.Roles)
+                        {
+                            <option value="@r.Id">@r.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-actions"><button class="btn btn-primary btn-block" type="submit"><icon name="plus" /> @L["Admin.Roles.Create"]</button></div>
+        </div>
+    </form>
+</div>

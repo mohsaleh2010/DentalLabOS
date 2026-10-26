@@ -1,0 +1,73 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "AUTH-06",
+  "module": "auth",
+  "titleKey": "Auth.Setup.Title",
+  "route": "/setup",
+  "pattern": "AuthPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "anonymous"
+  },
+  "entities": [
+    "ApplicationUser"
+  ],
+  "api": [],
+  "rules": [
+    "Open only while no platform owner exists",
+    "Requires the setup token from configuration or the startup log",
+    "No default credentials exist in code or seed data"
+  ],
+  "states": [
+    "locked",
+    "validationError"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "secrets": [
+      "token",
+      "password"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "AUTH-06.happy",
+    "AUTH-06.closedAfterFirstOwner",
+    "AUTH-06.wrongToken"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "token",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "fullName",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "required": true
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+@page "/offline"
+@model DentalLabOS.Web.Pages.Common.OfflineModel
+@{
+    Layout = "_BareLayout";
+    ViewData["Title"] = L["Offline.Title"];
+}
+<div class="status-page">
+    <div>
+        <div class="empty-art" style="margin-inline:auto"><icon name="wifi-off" class="icon-xl" /></div>
+        <h1>@L["Offline.Title"]</h1>
+        <p>@L["Offline.Text"]</p>
+        <div class="actions"><a class="btn btn-primary" href="/"><icon name="refresh-cw" /> @L["Offline.Retry"]</a></div>
+    </div>
+</div>

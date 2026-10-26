@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <!--
+    Shared UI (RCL): design system assets, Blazor components and UI resources reusable by the
+    Razor Pages web app and a future .NET MAUI Blazor Hybrid Android client (ADR-0002).
+  -->
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\*.json" LogicalName="DentalLabOS.SharedUI.Resources.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

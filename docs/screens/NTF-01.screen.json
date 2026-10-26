@@ -1,0 +1,46 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "NTF-01",
+  "module": "notifications",
+  "titleKey": "Nav.Notifications",
+  "route": "/notifications",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "authenticated"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [
+    "Only notifications addressed to the current user"
+  ],
+  "states": [
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "NTF-01.renders"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "when",
+    "title",
+    "status"
+  ]
+}

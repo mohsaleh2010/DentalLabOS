@@ -1,0 +1,20 @@
+<div class="empty" role="status">
+    <div class="empty-art"><Icon Name="@IconName" Class="icon-xl" /></div>
+    <h3>@Title</h3>
+    @if (Description is not null)
+    {
+        <p>@Description</p>
+    }
+    @if (ActionText is not null && ActionHref is not null)
+    {
+        <a class="btn btn-primary mt-2" href="@ActionHref"><Icon Name="plus" />@ActionText</a>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = default!;
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public string IconName { get; set; } = "layers";
+    [Parameter] public string? ActionText { get; set; }
+    [Parameter] public string? ActionHref { get; set; }
+}

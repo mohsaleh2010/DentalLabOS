@@ -1,0 +1,44 @@
+@page "/admin/branches"
+@model DentalLabOS.Web.Pages.Admin.Branches.IndexModel
+@{
+    ViewData["Title"] = L["Nav.Branches"];
+    var r = Model.Result;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Branches"] <span class="screen-id">ADM-03</span></h1>
+        <p class="lead">@L["Admin.Branches.Lead"]</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="/admin/branches/new"><icon name="plus" /> @L["Admin.Branches.New"]</a></div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Common.SearchByNameCode"]" aria-label="@L["Common.Search"]" /></div>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-IconName="@("building-2")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Code"]</th><th>@L["Fields.Phone"]</th><th>@L["Fields.Address"]</th><th>@L["Fields.Status"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr></thead>
+                <tbody>
+                @foreach (var b in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon" style="width:34px;height:34px"><icon name="building-2" class="icon-sm" /></span><span><strong>@b.Name</strong>@if (b.IsMain) {<span>@L["Admin.Branches.Main"]</span>}</span></div></td>
+                        <td data-label="@L["Fields.Code"]"><code>@b.Code</code></td>
+                        <td data-label="@L["Fields.Phone"]" class="ltr">@(b.Phone ?? "—")</td>
+                        <td data-label="@L["Fields.Address"]">@(b.Address ?? "—")</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(b.IsActive)" /></td>
+                        <td class="actions"><a class="btn btn-sm" href="/admin/branches/@b.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

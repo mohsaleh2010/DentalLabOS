@@ -1,0 +1,30 @@
+@page "/login"
+@model DentalLabOS.Web.Pages.Account.LoginModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = L["Auth.Login.Title"];
+}
+<h1>@L["Auth.Login.Title"]</h1>
+<p class="lead">@L["Auth.Login.Lead"]</p>
+
+@if (Request.Query["reason"] == "invited")
+{
+    <div class="alert alert-success mb-4"><icon name="circle-check" /><div>@L["Auth.Login.AccountReady"]</div></div>
+}
+<partial name="_ValidationSummary" />
+
+<form method="post" class="stack" novalidate>
+    <div class="field">
+        <label class="label" asp-for="Input.Email">@L["Fields.Email"]</label>
+        <input class="input input-ltr" asp-for="Input.Email" type="email" autocomplete="username" autofocus required dir="ltr" />
+    </div>
+    <div class="field">
+        <div class="flex justify-between items-center">
+            <label class="label" asp-for="Input.Password">@L["Fields.Password"]</label>
+        </div>
+        <input class="input input-ltr" asp-for="Input.Password" type="password" autocomplete="current-password" required dir="ltr" />
+    </div>
+    <label class="check"><input asp-for="Input.RememberMe" type="checkbox" /> @L["Auth.Login.Remember"]</label>
+    <button class="btn btn-primary btn-lg btn-block" type="submit"><span class="spinner"></span><span class="btn-text">@L["Auth.Login.Submit"]</span></button>
+</form>
+<p class="text-xs muted mt-6"><icon name="lock" class="icon-sm" style="display:inline; vertical-align:-3px" /> @L["Auth.Login.SecurityNote"]</p>

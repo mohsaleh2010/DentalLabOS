@@ -1,0 +1,12 @@
+@page "/platform/audit"
+@model DentalLabOS.Web.Pages.Platform.AuditModel
+@{
+    ViewData["Title"] = L["Nav.PlatformAudit"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.PlatformAudit"] <span class="screen-id">PLT-12</span></h1>
+        <p class="lead">@L["Audit.PlatformLead"]</p>
+    </div>
+</div>
+<partial name="_AuditTable" model="(Model.Result, Model.PageUrl)" />

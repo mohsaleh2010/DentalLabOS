@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!-- CS1591: XML docs are not required on public members during the foundation phase. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <Company>DentalLab OS</Company>
+    <Product>DentalLab OS</Product>
+  </PropertyGroup>
+</Project>

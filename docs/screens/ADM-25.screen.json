@@ -1,0 +1,60 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-25",
+  "module": "admin",
+  "titleKey": "Nav.Audit",
+  "route": "/admin/audit",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.audit.read",
+    "access": "permission"
+  },
+  "entities": [
+    "AuditLog"
+  ],
+  "api": [],
+  "rules": [
+    "Only the current lab's entries",
+    "Sensitive fields are masked",
+    "Append-only"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-25.happy",
+    "ADM-25.permissionDenied",
+    "ADM-25.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "when",
+    "who",
+    "action",
+    "entity",
+    "details",
+    "ip"
+  ],
+  "filters": [
+    "action",
+    "from",
+    "to"
+  ]
+}

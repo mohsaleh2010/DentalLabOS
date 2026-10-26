@@ -1,0 +1,54 @@
+@page "/admin/roles/{id:guid}/permissions"
+@model DentalLabOS.Web.Pages.Admin.Roles.PermissionsModel
+@{
+    var m = Model.Matrix;
+    ViewData["Title"] = L["Admin.Roles.MatrixOf", m.RoleName];
+    var modules = m.Permissions.GroupBy(p => p.Module).ToList();
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/admin/roles">@L["Nav.Roles"]</a><icon name="chevron-left" class="icon-dir" /><span>@m.RoleName</span></nav>
+        <h1>@L["Admin.Roles.MatrixOf", m.RoleName] <span class="screen-id">ADM-09</span></h1>
+        <p class="lead">@L["Admin.Roles.MatrixLead", m.Permissions.Count(p => p.Granted), m.Permissions.Count]</p>
+    </div>
+</div>
+@if (m.IsLocked)
+{
+    <div class="alert alert-warning mb-6"><icon name="lock" /><div>@L["Admin.Roles.OwnerLocked"]</div></div>
+}
+<partial name="_ValidationSummary" />
+<form method="post" data-guard>
+    <input type="hidden" name="rowVersion" value="@m.RowVersion" />
+    @foreach (var group in modules)
+    {
+        var granted = group.Count(p => p.Granted);
+        <section class="matrix-module">
+            <header>
+                <h3>@L[$"Module.{group.Key}"]</h3>
+                <span class="count">@granted / @group.Count()</span>
+                @if (!m.IsLocked)
+                {
+                    <div class="actions"><button class="btn btn-ghost btn-sm" type="button" data-check-module="@group.Key">@L["Admin.Roles.ToggleModule"]</button></div>
+                }
+            </header>
+            <div class="matrix-grid">
+                @foreach (var p in group)
+                {
+                    <label class="check">
+                        <input type="checkbox" name="keys" value="@p.Key" data-module="@group.Key" checked="@p.Granted" disabled="@m.IsLocked" />
+                        <span>@L[$"PermAction.{p.Key[(p.Key.LastIndexOf('.') + 1)..]}"] · <code>@p.Key</code></span>
+                    </label>
+                }
+            </div>
+        </section>
+    }
+    @if (!m.IsLocked)
+    {
+        <div class="form-actions" style="position: sticky; bottom: 0; background: var(--bg); padding-bottom: var(--space-4)">
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.SaveChanges"]</button>
+            <a class="btn btn-ghost" href="/admin/roles">@L["Common.Cancel"]</a>
+            <span class="spacer"></span>
+            <span class="text-xs muted"><icon name="info" class="icon-sm" style="display:inline; vertical-align:-3px" /> @L["Admin.Roles.ServerEnforced"]</span>
+        </div>
+    }
+</form>

@@ -1,0 +1,57 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "PLT-01",
+  "module": "platform",
+  "titleKey": "Platform.Dashboard.Title",
+  "route": "/platform",
+  "pattern": "DashboardPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "platform.dashboard.read",
+    "access": "permission"
+  },
+  "entities": [
+    "Tenant",
+    "TenantSubscription",
+    "SubscriptionPlan"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/dashboard",
+      "purpose": "KPIs"
+    }
+  ],
+  "rules": [
+    "Platform staff see subscription data only, never a lab's operational data"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "tenants.count",
+      "subscriptions.byPlan"
+    ]
+  },
+  "tests": [
+    "PLT-01.happy",
+    "PLT-01.permissionDenied"
+  ],
+  "relatedScreens": [
+    "PLT-02"
+  ]
+}

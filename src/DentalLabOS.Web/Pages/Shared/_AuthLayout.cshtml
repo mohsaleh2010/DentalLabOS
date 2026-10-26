@@ -1,0 +1,57 @@
+@{
+    var lang = UiPreferences.Lang;
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@(UiPreferences.IsRtl ? "rtl" : "ltr")" data-theme="@UiPreferences.Theme(Context)">
+<head>
+    <partial name="_Head" />
+    <title>@ViewData["Title"] · @L["App.Name"]</title>
+</head>
+<body>
+<div class="auth">
+    <section class="auth-panel">
+        <div class="auth-top">
+            <a class="sidebar-brand" href="/" style="border: 0; padding: 0; height: auto">
+                <brand-mark />
+                <span class="brand-name"><strong>@L["App.Name"]</strong><small>@L["App.Tagline"]</small></span>
+            </a>
+            <div class="flex items-center gap-2">
+                <form method="post" action="/culture">
+                    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                    <button class="btn btn-ghost btn-sm" name="culture" value="@(lang == "ar" ? "en-US" : "ar-EG")"><icon name="languages" class="icon-sm" /> @(lang == "ar" ? "English" : "العربية")</button>
+                </form>
+                <button class="btn btn-ghost btn-icon btn-sm" type="button" data-theme-toggle aria-label="@L["Prefs.ToggleTheme"]"><icon name="moon" class="icon-sm" /></button>
+            </div>
+        </div>
+        <div class="auth-form-wrap">
+            <div class="auth-form">
+                @RenderBody()
+            </div>
+        </div>
+        <p class="auth-foot">© @DateTime.UtcNow.Year @L["App.Name"] · @L["Auth.Footer"]</p>
+    </section>
+    <aside class="auth-hero" aria-hidden="true">
+        <div>
+            <span class="badge" style="background: rgb(255 255 255 / .1); color: #d5fff8; border-color: rgb(255 255 255 / .18)"><icon name="sparkles" class="icon-sm" /> @L["Hero.Badge"]</span>
+        </div>
+        <div>
+            <h2>@L["Hero.Title"]</h2>
+            <p>@L["Hero.Text"]</p>
+            <div class="hero-preview">
+                <div class="row"><span class="num">WO-26-000412</span> <span>@L["Hero.Row1"]</span> <span class="pill">@L["Hero.Status1"]</span></div>
+                <div class="row"><span class="num">WO-26-000409</span> <span>@L["Hero.Row2"]</span> <span class="pill amber">@L["Hero.Status2"]</span></div>
+                <div class="row"><span class="num">WO-26-000398</span> <span>@L["Hero.Row3"]</span> <span class="pill violet">@L["Hero.Status3"]</span></div>
+            </div>
+            <div class="hero-features">
+                <div class="hero-feature"><icon name="factory" /><div><strong>@L["Hero.F1"]</strong><span>@L["Hero.F1d"]</span></div></div>
+                <div class="hero-feature"><icon name="microscope" /><div><strong>@L["Hero.F2"]</strong><span>@L["Hero.F2d"]</span></div></div>
+                <div class="hero-feature"><icon name="boxes" /><div><strong>@L["Hero.F3"]</strong><span>@L["Hero.F3d"]</span></div></div>
+                <div class="hero-feature"><icon name="shield-check" /><div><strong>@L["Hero.F4"]</strong><span>@L["Hero.F4d"]</span></div></div>
+            </div>
+        </div>
+        <div class="text-xs" style="color: rgb(234 255 251 / .6)">@L["Hero.Foot"]</div>
+    </aside>
+</div>
+<partial name="_Flash" />
+</body>
+</html>

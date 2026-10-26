@@ -1,0 +1,15 @@
+@page "/notifications"
+@model DentalLabOS.Web.Pages.Common.NotificationsModel
+@{
+    ViewData["Title"] = L["Nav.Notifications"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Notifications"] <span class="screen-id">NTF-01</span></h1>
+        <p class="lead">@L["Notifications.Lead"]</p>
+    </div>
+</div>
+<div class="card">
+    <component type="typeof(EmptyState)" render-mode="Static"
+               param-Title="@L["Notifications.EmptyTitle"].Value" param-Description="@L["Notifications.EmptyText"].Value" param-IconName="@("bell")" />
+</div>
