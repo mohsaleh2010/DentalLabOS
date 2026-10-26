@@ -1,0 +1,176 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-02",
+  "module": "customers",
+  "titleKey": "Customers.Edit",
+  "route": "/customers/{id}/edit",
+  "pattern": "FormPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "customers.manage",
+    "access": "permission",
+    "actions": {
+      "credit": "customers.credit.manage",
+      "priceList": "pricelists.read"
+    }
+  },
+  "entities": [
+    "Customer"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/customers",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/customers/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/{id}",
+      "purpose": "Details"
+    }
+  ],
+  "rules": [
+    "Empty code takes the next number from the Customer sequence (C-00001)",
+    "Code unique per lab",
+    "Credit limit changes need customers.credit.manage",
+    "Customers are deactivated, never deleted",
+    "Internal notes are never shown in the dentist portal",
+    "RowVersion detects concurrent edits"
+  ],
+  "states": [
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-02.happy",
+    "CUS-02.permissionDenied",
+    "CUS-02.crossTenant",
+    "CUS-02.autoCode",
+    "CUS-02.creditPermission",
+    "CUS-02.concurrency"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/customers/new/edit",
+    "/customers/{id}/edit"
+  ],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "maxLength": 20
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 200
+    },
+    {
+      "name": "type",
+      "type": "enum",
+      "required": true,
+      "source": "PartyType"
+    },
+    {
+      "name": "groupId",
+      "type": "lookup",
+      "source": "customerGroups"
+    },
+    {
+      "name": "mobile",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "maxLength": 256
+    },
+    {
+      "name": "city",
+      "type": "text",
+      "maxLength": 100
+    },
+    {
+      "name": "address",
+      "type": "textarea",
+      "maxLength": 500
+    },
+    {
+      "name": "taxNumber",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "priceListId",
+      "type": "lookup",
+      "source": "priceLists"
+    },
+    {
+      "name": "paymentTermsDays",
+      "type": "integer",
+      "min": 0,
+      "max": 365
+    },
+    {
+      "name": "creditLimit",
+      "type": "decimal",
+      "min": 0,
+      "scale": 2
+    },
+    {
+      "name": "blockWhenOverCredit",
+      "type": "boolean"
+    },
+    {
+      "name": "openingBalance",
+      "type": "decimal",
+      "scale": 2
+    },
+    {
+      "name": "internalNotes",
+      "type": "textarea",
+      "maxLength": 2000
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-05",
+  "module": "customers",
+  "titleKey": "Customers.Groups",
+  "route": "/customers/groups",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "customers.groups.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "CustomerGroup"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/customer-groups",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/customer-groups",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/customer-groups/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/customer-groups/{id}",
+      "purpose": "Delete unused"
+    }
+  ],
+  "rules": [
+    "Name unique per lab",
+    "A group with customers can't be deleted",
+    "The group's list applies to members without their own list"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-05.happy",
+    "CUS-05.permissionDenied",
+    "CUS-05.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "defaultPriceListId",
+      "type": "lookup",
+      "source": "priceLists"
+    }
+  ],
+  "columns": [
+    "name",
+    "priceList",
+    "customers"
+  ]
+}

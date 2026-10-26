@@ -1,0 +1,69 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SUP-03",
+  "module": "suppliers",
+  "titleKey": "Customers.Tab.Info",
+  "route": "/suppliers/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "suppliers.read",
+    "access": "permission",
+    "actions": {
+      "edit": "suppliers.manage",
+      "items": "suppliers.items.manage"
+    }
+  },
+  "entities": [
+    "Supplier",
+    "SupplierItem"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/suppliers/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/suppliers/{id}/items",
+      "purpose": "Items"
+    }
+  ],
+  "rules": [
+    "Tabs: details, items & prices; purchase orders, invoices, payments and statement arrive with phases 6 and 8",
+    "Purchase prices are hidden without inventory.valuation.read"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "hidesCostFor": [
+      "Technician",
+      "Reception",
+      "Sales"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SUP-03.happy",
+    "SUP-03.permissionDenied",
+    "SUP-03.crossTenant",
+    "SUP-03.costHidden"
+  ],
+  "relatedScreens": []
+}

@@ -1,0 +1,44 @@
+@model (IReadOnlyList<DentalLabOS.Contracts.Catalog.BomLineDto> Lines, bool Editable)
+@{
+    var showCost = Model.Lines.Any(l => l.LineCost is not null);
+}
+@if (Model.Lines.Count == 0)
+{
+    <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Items.NoBom"].Value" param-Description="@L["Items.NoBomText"].Value" param-IconName="@("list")" />
+}
+else
+{
+    <div class="table-wrap">
+        <table class="table table-responsive">
+            <thead><tr><th>@L["Items.Material"]</th><th class="num">@L["Fields.Quantity"]</th><th class="num">@L["Items.Scrap"]</th><th class="num">@L["Items.GrossQty"]</th>@if (showCost) {<th class="num">@L["Items.LineCost"]</th>}<th class="actions"></th></tr></thead>
+            <tbody>
+            @foreach (var b in Model.Lines)
+            {
+                <tr>
+                    <td class="cell-primary"><strong>@b.MaterialName</strong> <code class="text-xs">@b.MaterialSku</code></td>
+                    <td data-label="@L["Fields.Quantity"]" class="num">@Fmt.Qty(b.Quantity) <code>@b.UnitCode</code></td>
+                    <td data-label="@L["Items.Scrap"]" class="num">@Fmt.Qty(b.ScrapPercent)%</td>
+                    <td data-label="@L["Items.GrossQty"]" class="num"><strong>@Fmt.Qty(Math.Round(b.GrossQuantity, 4))</strong></td>
+                    @if (showCost)
+                    {
+                        <td data-label="@L["Items.LineCost"]" class="num money">@Fmt.Money(b.LineCost)</td>
+                    }
+                    <td class="actions">
+                        @if (Model.Editable)
+                        {
+                            <a class="btn btn-sm" href="?edit=@b.Id"><icon name="pencil" class="icon-sm" /></a>
+                            <form method="post" asp-page-handler="Delete" asp-route-lineId="@b.Id" style="display:inline">
+                                <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Common.DeleteConfirm", b.MaterialName]"><icon name="trash-2" class="icon-sm" /></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+            @if (showCost)
+            {
+                <tfoot><tr><td colspan="4"><strong>@L["Items.BomTotal"]</strong></td><td class="num money"><strong>@Fmt.Money(Model.Lines.Sum(l => l.LineCost ?? 0))</strong></td><td></td></tr></tfoot>
+            }
+        </table>
+    </div>
+}

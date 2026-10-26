@@ -1,0 +1,68 @@
+@page "/suppliers"
+@model DentalLabOS.Web.Pages.Suppliers.IndexModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.Suppliers"];
+    var r = Model.Result;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Suppliers"] <span class="screen-id">SUP-01</span></h1>
+        <p class="lead">@L["Suppliers.Lead"]</p>
+    </div>
+    @if (Model.Can(Permissions.Suppliers.Manage))
+    {
+        <div class="actions"><a class="btn btn-primary" href="/suppliers/new/edit"><icon name="plus" /> @L["Suppliers.New"]</a></div>
+    }
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Common.SearchByNameCode"]" aria-label="@L["Common.Search"]" /></div>
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" onchange="this.form.submit()">
+            <option value="">@L["Common.AllStatuses"]</option>
+            <option value="active" selected="@(Model.Status == "active")">@L["Common.Active"]</option>
+            <option value="inactive" selected="@(Model.Status == "inactive")">@L["Common.Inactive"]</option>
+        </select>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        @if (string.IsNullOrEmpty(Model.Q) && Model.Status is null && Model.Can(Permissions.Suppliers.Manage))
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Suppliers.EmptyTitle"].Value" param-Description="@L["Suppliers.EmptyText"].Value"
+                       param-IconName="@("building")" param-ActionText="@L["Suppliers.New"].Value" param-ActionHref="@("/suppliers/new/edit")" />
+        }
+        else
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-Description="@L["Common.NoResultsText"].Value" param-IconName="@("search")" />
+        }
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Code"]</th><th>@L["Fields.Phone"]</th><th class="num">@L["Suppliers.Items"]</th><th>@L["Fields.Rating"]</th><th>@L["Fields.Status"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr></thead>
+                <tbody>
+                @foreach (var s in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon tone-violet" style="width:34px;height:34px"><icon name="building" class="icon-sm" /></span><span><a href="/suppliers/@s.Id"><strong>@s.Name</strong></a>@if (s.IsOutsourcePartner) {<span>@L["Suppliers.OutsourcePartner"]</span>}</span></div></td>
+                        <td data-label="@L["Fields.Code"]"><code>@s.Code</code></td>
+                        <td data-label="@L["Fields.Phone"]" class="ltr">@(s.Phone ?? "—")</td>
+                        <td data-label="@L["Suppliers.Items"]" class="num">@s.ItemCount</td>
+                        <td data-label="@L["Fields.Rating"]">@if (s.Rating is { } rating) {<span class="badge badge-warning"><icon name="star" class="icon-sm" /> @rating.ToString("0.0", CultureInfo.InvariantCulture)</span>} else {<span class="muted">—</span>}</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(s.IsActive)" /></td>
+                        <td class="actions">
+                            <a class="btn btn-sm" href="/suppliers/@s.Id"><icon name="eye" class="icon-sm" /> @L["Common.Details"]</a>
+                            @if (Model.Can(Permissions.Suppliers.Manage))
+                            {
+                                <a class="btn btn-sm btn-ghost" href="/suppliers/@s.Id/edit" aria-label="@L["Common.Edit"]"><icon name="pencil" class="icon-sm" /></a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

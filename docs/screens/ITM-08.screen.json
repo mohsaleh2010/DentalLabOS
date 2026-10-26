@@ -1,0 +1,123 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-08",
+  "module": "items",
+  "titleKey": "PriceLists.Settings",
+  "route": "/price-lists/{id}",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "pricelists.read",
+    "access": "permission",
+    "actions": {
+      "manage": "pricelists.manage"
+    }
+  },
+  "entities": [
+    "PriceList",
+    "PriceListLine"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/price-lists",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/price-lists/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/price-lists/{id}/lines",
+      "purpose": "Lines"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/price-lists/{id}/lines",
+      "purpose": "Set a price"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/price-lists/{id}/lines/{lineId}",
+      "purpose": "Remove a price"
+    }
+  ],
+  "rules": [
+    "Making a list general moves the flag from the previous one",
+    "The general list can't be deactivated or un-flagged",
+    "One price per item and minimum quantity",
+    "Read-only without pricelists.manage"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-08.happy",
+    "ITM-08.permissionDenied",
+    "ITM-08.crossTenant",
+    "ITM-08.singleDefault"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/price-lists/new",
+    "/price-lists/{id}"
+  ],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "currencyCode",
+      "type": "lookup",
+      "required": true,
+      "source": "currencies"
+    },
+    {
+      "name": "validFrom",
+      "type": "date"
+    },
+    {
+      "name": "validTo",
+      "type": "date"
+    },
+    {
+      "name": "isDefault",
+      "type": "boolean"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}

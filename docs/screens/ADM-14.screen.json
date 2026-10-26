@@ -1,0 +1,93 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-14",
+  "module": "admin",
+  "titleKey": "Nav.Units",
+  "route": "/admin/units",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.units.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "UnitOfMeasure"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/units",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/units",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/units/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/units/{id}",
+      "purpose": "Delete unused"
+    }
+  ],
+  "rules": [
+    "Starter units are created with the lab",
+    "Units used by items, conversions or BOMs can't be deleted"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-14.happy",
+    "ADM-14.permissionDenied",
+    "ADM-14.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "required": true,
+      "maxLength": 10
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 50
+    },
+    {
+      "name": "decimalPlaces",
+      "type": "integer",
+      "min": 0,
+      "max": 6
+    }
+  ]
+}

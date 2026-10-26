@@ -1,0 +1,39 @@
+@page "/catalog/services"
+@model DentalLabOS.Web.Pages.Items.ServicesModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Items.ServicesCatalog"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Items.ServicesCatalog"] <span class="screen-id">ITM-05</span></h1>
+        <p class="lead">@L["Items.ServicesLead"]</p>
+    </div>
+    @if (Model.Can(Permissions.Items.Manage))
+    {
+        <div class="actions"><a class="btn btn-primary" href="/items/new/edit?type=Service"><icon name="plus" /> @L["Items.NewService"]</a></div>
+    }
+</div>
+<form class="toolbar card mb-6" method="get">
+    <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Items.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
+    <span class="muted text-sm ms-auto">@L["Items.ServicesCount", Model.Count]</span>
+</form>
+@if (Model.Count == 0)
+{
+    <section class="card"><component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Items.NoServices"].Value" param-Description="@L["Items.NoServicesText"].Value" param-IconName="@("layers")" /></section>
+}
+@foreach (var g in Model.Groups)
+{
+    <h2 class="group-title"><icon name="folder-tree" class="icon-sm" /> @g.Key <span class="badge">@g.Count()</span></h2>
+    <div class="service-grid">
+        @foreach (var s in g)
+        {
+            <a class="service-card" href="/items/@s.Id">
+                <div class="flex items-center justify-between gap-2"><code class="text-xs">@s.Sku</code>@if (s.Type == "OutsourcedService") {<span class="badge badge-violet">@L["ItemType.OutsourcedService"]</span>}</div>
+                <h3>@s.Name</h3>
+                @if (s.NameEn is not null) {<span class="text-xs muted ltr">@s.NameEn</span>}
+                <div class="meta"><span>@L["Items.PerUnit", s.UnitCode]</span><span class="price money">@Fmt.Money(s.DefaultSalesPrice)</span></div>
+            </a>
+        }
+    </div>
+}

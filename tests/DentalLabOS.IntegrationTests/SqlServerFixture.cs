@@ -1,9 +1,12 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using DentalLabOS.Application.Abstractions;
 using DentalLabOS.Application.Admin;
+using DentalLabOS.Application.Common;
 using DentalLabOS.Contracts;
 using DentalLabOS.Contracts.Auth;
 using DentalLabOS.Contracts.Platform;
+using DentalLabOS.Domain.Organization;
 using DentalLabOS.Infrastructure.Identity;
 using DentalLabOS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -130,6 +133,29 @@ public sealed class SqlServerFixture : IAsyncLifetime
 
         var token = await TokenAsync(email);
         return new LabContext(result.TenantId, email, token);
+    }
+
+    /// <summary>Adds a user with one system role to a lab (accepting an invitation, as a real user would) and returns their token.</summary>
+    public async Task<string> AddUserAsync(LabContext lab, string roleKey, string email)
+    {
+        var token = SecureToken.Create();
+        using (var scope = Api.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            using (scope.ServiceProvider.GetRequiredService<ITenantContext>().BeginScope(lab.TenantId))
+            {
+                var roleId = await db.Roles.Where(r => r.SystemKey == roleKey).Select(r => r.Id).SingleAsync();
+                db.UserInvitations.Add(new UserInvitation
+                {
+                    Email = email, FullName = roleKey, RoleId = roleId, TokenHash = SecureToken.Hash(token), ExpiresAtUtc = DateTime.UtcNow.AddDays(1),
+                });
+                await db.SaveChangesAsync();
+            }
+
+            await scope.ServiceProvider.GetRequiredService<InvitationService>().AcceptAsync(token, Password);
+        }
+
+        return await TokenAsync(email);
     }
 
     /// <summary>Runs code against the database with all tenant filters removed (test assertions only).</summary>

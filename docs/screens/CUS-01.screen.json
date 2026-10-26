@@ -1,0 +1,82 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-01",
+  "module": "customers",
+  "titleKey": "Nav.Customers",
+  "route": "/customers",
+  "pattern": "ListPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "customers.read",
+    "access": "permission",
+    "actions": {
+      "create": "customers.manage",
+      "import": "admin.import.manage",
+      "groups": "customers.groups.manage"
+    }
+  },
+  "entities": [
+    "Customer",
+    "CustomerGroup",
+    "Dentist"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/customers",
+      "purpose": "List (search: name, code, phones, dentist names)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/options",
+      "purpose": "Picker"
+    }
+  ],
+  "rules": [
+    "Server-side paging and search",
+    "Only the current lab's customers"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "filters"
+    ]
+  },
+  "tests": [
+    "CUS-01.happy",
+    "CUS-01.permissionDenied",
+    "CUS-01.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "code",
+    "type",
+    "group",
+    "phone",
+    "dentistCount",
+    "status"
+  ],
+  "filters": [
+    "search",
+    "type",
+    "group",
+    "status"
+  ]
+}

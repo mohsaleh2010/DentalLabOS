@@ -42,13 +42,14 @@ builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactor
 builder.Services.AddSingleton<IStringLocalizer>(_ => new JsonStringLocalizer());
 builder.Services.Configure<RequestLocalizationOptions>(o =>
 {
-    o.DefaultRequestCulture = new RequestCulture("ar-EG");
+    o.DefaultRequestCulture = new RequestCulture(UiPreferences.Cultures[0]);
     o.SupportedCultures = UiPreferences.Cultures;
     o.SupportedUICultures = UiPreferences.Cultures;
     o.RequestCultureProviders = [new CookieRequestCultureProvider(), new UiPreferences.ClaimCultureProvider()];
 });
 
 builder.Services.AddScoped<LayoutContext>();
+builder.Services.AddMemoryCache();
 builder.Services.AddRazorPages(o =>
     {
         o.Conventions.AuthorizeFolder("/");

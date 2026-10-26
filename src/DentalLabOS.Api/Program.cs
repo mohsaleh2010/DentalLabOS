@@ -93,6 +93,8 @@ v1.MapGet("/health", async (AppDbContext db, TimeProvider time, CancellationToke
     .AllowAnonymous().WithTags("Health").DisableRateLimiting();
 v1.MapAuthEndpoints();
 v1.MapOrganizationEndpoints();
+v1.MapPartiesEndpoints();
+v1.MapCatalogEndpoints();
 v1.MapPlatformEndpoints();
 
 await app.RunAsync();

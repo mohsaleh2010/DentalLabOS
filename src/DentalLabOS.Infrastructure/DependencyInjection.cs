@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IPermissionService>(sp => sp.GetRequiredService<PermissionService>());
         services.AddScoped<IAuditWriter, AuditWriter>();
         services.AddScoped<INumberingService, NumberingService>();
+        services.AddSingleton<ISpreadsheetService, ClosedXmlSpreadsheetService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<DbInitializer>();
         services.AddSingleton<SetupTokenProvider>();

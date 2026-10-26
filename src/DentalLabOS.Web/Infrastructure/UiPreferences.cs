@@ -8,7 +8,23 @@ public static class UiPreferences
 {
     public const string ThemeCookie = "dlos-theme";
     public static readonly string[] Themes = ["light", "dark", "system"];
-    public static readonly CultureInfo[] Cultures = [new("ar-EG"), new("en-US")];
+    public static readonly CultureInfo[] Cultures = [WithLatinNumbers("ar-EG"), new("en-US")];
+
+    /// <summary>
+    /// Arabic UI with Latin digits and "." decimals, so amounts look the same in both languages and number inputs
+    /// (which always post "12.5") bind correctly.
+    /// </summary>
+    private static CultureInfo WithLatinNumbers(string name)
+    {
+        var culture = (CultureInfo)CultureInfo.GetCultureInfo(name).Clone();
+        var n = culture.NumberFormat;
+        n.NumberDecimalSeparator = n.CurrencyDecimalSeparator = n.PercentDecimalSeparator = ".";
+        n.NumberGroupSeparator = n.CurrencyGroupSeparator = n.PercentGroupSeparator = ",";
+        n.NegativeSign = "-";
+        n.PositiveSign = "+";
+        n.DigitSubstitution = DigitShapes.None;
+        return culture;
+    }
 
     public static string Theme(HttpContext ctx)
     {

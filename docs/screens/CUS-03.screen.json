@@ -1,0 +1,87 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-03",
+  "module": "customers",
+  "titleKey": "Customers.Tab.Info",
+  "route": "/customers/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "customers.read",
+    "access": "permission",
+    "actions": {
+      "edit": "customers.manage",
+      "prices": "pricelists.read",
+      "managePrices": "pricelists.manage",
+      "dentists": "customers.dentists.manage"
+    }
+  },
+  "entities": [
+    "Customer",
+    "Dentist",
+    "CustomerItemPrice"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/{id}/dentists",
+      "purpose": "Dentists"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/{id}/prices",
+      "purpose": "Special prices"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/customers/{id}/prices",
+      "purpose": "Add special price"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/customers/{id}/prices/{priceId}",
+      "purpose": "Remove special price"
+    }
+  ],
+  "rules": [
+    "Tabs: details, dentists, prices; orders, work orders, invoices, payments and statement arrive with phases 3, 7 and 8",
+    "Special prices take priority over every list",
+    "Special price periods for one item must not overlap"
+  ],
+  "states": [
+    "notFound"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-03.happy",
+    "CUS-03.permissionDenied",
+    "CUS-03.crossTenant",
+    "CUS-03.priceOverlap"
+  ],
+  "relatedScreens": []
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-08",
+  "module": "customers",
+  "titleKey": "Customers.Dentists",
+  "route": "/customers/{id}/portal-users",
+  "pattern": "Custom",
+  "phase": 12,
+  "status": "planned",
+  "permissions": {
+    "view": "customers.portal.manage",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-08.happy",
+    "CUS-08.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "notes": "Planned: deferred from phase 2 until the documents it depends on exist."
+}

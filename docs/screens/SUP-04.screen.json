@@ -1,0 +1,41 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SUP-04",
+  "module": "suppliers",
+  "titleKey": "Suppliers.Tab.Statement",
+  "route": "/suppliers/{id}/statement",
+  "pattern": "Custom",
+  "phase": 6,
+  "status": "planned",
+  "permissions": {
+    "view": "suppliers.statement.read",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SUP-04.happy",
+    "SUP-04.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "notes": "Planned: deferred from phase 2 until the documents it depends on exist."
+}

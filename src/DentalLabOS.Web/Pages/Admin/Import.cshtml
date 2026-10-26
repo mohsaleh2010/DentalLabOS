@@ -1,0 +1,22 @@
+@page "/admin/import"
+@model DentalLabOS.Web.Pages.Admin.ImportModel
+@using DentalLabOS.Contracts.Catalog
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Import.Title"];
+    var kind = Model.Kind == ImportKind.Items ? "items" : "customers";
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Import.Title"] <span class="screen-id">ADM-23</span></h1>
+        <p class="lead">@L["Import.Lead"]</p>
+    </div>
+</div>
+<nav class="tabs mb-6" aria-label="@L["Common.Sections"]">
+    <a class="tab" href="/admin/import?kind=customers" aria-current="@(kind == "customers" ? "page" : null)"><icon name="stethoscope" class="icon-sm" /> @L["Nav.Customers"]</a>
+    @if (Model.Can(Permissions.Items.Import))
+    {
+        <a class="tab" href="/admin/import?kind=items" aria-current="@(kind == "items" ? "page" : null)"><icon name="tag" class="icon-sm" /> @L["Nav.Items"]</a>
+    }
+</nav>
+<partial name="_ImportWizard" model="Model" />

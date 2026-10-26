@@ -1,0 +1,111 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-06",
+  "module": "items",
+  "titleKey": "Items.Bom",
+  "route": "/items/{id}/bom",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.bom.manage",
+    "access": "permission",
+    "actions": {
+      "cost": "inventory.valuation.read"
+    }
+  },
+  "entities": [
+    "BomLine"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/items/{id}/bom",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/items/{id}/bom",
+      "purpose": "Add"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/items/{id}/bom/{lineId}",
+      "purpose": "Update"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/items/{id}/bom/{lineId}",
+      "purpose": "Remove"
+    }
+  ],
+  "rules": [
+    "Only services have a BOM",
+    "Only active stock items can be consumed",
+    "One line per material",
+    "The unit must be the material's base unit or have a conversion",
+    "Gross quantity = quantity × (1 + scrap%)"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "hidesCostFor": [
+      "Technician",
+      "Reception",
+      "Sales"
+    ],
+    "auditActions": [
+      "Create",
+      "Update",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-06.happy",
+    "ITM-06.permissionDenied",
+    "ITM-06.crossTenant",
+    "ITM-06.serviceOnly"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "materialItemId",
+      "type": "lookup",
+      "required": true,
+      "source": "stockItems"
+    },
+    {
+      "name": "quantity",
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    {
+      "name": "unitId",
+      "type": "lookup",
+      "required": true,
+      "source": "units"
+    },
+    {
+      "name": "scrapPercent",
+      "type": "decimal",
+      "min": 0,
+      "max": 100
+    }
+  ]
+}

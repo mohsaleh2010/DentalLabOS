@@ -1,0 +1,94 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-09",
+  "module": "items",
+  "titleKey": "PriceLists.Bulk",
+  "route": "/price-lists/bulk-update",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "pricelists.bulk",
+    "access": "permission"
+  },
+  "entities": [
+    "PriceListLine"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/price-lists/bulk-update/preview",
+      "purpose": "Preview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/price-lists/bulk-update",
+      "purpose": "Apply"
+    }
+  ],
+  "rules": [
+    "Always previewed before applying",
+    "Rounded away from zero to the chosen decimals",
+    "The change is audited with its parameters"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-09.happy",
+    "ITM-09.permissionDenied",
+    "ITM-09.crossTenant",
+    "ITM-09.preview"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "priceListId",
+      "type": "lookup",
+      "required": true,
+      "source": "priceLists"
+    },
+    {
+      "name": "percent",
+      "type": "decimal",
+      "required": true,
+      "min": -90,
+      "max": 500
+    },
+    {
+      "name": "categoryId",
+      "type": "lookup",
+      "source": "itemCategories"
+    },
+    {
+      "name": "itemType",
+      "type": "enum",
+      "source": "ItemType"
+    },
+    {
+      "name": "decimals",
+      "type": "integer",
+      "min": 0,
+      "max": 3
+    }
+  ]
+}

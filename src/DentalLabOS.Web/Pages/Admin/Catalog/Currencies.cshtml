@@ -1,0 +1,129 @@
+@page "/admin/currencies"
+@model DentalLabOS.Web.Pages.Admin.Catalog.CurrenciesModel
+@{
+    ViewData["Title"] = L["Nav.Currencies"];
+    var editing = Model.Edit is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Currencies"] <span class="screen-id">ADM-13</span></h1>
+        <p class="lead">@L["Currencies.Lead"]</p>
+    </div>
+</div>
+<div class="split mb-6">
+    <section class="card">
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Code"]</th><th class="num">@L["Units.Decimals"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var c in Model.Currencies)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon" style="width:34px;height:34px"><icon name="coins" class="icon-sm" /></span><span><strong>@c.Name</strong>@if (c.IsBase) {<span>@L["Currencies.Base"]</span>}</span></div></td>
+                        <td data-label="@L["Fields.Code"]"><code>@c.Code</code></td>
+                        <td data-label="@L["Units.Decimals"]" class="num">@c.DecimalPlaces</td>
+                        <td class="actions"><a class="btn btn-sm" href="?edit=@c.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <form method="post" class="card" asp-route-edit="@Model.Edit" data-guard novalidate>
+        <div class="card-header"><h2>@(editing ? L["Currencies.Edit"] : L["Currencies.New"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.Code">@L["Fields.Code"]<span class="req">*</span></label>
+                    <input class="input input-ltr" asp-for="Input.Code" dir="ltr" maxlength="3" required readonly="@editing" placeholder="USD" />
+                    <span class="hint">@L["Currencies.CodeHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.Code"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.DecimalPlaces">@L["Units.Decimals"]</label>
+                    <input class="input" asp-for="Input.DecimalPlaces" type="number" min="0" max="4" />
+                    <span class="field-error" asp-validation-for="Input.DecimalPlaces"></span>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" maxlength="100" required />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+                @if (editing)
+                {
+                    <a class="btn btn-ghost" href="/admin/currencies">@L["Common.Cancel"]</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+<div class="split" id="rates">
+    <section class="card">
+        <div class="card-header"><h2>@L["Currencies.Rates"]</h2><span class="sub">@L["Currencies.RatesHint"]</span></div>
+        @if (Model.Rates.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Currencies.NoRates"].Value" param-IconName="@("refresh-cw")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Date"]</th><th>@L["Currencies.Pair"]</th><th class="num">@L["Currencies.Rate"]</th></tr></thead>
+                    <tbody>
+                    @foreach (var r in Model.Rates)
+                    {
+                        <tr>
+                            <td>@Fmt.Date(r.Date)</td>
+                            <td data-label="@L["Currencies.Pair"]" class="ltr" style="text-align:start">1 <code>@r.FromCode</code> → <code>@r.ToCode</code></td>
+                            <td data-label="@L["Currencies.Rate"]" class="num"><strong>@Fmt.Qty(r.Rate)</strong></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <form method="post" asp-page-handler="Rate" class="card" novalidate>
+        <div class="card-header"><h2>@L["Currencies.AddRate"]</h2></div>
+        <div class="card-body">
+            @if (Model.Currencies.Count < 2)
+            {
+                <div class="alert"><icon name="info" /><div>@L["Currencies.NeedTwo"]</div></div>
+            }
+            else
+            {
+                <div class="form-grid cols-2">
+                    <div class="field">
+                        <label class="label" asp-for="Rate.FromCode">@L["Fields.From"]</label>
+                        <select class="select" asp-for="Rate.FromCode">
+                            @foreach (var c in Model.Currencies) { <option value="@c.Code">@c.Code</option> }
+                        </select>
+                        <span class="field-error" asp-validation-for="Rate.FromCode"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Rate.ToCode">@L["Fields.To"]</label>
+                        <select class="select" asp-for="Rate.ToCode">
+                            @foreach (var c in Model.Currencies) { <option value="@c.Code">@c.Code</option> }
+                        </select>
+                        <span class="field-error" asp-validation-for="Rate.ToCode"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Rate.Date">@L["Fields.Date"]</label>
+                        <input class="input" asp-for="Rate.Date" type="date" />
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Rate.Rate">@L["Currencies.Rate"]<span class="req">*</span></label>
+                        <input class="input input-ltr" asp-for="Rate.Rate" type="number" step="any" min="0" dir="ltr" value="@(Model.Rate.Rate == 0 ? "" : Fmt.Input(Model.Rate.Rate))" required />
+                        <span class="field-error" asp-validation-for="Rate.Rate"></span>
+                    </div>
+                </div>
+                <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button></div>
+            }
+        </div>
+    </form>
+</div>

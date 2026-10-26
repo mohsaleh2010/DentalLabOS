@@ -1,0 +1,94 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-04",
+  "module": "customers",
+  "titleKey": "Customers.Dentists",
+  "route": "/customers/{id}/dentists",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "customers.dentists.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "Dentist"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/customers/{id}/dentists",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/customers/{id}/dentists",
+      "purpose": "Add"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/customers/{id}/dentists/{dentistId}",
+      "purpose": "Update"
+    }
+  ],
+  "rules": [
+    "Dentists belong to one customer",
+    "Deactivate instead of delete (orders keep the reference)"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-04.happy",
+    "CUS-04.permissionDenied",
+    "CUS-04.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "fullName",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "specialty",
+      "type": "text",
+      "maxLength": 100
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "maxLength": 256
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    }
+  ]
+}

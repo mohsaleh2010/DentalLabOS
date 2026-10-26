@@ -1,0 +1,72 @@
+@page "/admin/units"
+@model DentalLabOS.Web.Pages.Admin.Catalog.UnitsModel
+@{
+    ViewData["Title"] = L["Nav.Units"];
+    var editing = Model.Edit is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Units"] <span class="screen-id">ADM-14</span></h1>
+        <p class="lead">@L["Units.Lead"]</p>
+    </div>
+</div>
+<div class="split">
+    <section class="card">
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Code"]</th><th class="num">@L["Units.Decimals"]</th><th class="num">@L["Nav.Items"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var u in Model.Units)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon" style="width:34px;height:34px"><icon name="ruler" class="icon-sm" /></span><strong>@u.Name</strong></div></td>
+                        <td data-label="@L["Fields.Code"]"><code>@u.Code</code></td>
+                        <td data-label="@L["Units.Decimals"]" class="num">@u.DecimalPlaces</td>
+                        <td data-label="@L["Nav.Items"]" class="num">@u.ItemCount</td>
+                        <td class="actions">
+                            <a class="btn btn-sm" href="?edit=@u.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a>
+                            @if (u.ItemCount == 0)
+                            {
+                                <form method="post" asp-page-handler="Delete" asp-route-unitId="@u.Id" style="display:inline">
+                                    <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Common.DeleteConfirm", u.Name]"><icon name="trash-2" class="icon-sm" /></button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <form method="post" class="card" asp-route-edit="@Model.Edit" data-guard novalidate>
+        <div class="card-header"><h2>@(editing ? L["Units.Edit"] : L["Units.New"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" maxlength="50" required />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.Code">@L["Fields.Code"]<span class="req">*</span></label>
+                    <input class="input input-ltr" asp-for="Input.Code" dir="ltr" maxlength="10" required />
+                    <span class="field-error" asp-validation-for="Input.Code"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.DecimalPlaces">@L["Units.Decimals"]</label>
+                    <input class="input" asp-for="Input.DecimalPlaces" type="number" min="0" max="6" />
+                    <span class="field-error" asp-validation-for="Input.DecimalPlaces"></span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+                @if (editing)
+                {
+                    <a class="btn btn-ghost" href="/admin/units">@L["Common.Cancel"]</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>

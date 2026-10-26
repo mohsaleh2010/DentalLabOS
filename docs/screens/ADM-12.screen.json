@@ -1,0 +1,96 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-12",
+  "module": "admin",
+  "titleKey": "Nav.Taxes",
+  "route": "/admin/taxes",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.taxes.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "TaxCode"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/tax-codes",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/tax-codes",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/tax-codes/{id}",
+      "purpose": "Update"
+    }
+  ],
+  "rules": [
+    "No preset rates (accountant approval)",
+    "Code unique per lab"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-12.happy",
+    "ADM-12.permissionDenied",
+    "ADM-12.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "required": true,
+      "maxLength": 20
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "rate",
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "max": 100
+    },
+    {
+      "name": "isWithholding",
+      "type": "boolean"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    }
+  ]
+}

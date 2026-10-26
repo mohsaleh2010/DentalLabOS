@@ -1,0 +1,81 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-03",
+  "module": "items",
+  "titleKey": "Customers.Tab.Info",
+  "route": "/items/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.read",
+    "access": "permission",
+    "actions": {
+      "edit": "items.manage",
+      "bom": "items.bom.manage",
+      "prices": "pricelists.read"
+    }
+  },
+  "entities": [
+    "Item",
+    "BomLine",
+    "SupplierItem",
+    "PriceListLine"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/items/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/items/{id}/bom",
+      "purpose": "BOM"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/items/{id}/suppliers",
+      "purpose": "Suppliers"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/items/{id}/conversions",
+      "purpose": "Conversions"
+    }
+  ],
+  "rules": [
+    "Services show their BOM; stock items show suppliers",
+    "Balances and movements arrive with phase 5"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "hidesCostFor": [
+      "Technician",
+      "Reception",
+      "Sales"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-03.happy",
+    "ITM-03.permissionDenied",
+    "ITM-03.crossTenant"
+  ],
+  "relatedScreens": []
+}

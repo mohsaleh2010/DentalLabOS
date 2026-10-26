@@ -1,0 +1,127 @@
+@page "/items/{id:guid}"
+@model DentalLabOS.Web.Pages.Items.DetailsModel
+@using DentalLabOS.Domain.Security
+@{
+    var i = Model.Item;
+    ViewData["Title"] = i.Name;
+    var showCost = i.StandardCost is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/items">@L["Nav.Items"]</a><icon name="chevron-left" class="icon-dir" /><span>@i.Name</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@i.Name <partial name="_StatusBadge" model="StatusUi.Active(i.IsActive)" /> <span class="screen-id">ITM-03</span></h1>
+        <p class="lead"><code>@i.Sku</code> · @L[$"ItemType.{i.Type}"] · @i.CategoryName</p>
+    </div>
+    <div class="actions">
+        @if (Model.IsService && Model.Can(Permissions.Items.BomManage))
+        {
+            <a class="btn" href="/items/@i.Id/bom"><icon name="list" /> @L["Items.EditBom"]</a>
+        }
+        @if (Model.Can(Permissions.Items.Manage))
+        {
+            <a class="btn btn-primary" href="/items/@i.Id/edit"><icon name="pencil" /> @L["Common.Edit"]</a>
+        }
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Common.Sections"]">
+    <a class="tab" href="/items/@i.Id" aria-current="@(Model.Tab == "info" ? "page" : null)">@L["Customers.Tab.Info"]</a>
+    @if (Model.IsService)
+    {
+        <a class="tab" href="/items/@i.Id?tab=bom" aria-current="@(Model.Tab == "bom" ? "page" : null)">@L["Items.Bom"]</a>
+    }
+    else
+    {
+        <a class="tab" href="/items/@i.Id?tab=suppliers" aria-current="@(Model.Tab == "suppliers" ? "page" : null)">@L["Nav.Suppliers"]</a>
+    }
+    @if (Model.Can(Permissions.PriceLists.Read))
+    {
+        <a class="tab" href="/items/@i.Id?tab=prices" aria-current="@(Model.Tab == "prices" ? "page" : null)">@L["Customers.Tab.Prices"]</a>
+    }
+    @if (!Model.IsService)
+    {
+        <span class="tab is-soon" title="@L["Nav.SoonTitle", 5]">@L["Items.Tab.Balances"] <span class="badge">@L["Nav.Phase", 5]</span></span>
+        <span class="tab is-soon" title="@L["Nav.SoonTitle", 5]">@L["Items.Tab.Movements"] <span class="badge">@L["Nav.Phase", 5]</span></span>
+    }
+</nav>
+<div class="tab-panel">
+@switch (Model.Tab)
+{
+    case "bom":
+        <section class="card">
+            <div class="card-header"><h2>@L["Items.Bom"]</h2><span class="sub">@L["Items.BomLead"]</span></div>
+            <partial name="_BomTable" model="(Model.Bom, false)" />
+        </section>
+        break;
+    case "suppliers":
+        <section class="card">
+            <partial name="/Pages/Suppliers/_SupplierItemsTable.cshtml" model="(Model.Suppliers, false, (Guid?)null)" />
+        </section>
+        break;
+    case "prices":
+        <section class="card">
+            <div class="card-header"><h2>@L["Items.PricesInLists"]</h2><span class="sub">@L["Items.PricesInListsHint"]</span></div>
+            @if (Model.Prices.Count == 0)
+            {
+                <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Items.NotInLists"].Value" param-Description="@L["Items.NotInListsText", Fmt.Money(i.DefaultSalesPrice)].Value" param-IconName="@("tag")" />
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="table table-responsive">
+                        <thead><tr><th>@L["Fields.PriceList"]</th><th class="num">@L["Fields.MinQty"]</th><th class="num">@L["Fields.Price"]</th></tr></thead>
+                        <tbody>
+                        @foreach (var p in Model.Prices)
+                        {
+                            <tr>
+                                <td class="cell-primary"><a href="/price-lists/@p.PriceListId"><strong>@p.PriceListName</strong></a> @if (p.IsDefault) {<span class="badge badge-brand">@L["PriceLists.Default"]</span>} @if (!p.IsActive) {<span class="badge">@L["Common.Inactive"]</span>}</td>
+                                <td data-label="@L["Fields.MinQty"]" class="num">@Fmt.Qty(p.MinQty)</td>
+                                <td data-label="@L["Fields.Price"]" class="num money"><strong>@Fmt.Money(p.Price)</strong></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+        break;
+    default:
+        <div class="grid grid-main">
+            <section class="card">
+                <div class="card-body">
+                    <dl class="dl">
+                        <div><dt>@L["Fields.NameEn"]</dt><dd class="ltr">@(i.NameEn ?? "—")</dd></div>
+                        <div><dt>@L["Fields.Unit"]</dt><dd><code>@i.BaseUnitCode</code></dd></div>
+                        <div><dt>@L["Fields.Barcode"]</dt><dd class="ltr">@(i.Barcode ?? "—")</dd></div>
+                        <div><dt>@L["Fields.TaxCode"]</dt><dd>@(i.TaxCodeName ?? L["Items.NoTax"].Value)</dd></div>
+                        @if (Model.IsService)
+                        {
+                            <div><dt>@L["Fields.StandardLeadHours"]</dt><dd>@Fmt.Qty(i.StandardLeadHours)</dd></div>
+                            <div><dt>@L["Fields.DifficultyFactor"]</dt><dd>@Fmt.Qty(i.DifficultyFactor)</dd></div>
+                        }
+                        else
+                        {
+                            <div><dt>@L["Fields.ReorderLevel"]</dt><dd>@Fmt.Qty(i.ReorderLevel) / @Fmt.Qty(i.ReorderQty)</dd></div>
+                            <div><dt>@L["Items.Tracking"]</dt><dd>@(i.TracksBatches ? L["Fields.TracksBatches"].Value : "—")@(i.TracksExpiry ? $" · {L["Fields.TracksExpiry"]}" : "")</dd></div>
+                        }
+                        @foreach (var c in Model.Conversions)
+                        {
+                            <div><dt>@L["Items.Conversion"]</dt><dd class="ltr" style="text-align:start">1 @c.FromUnitCode = @Fmt.Qty(c.Factor) @c.ToUnitCode</dd></div>
+                        }
+                    </dl>
+                </div>
+            </section>
+            <section class="card" style="align-self:start">
+                <div class="card-body">
+                    <div class="kpis">
+                        <div class="kpi"><span>@L["Items.DefaultPrice"]</span><strong class="money">@Fmt.Money(i.DefaultSalesPrice)</strong></div>
+                        @if (showCost)
+                        {
+                            <div class="kpi"><span>@L["Fields.StandardCost"]</span><strong class="money">@Fmt.Money(i.StandardCost)</strong></div>
+                        }
+                    </div>
+                </div>
+            </section>
+        </div>
+        break;
+}
+</div>

@@ -104,15 +104,27 @@ public sealed class SecurityRulesTests
     }
 
     [Fact]
-    public void Admin_and_platform_pages_require_a_permission()
+    public void Admin_platform_and_master_data_pages_require_a_permission()
     {
+        string[] guarded = [".Pages.Admin", ".Pages.Platform", ".Pages.Customers", ".Pages.Suppliers", ".Pages.Items", ".Pages.PriceLists"];
         var pages = typeof(Web.Infrastructure.AppPageModel).Assembly.GetTypes()
-            .Where(t => t.Namespace is { } ns && (ns.Contains(".Pages.Admin", StringComparison.Ordinal) || ns.Contains(".Pages.Platform", StringComparison.Ordinal)))
+            .Where(t => t.Namespace is { } ns && guarded.Any(g => ns.Contains(g, StringComparison.Ordinal)))
             .Where(t => typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel).IsAssignableFrom(t))
             .ToArray();
 
         Assert.NotEmpty(pages);
         var missing = pages.Where(t => !t.GetCustomAttributes(typeof(Web.Infrastructure.HasPermissionAttribute), true).Any()).Select(t => t.FullName).ToArray();
         Assert.Empty(missing);
+    }
+
+    [Fact]
+    public void Views_have_no_inline_scripts_blocked_by_the_content_security_policy()
+    {
+        // script-src 'self': behaviour lives in dlos.js and is wired with data-* attributes.
+        var offenders = Repo.SourceFiles("*.cshtml")
+            .Where(f => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(f), @"<script(?![^>]*\bsrc=)[^>]*>", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            .Select(Repo.Relative)
+            .ToArray();
+        Assert.Empty(offenders);
     }
 }

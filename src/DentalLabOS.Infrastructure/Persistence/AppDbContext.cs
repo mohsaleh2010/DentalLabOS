@@ -1,9 +1,11 @@
 using System.Linq.Expressions;
 using DentalLabOS.Application.Abstractions;
 using DentalLabOS.Application.Common;
+using DentalLabOS.Domain.Catalog;
 using DentalLabOS.Domain.Common;
 using DentalLabOS.Domain.Operations;
 using DentalLabOS.Domain.Organization;
+using DentalLabOS.Domain.Parties;
 using DentalLabOS.Domain.Platform;
 using DentalLabOS.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -35,6 +37,23 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
     public DbSet<ApprovalPolicy> ApprovalPolicies => Set<ApprovalPolicy>();
     public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerGroup> CustomerGroups => Set<CustomerGroup>();
+    public DbSet<CustomerContact> CustomerContacts => Set<CustomerContact>();
+    public DbSet<Dentist> Dentists => Set<Dentist>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<SupplierItem> SupplierItems => Set<SupplierItem>();
+    public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();
+    public DbSet<UnitOfMeasure> Units => Set<UnitOfMeasure>();
+    public DbSet<UnitConversion> UnitConversions => Set<UnitConversion>();
+    public DbSet<Item> Items => Set<Item>();
+    public DbSet<BomLine> BomLines => Set<BomLine>();
+    public DbSet<PriceList> PriceLists => Set<PriceList>();
+    public DbSet<PriceListLine> PriceListLines => Set<PriceListLine>();
+    public DbSet<CustomerItemPrice> CustomerItemPrices => Set<CustomerItemPrice>();
+    public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
 
     /// <summary>
     /// Value used by every tenant query filter. With no tenant in context it is <see cref="Guid.Empty"/>, which matches

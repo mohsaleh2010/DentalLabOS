@@ -1,0 +1,186 @@
+@page "/customers/{id:guid}"
+@model DentalLabOS.Web.Pages.Customers.DetailsModel
+@using DentalLabOS.Domain.Security
+@{
+    var c = Model.Customer;
+    ViewData["Title"] = c.Name;
+    string[] soon = ["Customers.Tab.Orders", "Customers.Tab.WorkOrders", "Customers.Tab.Invoices", "Customers.Tab.Payments", "Customers.Tab.Statement"];
+    int[] soonPhase = [3, 3, 7, 8, 7];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/customers">@L["Nav.Customers"]</a><icon name="chevron-left" class="icon-dir" /><span>@c.Name</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@c.Name <partial name="_StatusBadge" model="StatusUi.Active(c.IsActive)" /> <span class="screen-id">CUS-03</span></h1>
+        <p class="lead"><code>@c.Code</code> · @L[$"PartyType.{c.Type}"]@if (c.GroupName is not null) {<text> · @c.GroupName</text>}</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.Customers.Manage))
+        {
+            <a class="btn btn-primary" href="/customers/@c.Id/edit"><icon name="pencil" /> @L["Common.Edit"]</a>
+        }
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Common.Sections"]">
+    <a class="tab" href="/customers/@c.Id" aria-current="@(Model.Tab == "info" ? "page" : null)">@L["Customers.Tab.Info"]</a>
+    <a class="tab" href="/customers/@c.Id?tab=dentists" aria-current="@(Model.Tab == "dentists" ? "page" : null)">@L["Customers.Dentists"] <span class="badge">@Model.Dentists.Count(d => d.IsActive)</span></a>
+    @if (Model.Can(Permissions.PriceLists.Read))
+    {
+        <a class="tab" href="/customers/@c.Id?tab=prices" aria-current="@(Model.Tab == "prices" ? "page" : null)">@L["Customers.Tab.Prices"]</a>
+    }
+    @for (var i = 0; i < soon.Length; i++)
+    {
+        <span class="tab is-soon" title="@L["Nav.SoonTitle", soonPhase[i]]">@L[soon[i]] <span class="badge">@L["Nav.Phase", soonPhase[i]]</span></span>
+    }
+</nav>
+<div class="tab-panel">
+@if (Model.Tab == "info")
+{
+    <div class="grid grid-main">
+        <section class="card">
+            <div class="card-header"><h2>@L["Customers.Section.Contact"]</h2></div>
+            <div class="card-body">
+                <dl class="dl">
+                    <div><dt>@L["Fields.Mobile"]</dt><dd class="ltr">@(c.Mobile ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Phone"]</dt><dd class="ltr">@(c.Phone ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Email"]</dt><dd class="ltr">@(c.Email ?? "—")</dd></div>
+                    <div><dt>@L["Fields.City"]</dt><dd>@(c.City ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Address"]</dt><dd>@(c.Address ?? "—")</dd></div>
+                    <div><dt>@L["Fields.TaxNumber"]</dt><dd class="ltr">@(c.TaxNumber ?? "—")</dd></div>
+                </dl>
+            </div>
+        </section>
+        <section class="card" style="align-self:start">
+            <div class="card-header"><h2>@L["Customers.Section.Commercial"]</h2></div>
+            <div class="card-body">
+                <div class="kpis mb-4">
+                    <div class="kpi"><span>@L["Fields.CreditLimit"]</span><strong class="money">@(c.CreditLimit == 0 ? L["Customers.NoLimit"].Value : Fmt.Money(c.CreditLimit))</strong></div>
+                    <div class="kpi"><span>@L["Fields.PaymentTermsDays"]</span><strong>@c.PaymentTermsDays</strong></div>
+                </div>
+                <dl class="dl">
+                    <div><dt>@L["Fields.PriceList"]</dt><dd>@(c.PriceListName ?? L["Customers.PriceListInherit"].Value)</dd></div>
+                    <div><dt>@L["Fields.OpeningBalance"]</dt><dd class="money">@Fmt.Money(c.OpeningBalance)</dd></div>
+                    <div><dt>@L["Fields.BlockWhenOverCredit"]</dt><dd>@(c.BlockWhenOverCredit ? L["Common.Yes"] : L["Common.No"])</dd></div>
+                    <div><dt>@L["Fields.CreatedAt"]</dt><dd>@c.CreatedAtUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</dd></div>
+                </dl>
+                @if (c.InternalNotes is not null)
+                {
+                    <div class="alert mt-4"><icon name="lock" /><div><strong>@L["Fields.InternalNotes"]</strong><p>@c.InternalNotes</p></div></div>
+                }
+            </div>
+        </section>
+    </div>
+}
+else if (Model.Tab == "dentists")
+{
+    <section class="card">
+        <div class="card-header">
+            <h2>@L["Customers.Dentists"]</h2>
+            @if (Model.Can(Permissions.Customers.DentistsManage))
+            {
+                <a class="btn btn-sm btn-primary ms-auto" href="/customers/@c.Id/dentists"><icon name="user-cog" class="icon-sm" /> @L["Customers.ManageDentists"]</a>
+            }
+        </div>
+        @if (Model.Dentists.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Customers.NoDentists"].Value" param-IconName="@("user-round")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.FullName"]</th><th>@L["Fields.Specialty"]</th><th>@L["Fields.Phone"]</th><th>@L["Fields.Email"]</th><th>@L["Fields.Status"]</th></tr></thead>
+                    <tbody>
+                    @foreach (var d in Model.Dentists)
+                    {
+                        <tr>
+                            <td class="cell-primary"><strong>@d.FullName</strong></td>
+                            <td data-label="@L["Fields.Specialty"]">@(d.Specialty ?? "—")</td>
+                            <td data-label="@L["Fields.Phone"]" class="ltr">@(d.Phone ?? "—")</td>
+                            <td data-label="@L["Fields.Email"]" class="ltr">@(d.Email ?? "—")</td>
+                            <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(d.IsActive)" /></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
+else
+{
+    <div class="@(Model.ItemOptions.Count > 0 ? "split" : null)">
+        <section class="card">
+            <div class="card-header"><h2>@L["Customers.SpecialPrices"]</h2><span class="sub">@L["Customers.SpecialPricesHint"]</span></div>
+            @if (Model.Prices.Count == 0)
+            {
+                <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Customers.NoSpecialPrices"].Value" param-IconName="@("tag")" />
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="table table-responsive">
+                        <thead><tr><th>@L["Fields.Item"]</th><th class="num">@L["Fields.Price"]</th><th class="num">@L["Items.DefaultPrice"]</th><th>@L["Fields.ValidFrom"]</th><th>@L["Fields.ValidTo"]</th><th class="actions"></th></tr></thead>
+                        <tbody>
+                        @foreach (var p in Model.Prices)
+                        {
+                            <tr>
+                                <td class="cell-primary"><strong>@p.ItemName</strong> <code class="text-xs">@p.ItemSku</code></td>
+                                <td data-label="@L["Fields.Price"]" class="num money"><strong>@Fmt.Money(p.Price)</strong></td>
+                                <td data-label="@L["Items.DefaultPrice"]" class="num money muted">@Fmt.Money(p.DefaultPrice)</td>
+                                <td data-label="@L["Fields.ValidFrom"]">@Fmt.Date(p.ValidFrom)</td>
+                                <td data-label="@L["Fields.ValidTo"]">@Fmt.Date(p.ValidTo)</td>
+                                <td class="actions">
+                                    @if (Model.Can(Permissions.PriceLists.Manage))
+                                    {
+                                        <form method="post" asp-page-handler="DeletePrice" asp-route-priceId="@p.Id">
+                                            <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Customers.DeletePriceConfirm", p.ItemName]"><icon name="trash-2" class="icon-sm" /></button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+        @if (Model.ItemOptions.Count > 0)
+        {
+            <form method="post" asp-page-handler="AddPrice" class="card" novalidate>
+                <div class="card-header"><h2>@L["Customers.AddSpecialPrice"]</h2></div>
+                <div class="card-body">
+                    <partial name="_ValidationSummary" />
+                    <div class="field">
+                        <label class="label" asp-for="NewPrice.ItemId">@L["Fields.Service"]<span class="req">*</span></label>
+                        <select class="select" asp-for="NewPrice.ItemId" required>
+                            @foreach (var o in Model.ItemOptions)
+                            {
+                                <option value="@o.Id">@o.Name (@o.Code)</option>
+                            }
+                        </select>
+                        <span class="field-error" asp-validation-for="NewPrice.ItemId"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="NewPrice.Price">@L["Fields.Price"]<span class="req">*</span></label>
+                        <input class="input input-ltr" asp-for="NewPrice.Price" type="number" step="0.01" min="0" dir="ltr" value="@(Model.NewPrice.Price == 0 ? "" : Fmt.Input(Model.NewPrice.Price))" required />
+                        <span class="field-error" asp-validation-for="NewPrice.Price"></span>
+                    </div>
+                    <div class="form-grid cols-2">
+                        <div class="field">
+                            <label class="label" asp-for="NewPrice.ValidFrom">@L["Fields.ValidFrom"]</label>
+                            <input class="input" asp-for="NewPrice.ValidFrom" type="date" />
+                            <span class="field-error" asp-validation-for="NewPrice.ValidFrom"></span>
+                        </div>
+                        <div class="field">
+                            <label class="label" asp-for="NewPrice.ValidTo">@L["Fields.ValidTo"]</label>
+                            <input class="input" asp-for="NewPrice.ValidTo" type="date" />
+                            <span class="field-error" asp-validation-for="NewPrice.ValidTo"></span>
+                        </div>
+                    </div>
+                    <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="plus" /> @L["Common.Add"]</button></div>
+                </div>
+            </form>
+        }
+    </div>
+}
+</div>

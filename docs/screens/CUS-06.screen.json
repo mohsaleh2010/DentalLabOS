@@ -1,0 +1,41 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-06",
+  "module": "customers",
+  "titleKey": "Customers.Tab.Statement",
+  "route": "/customers/{id}/statement",
+  "pattern": "Custom",
+  "phase": 7,
+  "status": "planned",
+  "permissions": {
+    "view": "customers.statement.read",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-06.happy",
+    "CUS-06.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "notes": "Planned: deferred from phase 2 until the documents it depends on exist."
+}

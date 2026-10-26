@@ -1,0 +1,69 @@
+@page "/suppliers/{id:guid}"
+@model DentalLabOS.Web.Pages.Suppliers.DetailsModel
+@using DentalLabOS.Domain.Security
+@{
+    var s = Model.Supplier;
+    ViewData["Title"] = s.Name;
+    string[] soon = ["Suppliers.Tab.PurchaseOrders", "Suppliers.Tab.Invoices", "Suppliers.Tab.Payments", "Suppliers.Tab.Statement"];
+    int[] soonPhase = [6, 6, 8, 6];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/suppliers">@L["Nav.Suppliers"]</a><icon name="chevron-left" class="icon-dir" /><span>@s.Name</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@s.Name <partial name="_StatusBadge" model="StatusUi.Active(s.IsActive)" /> <span class="screen-id">SUP-03</span></h1>
+        <p class="lead"><code>@s.Code</code>@if (s.IsOutsourcePartner) {<text> · @L["Suppliers.OutsourcePartner"]</text>}</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.Suppliers.ItemsManage))
+        {
+            <a class="btn" href="/suppliers/@s.Id/items"><icon name="package" /> @L["Suppliers.ManageItems"]</a>
+        }
+        @if (Model.Can(Permissions.Suppliers.Manage))
+        {
+            <a class="btn btn-primary" href="/suppliers/@s.Id/edit"><icon name="pencil" /> @L["Common.Edit"]</a>
+        }
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Common.Sections"]">
+    <a class="tab" href="/suppliers/@s.Id" aria-current="@(Model.Tab == "info" ? "page" : null)">@L["Customers.Tab.Info"]</a>
+    <a class="tab" href="/suppliers/@s.Id?tab=items" aria-current="@(Model.Tab == "items" ? "page" : null)">@L["Suppliers.Items"] <span class="badge">@Model.Items.Count</span></a>
+    @for (var i = 0; i < soon.Length; i++)
+    {
+        <span class="tab is-soon" title="@L["Nav.SoonTitle", soonPhase[i]]">@L[soon[i]] <span class="badge">@L["Nav.Phase", soonPhase[i]]</span></span>
+    }
+</nav>
+<div class="tab-panel">
+@if (Model.Tab == "info")
+{
+    <div class="grid grid-main">
+        <section class="card">
+            <div class="card-body">
+                <dl class="dl">
+                    <div><dt>@L["Fields.Phone"]</dt><dd class="ltr">@(s.Phone ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Email"]</dt><dd class="ltr">@(s.Email ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Address"]</dt><dd>@(s.Address ?? "—")</dd></div>
+                    <div><dt>@L["Fields.TaxNumber"]</dt><dd class="ltr">@(s.TaxNumber ?? "—")</dd></div>
+                </dl>
+            </div>
+        </section>
+        <section class="card" style="align-self:start">
+            <div class="card-body">
+                <div class="kpis mb-4">
+                    <div class="kpi"><span>@L["Fields.PaymentTermsDays"]</span><strong>@s.PaymentTermsDays</strong></div>
+                    <div class="kpi"><span>@L["Fields.Rating"]</span><strong>@(s.Rating?.ToString("0.0", CultureInfo.InvariantCulture) ?? "—")</strong></div>
+                </div>
+                <dl class="dl">
+                    <div><dt>@L["Fields.OpeningBalance"]</dt><dd class="money">@Fmt.Money(s.OpeningBalance)</dd></div>
+                    <div><dt>@L["Fields.CreatedAt"]</dt><dd>@s.CreatedAtUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</dd></div>
+                </dl>
+            </div>
+        </section>
+    </div>
+}
+else
+{
+    <section class="card">
+        <partial name="_SupplierItemsTable" model="(Model.Items, false, (Guid?)null)" />
+    </section>
+}
+</div>
