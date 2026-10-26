@@ -53,7 +53,7 @@ jobs:
       - name: Pending model changes have a migration
         run: |
           dotnet tool restore
-          dotnet ef migrations has-pending-model-changes -p src/DentalLabOS.Infrastructure -s src/DentalLabOS.Web --no-build -c Release
+          dotnet ef migrations has-pending-model-changes -p src/DentalLabOS.Infrastructure -s src/DentalLabOS.Web --no-build --configuration Release
         env:
           ConnectionStrings__DentalLabOS: Server=localhost;Database=unused;TrustServerCertificate=true
 
