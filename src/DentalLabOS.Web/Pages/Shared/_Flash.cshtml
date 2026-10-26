@@ -1,0 +1,8 @@
+@if (TempData["toast"] is string ok)
+{
+    <span hidden data-toast="@ok"></span>
+}
+@if (TempData["toast-error"] is string err)
+{
+    <span hidden data-toast="@err" data-toast-error="1"></span>
+}

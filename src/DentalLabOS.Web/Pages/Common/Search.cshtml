@@ -1,0 +1,18 @@
+@page "/search"
+@model DentalLabOS.Web.Pages.Common.SearchModel
+@{
+    ViewData["Title"] = L["Search.Title"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Search.Title"] <span class="screen-id">SYS-05</span></h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Q))
+        {
+            <p class="lead">@L["Search.ResultsFor", Model.Q]</p>
+        }
+    </div>
+</div>
+<div class="card">
+    <component type="typeof(EmptyState)" render-mode="Static"
+               param-Title="@L["Search.SoonTitle"].Value" param-Description="@L["Search.SoonText"].Value" param-IconName="@("search")" />
+</div>

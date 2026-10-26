@@ -1,0 +1,96 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-06",
+  "module": "admin",
+  "titleKey": "Admin.Users.Invite",
+  "route": "/admin/users/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.users.read",
+    "access": "permission",
+    "actions": {
+      "invite": "admin.users.manage",
+      "assignRoles": "admin.users.manage",
+      "deactivate": "admin.users.manage"
+    }
+  },
+  "entities": [
+    "UserInvitation",
+    "UserProfile",
+    "UserRole",
+    "AppRole"
+  ],
+  "api": [],
+  "rules": [
+    "Plan user limit includes pending invitations",
+    "One e-mail = one account across the platform",
+    "You cannot deactivate yourself or the last active owner",
+    "Role changes apply on the next request"
+  ],
+  "states": [
+    "validationError",
+    "notFound"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Invite",
+      "RoleAssignment",
+      "StatusChange"
+    ],
+    "secrets": [
+      "inviteToken"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-06.happy",
+    "ADM-06.permissionDenied",
+    "ADM-06.crossTenant",
+    "ADM-06.planLimit",
+    "ADM-06.lastOwner"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/admin/users/invite",
+    "/admin/users/{id}"
+  ],
+  "fields": [
+    {
+      "name": "fullName",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "required": true
+    },
+    {
+      "name": "roleId",
+      "type": "lookup",
+      "required": true,
+      "source": "roles"
+    },
+    {
+      "name": "roleIds",
+      "type": "multiLookup",
+      "source": "roles"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+@page "/admin/departments/{id}"
+@model DentalLabOS.Web.Pages.Admin.Departments.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? L["Admin.Departments.New"] : L["Admin.Departments.Edit"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/admin/departments">@L["Nav.Departments"]</a><icon name="chevron-left" class="icon-dir" /><span>@ViewData["Title"]</span></nav>
+        <h1>@ViewData["Title"] <span class="screen-id">ADM-04</span></h1>
+    </div>
+</div>
+<form method="post" class="card" style="max-width: 860px" data-guard novalidate>
+    <div class="card-body">
+        <partial name="_ValidationSummary" />
+        <input type="hidden" asp-for="Input.RowVersion" />
+        <div class="form-grid cols-2">
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" required maxlength="200" placeholder="@L["Admin.Departments.NameExample"]" />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Code">@L["Fields.Code"]<span class="req">*</span></label>
+                <input class="input input-ltr" asp-for="Input.Code" dir="ltr" required maxlength="20" placeholder="CAD" />
+                <span class="field-error" asp-validation-for="Input.Code"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.BranchId">@L["Fields.Branch"]</label>
+                <select class="select" asp-for="Input.BranchId">
+                    <option value="">@L["Admin.Departments.AllBranches"]</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b.Id">@b.Name</option>
+                    }
+                </select>
+                <span class="field-error" asp-validation-for="Input.BranchId"></span>
+            </div>
+            <div class="field" style="justify-content: end">
+                <label class="switch"><input type="checkbox" asp-for="Input.IsProduction" /> @L["Admin.Departments.IsProduction"]</label>
+                <span class="hint">@L["Admin.Departments.IsProductionHint"]</span>
+            </div>
+            @if (!Model.IsNew)
+            {
+                <label class="switch span-2"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"]</label>
+            }
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+            <a class="btn btn-ghost" href="/admin/departments">@L["Common.Cancel"]</a>
+        </div>
+    </div>
+</form>

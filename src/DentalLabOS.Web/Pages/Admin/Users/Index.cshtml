@@ -1,0 +1,78 @@
+@page "/admin/users"
+@model DentalLabOS.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = L["Nav.Users"];
+    var r = Model.Result;
+    var pending = Model.Invitations.Where(i => !i.IsAccepted && !i.IsRevoked && i.ExpiresAtUtc > DateTime.UtcNow).ToList();
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Users"] <span class="screen-id">ADM-05</span></h1>
+        <p class="lead">@L["Admin.Users.Lead"]</p>
+    </div>
+    @if (Model.CanManage)
+    {
+        <div class="actions"><a class="btn btn-primary" href="/admin/users/invite"><icon name="user-plus" /> @L["Admin.Users.Invite"]</a></div>
+    }
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Admin.Users.Search"]" aria-label="@L["Common.Search"]" /></div>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-IconName="@("users")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.User"]</th><th>@L["Fields.Roles"]</th><th>@L["Account.LastLogin"]</th><th>@L["Fields.Status"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr></thead>
+                <tbody>
+                @foreach (var u in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="avatar avatar-sm">@u.FullName[..1]</span><span><strong>@u.FullName</strong><span class="ltr">@u.Email</span></span></div></td>
+                        <td data-label="@L["Fields.Roles"]"><div class="flex gap-2 wrap">@foreach (var role in u.Roles) {<span class="badge badge-brand">@role</span>}</div></td>
+                        <td data-label="@L["Account.LastLogin"]" class="text-sm">@(u.LastLoginAtUtc?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture) ?? L["Admin.Users.NeverLoggedIn"].Value)</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(u.IsActive)" /></td>
+                        <td class="actions"><a class="btn btn-sm" href="/admin/users/@u.ProfileId">@L["Common.Manage"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>
+
+@if (pending.Count > 0)
+{
+    <section class="card mt-6">
+        <div class="card-header"><h2>@L["Admin.Users.PendingInvites"]</h2><span class="badge badge-count badge-warning">@pending.Count</span></div>
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.FullName"]</th><th>@L["Fields.Email"]</th><th>@L["Fields.Role"]</th><th>@L["Admin.Users.Expires"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var i in pending)
+                {
+                    <tr>
+                        <td class="cell-primary fw-600">@i.FullName</td>
+                        <td data-label="@L["Fields.Email"]" class="ltr">@i.Email</td>
+                        <td data-label="@L["Fields.Role"]"><span class="badge badge-brand">@i.RoleName</span></td>
+                        <td data-label="@L["Admin.Users.Expires"]">@i.ExpiresAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</td>
+                        <td class="actions">
+                            @if (Model.CanManage)
+                            {
+                                <form method="post" asp-page-handler="Revoke" asp-route-invitationId="@i.Id">
+                                    <button class="btn btn-sm btn-ghost" type="submit" data-confirm="@L["Admin.Users.RevokeConfirm", i.Email]"><icon name="ban" class="icon-sm" /> @L["Admin.Users.Revoke"]</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

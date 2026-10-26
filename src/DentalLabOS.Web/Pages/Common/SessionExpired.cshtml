@@ -1,0 +1,15 @@
+@page "/session-expired"
+@model DentalLabOS.Web.Pages.Common.SessionExpiredModel
+@{
+    Layout = "_BareLayout";
+    ViewData["Title"] = L["Session.Title"];
+    var reason = Request.Query["reason"].ToString();
+}
+<div class="status-page">
+    <div>
+        <div class="empty-art" style="margin-inline:auto"><icon name="clock" class="icon-xl" /></div>
+        <h1>@L["Session.Title"]</h1>
+        <p>@L[reason == "suspended" ? "Session.Suspended" : reason == "disabled" ? "Session.Disabled" : "Session.Text"]</p>
+        <div class="actions"><a class="btn btn-primary" href="/login"><icon name="log-out" class="icon-dir" /> @L["Auth.Login.Submit"]</a></div>
+    </div>
+</div>

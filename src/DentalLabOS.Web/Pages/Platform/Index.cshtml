@@ -1,0 +1,73 @@
+@page "/platform"
+@model DentalLabOS.Web.Pages.Platform.IndexModel
+@{
+    ViewData["Title"] = L["Platform.Dashboard.Title"];
+    var d = Model.Data;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Platform.Dashboard.Title"] <span class="screen-id">PLT-01</span></h1>
+        <p class="lead">@L["Platform.Dashboard.Lead"]</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-primary" href="/platform/tenants/new"><icon name="plus" /> @L["Platform.Tenants.New"]</a>
+    </div>
+</div>
+
+<div class="stats mb-6">
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Platform.Stat.Tenants"].Value" param-Value="@d.TotalTenants.ToString("N0")" param-IconName="@("building-2")" param-Footnote="@L["Platform.Stat.TenantsFoot", d.ActiveTenants, d.TrialTenants].Value" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Platform.Stat.Suspended"].Value" param-Value="@d.SuspendedTenants.ToString("N0")" param-IconName="@("ban")" param-Tone="@("warning")" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Platform.Stat.Users"].Value" param-Value="@d.TotalUsers.ToString("N0")" param-IconName="@("users")" param-Tone="@("violet")" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Platform.Stat.Mrr"].Value" param-Value="@d.EstimatedMrr.ToString("N0")" param-Suffix="@("EGP")" param-IconName="@("chart-column")" param-Tone="@("info")" param-Footnote="@L["Platform.Stat.MrrFoot"].Value" />
+</div>
+
+<div class="grid grid-main">
+    <section class="card">
+        <div class="card-header">
+            <h2>@L["Platform.RecentTenants"]</h2>
+            <div class="actions"><a class="btn btn-ghost btn-sm" href="/platform/tenants">@L["Common.ViewAll"] <icon name="arrow-left" class="icon-sm icon-dir" /></a></div>
+        </div>
+        @if (d.RecentTenants.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Platform.NoTenants"].Value" param-Description="@L["Platform.NoTenantsText"].Value"
+                       param-IconName="@("building-2")" param-ActionText="@L["Platform.Tenants.New"].Value" param-ActionHref="@("/platform/tenants/new")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Lab"]</th><th>@L["Fields.Plan"]</th><th>@L["Fields.Status"]</th><th class="num">@L["Fields.Users"]</th></tr></thead>
+                    <tbody>
+                    @foreach (var t in d.RecentTenants)
+                    {
+                        <tr>
+                            <td class="cell-primary"><a class="cell-main" href="/platform/tenants/@t.Id"><span class="avatar avatar-sm">@t.Name[..1]</span><span><strong>@t.Name</strong><span class="ltr">@t.Slug</span></span></a></td>
+                            <td data-label="@L["Fields.Plan"]">@(t.PlanName ?? "—")</td>
+                            <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Tenant(t.Status)" /></td>
+                            <td class="num" data-label="@L["Fields.Users"]">@t.UserCount</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <section class="card">
+        <div class="card-header"><h2>@L["Platform.PlanMix"]</h2></div>
+        <div class="card-body">
+            @if (d.Plans.Count == 0)
+            {
+                <p class="muted text-sm">@L["Platform.NoSubscriptions"]</p>
+            }
+            @foreach (var p in d.Plans)
+            {
+                var pct = d.TotalTenants == 0 ? 0 : (int)Math.Round(p.Tenants * 100.0 / d.TotalTenants);
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm"><span class="fw-600">@p.PlanName</span><span class="muted">@p.Tenants · @pct%</span></div>
+                    <div class="meter"><span style="width:@pct%"></span></div>
+                </div>
+            }
+            <div class="alert mt-6"><icon name="info" /><div>@L["Platform.PrivacyNote"]</div></div>
+        </div>
+    </section>
+</div>

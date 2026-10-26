@@ -1,0 +1,47 @@
+@page "/setup"
+@model DentalLabOS.Web.Pages.Account.SetupModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = L["Auth.Setup.Title"];
+}
+@if (!Model.IsOpen)
+{
+    <div class="empty">
+        <div class="empty-art"><icon name="lock" class="icon-xl" /></div>
+        <h3>@L["Auth.Setup.ClosedTitle"]</h3>
+        <p>@L["Auth.Setup.ClosedText"]</p>
+        <a class="btn btn-primary mt-2" href="/login">@L["Auth.Login.Submit"]</a>
+    </div>
+}
+else
+{
+    <span class="badge badge-brand mb-4"><icon name="sparkles" class="icon-sm" /> AUTH-06</span>
+    <h1 class="mt-2">@L["Auth.Setup.Title"]</h1>
+    <p class="lead">@L["Auth.Setup.Lead"]</p>
+    <partial name="_ValidationSummary" />
+    <form method="post" class="stack" novalidate>
+        <div class="field">
+            <label class="label" asp-for="Input.Token">@L["Auth.Setup.Token"]<span class="req">*</span></label>
+            <input class="input input-ltr" asp-for="Input.Token" autocomplete="off" dir="ltr" required />
+            <span class="hint">@L["Auth.Setup.TokenHint"]</span>
+            <span class="field-error" asp-validation-for="Input.Token"></span>
+        </div>
+        <div class="field">
+            <label class="label" asp-for="Input.FullName">@L["Fields.FullName"]<span class="req">*</span></label>
+            <input class="input" asp-for="Input.FullName" autocomplete="name" required />
+            <span class="field-error" asp-validation-for="Input.FullName"></span>
+        </div>
+        <div class="field">
+            <label class="label" asp-for="Input.Email">@L["Fields.Email"]<span class="req">*</span></label>
+            <input class="input input-ltr" asp-for="Input.Email" type="email" autocomplete="username" dir="ltr" required />
+            <span class="field-error" asp-validation-for="Input.Email"></span>
+        </div>
+        <div class="field">
+            <label class="label" asp-for="Input.Password">@L["Fields.Password"]<span class="req">*</span></label>
+            <input class="input input-ltr" asp-for="Input.Password" type="password" autocomplete="new-password" dir="ltr" required />
+            <span class="hint">@L["Auth.PasswordPolicy"]</span>
+            <span class="field-error" asp-validation-for="Input.Password"></span>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit"><span class="spinner"></span><span class="btn-text">@L["Auth.Setup.Submit"]</span></button>
+    </form>
+}

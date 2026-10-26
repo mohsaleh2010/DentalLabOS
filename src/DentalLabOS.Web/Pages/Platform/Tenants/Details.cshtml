@@ -1,0 +1,93 @@
+@page "/platform/tenants/{id:guid}"
+@model DentalLabOS.Web.Pages.Platform.Tenants.DetailsModel
+@{
+    var t = Model.Tenant;
+    ViewData["Title"] = t.Name;
+    var look = StatusUi.Tenant(t.Status);
+    int Pct(int used, int max) => max <= 0 ? 0 : (int)Math.Round(used * 100.0 / max);
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/platform/tenants">@L["Nav.Tenants"]</a><icon name="chevron-left" class="icon-dir" /><span>@t.Name</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@t.Name <partial name="_StatusBadge" model="look" /> <span class="screen-id">PLT-04</span></h1>
+        <p class="lead ltr">@t.Slug</p>
+    </div>
+</div>
+
+<div class="stats mb-6">
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Fields.Users"].Value" param-Value="@t.UserCount.ToString()" param-Suffix="@(t.MaxUsers > 0 ? $"/ {t.MaxUsers}" : null)" param-IconName="@("users")" param-Percent="@(t.MaxUsers > 0 ? Pct(t.UserCount, t.MaxUsers) : (int?)null)" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Nav.Branches"].Value" param-Value="@t.BranchCount.ToString()" param-Suffix="@(t.MaxBranches > 0 ? $"/ {t.MaxBranches}" : null)" param-IconName="@("building-2")" param-Tone="@("violet")" param-Percent="@(t.MaxBranches > 0 ? Pct(t.BranchCount, t.MaxBranches) : (int?)null)" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Fields.Plan"].Value" param-Value="@(t.PlanName ?? "—")" param-IconName="@("sparkles")" param-Tone="@("info")" param-Footnote="@(t.SubscriptionEnd is { } e ? L["Plan.EndsOn", e.ToString("d MMM yyyy", CultureInfo.CurrentCulture)].Value : null)" />
+</div>
+
+<div class="grid grid-main">
+    <div class="stack">
+        <section class="card">
+            <div class="card-header"><h2>@L["Platform.Tenant.Profile"]</h2></div>
+            <div class="card-body">
+                <dl class="dl">
+                    <div><dt>@L["Fields.Email"]</dt><dd class="ltr">@(t.ContactEmail ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Phone"]</dt><dd class="ltr">@(t.ContactPhone ?? "—")</dd></div>
+                    <div><dt>@L["Prefs.Language"]</dt><dd>@t.DefaultCulture</dd></div>
+                    <div><dt>@L["Fields.Currency"]</dt><dd>@t.BaseCurrencyCode</dd></div>
+                    <div><dt>@L["Fields.TimeZone"]</dt><dd class="ltr">@t.TimeZoneId</dd></div>
+                    <div><dt>@L["Fields.CreatedAt"]</dt><dd>@t.CreatedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</dd></div>
+                    @if (t.SuspendReason is not null)
+                    {
+                        <div><dt>@L["Platform.Tenant.SuspendReason"]</dt><dd>@t.SuspendReason</dd></div>
+                    }
+                </dl>
+            </div>
+        </section>
+        <section class="card">
+            <div class="card-header"><h2>@L["Platform.Tenant.SubscriptionHistory"]</h2></div>
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Plan"]</th><th>@L["Fields.From"]</th><th>@L["Fields.To"]</th><th>@L["Fields.Reason"]</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach (var h in t.SubscriptionHistory)
+                    {
+                        <tr>
+                            <td class="cell-primary fw-600">@h.PlanName</td>
+                            <td data-label="@L["Fields.From"]">@h.StartDate.ToString("d MMM yyyy", CultureInfo.CurrentCulture)</td>
+                            <td data-label="@L["Fields.To"]">@h.EndDate.ToString("d MMM yyyy", CultureInfo.CurrentCulture)</td>
+                            <td data-label="@L["Fields.Reason"]">@(h.ChangeReason ?? "—")</td>
+                            <td>@if (h.IsCurrent) { <span class="badge badge-brand">@L["Common.Current"]</span> }</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <section class="card" style="align-self: start">
+        <div class="card-header"><h2>@L["Platform.Tenant.Status"]</h2> <span class="screen-id">PLT-05</span></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            @if (t.Status is "Active" or "Trial")
+            {
+                <p class="muted text-sm">@L["Platform.Tenant.SuspendHelp"]</p>
+                <form method="post" asp-page-handler="Status" class="stack">
+                    <input type="hidden" name="activate" value="false" />
+                    <input type="hidden" name="rowVersion" value="@t.RowVersion" />
+                    <div class="field">
+                        <label class="label" for="reason">@L["Fields.Reason"]<span class="req">*</span></label>
+                        <textarea class="textarea" id="reason" name="reason" required maxlength="500"></textarea>
+                        <span class="field-error" asp-validation-for="Reason"></span>
+                    </div>
+                    <button class="btn btn-danger btn-block" type="submit" data-confirm="@L["Platform.Tenant.SuspendConfirm", t.Name]" data-confirm-title="@L["Platform.Tenant.Suspend"]"><icon name="ban" /> @L["Platform.Tenant.Suspend"]</button>
+                </form>
+            }
+            else if (t.Status == "Suspended")
+            {
+                <p class="muted text-sm">@L["Platform.Tenant.ActivateHelp"]</p>
+                <form method="post" asp-page-handler="Status">
+                    <input type="hidden" name="activate" value="true" />
+                    <input type="hidden" name="rowVersion" value="@t.RowVersion" />
+                    <button class="btn btn-primary btn-block" type="submit"><icon name="circle-check" /> @L["Platform.Tenant.Activate"]</button>
+                </form>
+            }
+            <div class="alert mt-4"><icon name="shield-check" /><div>@L["Platform.Tenant.DataKept"]</div></div>
+        </div>
+    </section>
+</div>

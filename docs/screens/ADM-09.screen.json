@@ -1,0 +1,71 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-09",
+  "module": "admin",
+  "titleKey": "Admin.Roles.Matrix",
+  "route": "/admin/roles/{id}/permissions",
+  "pattern": "Custom",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.roles.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "AppRole",
+    "RolePermission",
+    "Permission"
+  ],
+  "api": [],
+  "rules": [
+    "The owner role always has every permission and is read-only",
+    "Changes take effect on the next request",
+    "Every change is audited with added/removed keys"
+  ],
+  "states": [
+    "conflict",
+    "locked"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "PermissionChange"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "role.name",
+      "permissions.granted"
+    ]
+  },
+  "tests": [
+    "ADM-09.happy",
+    "ADM-09.permissionDenied",
+    "ADM-09.crossTenant",
+    "ADM-09.ownerLocked",
+    "ADM-09.concurrency"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "keys",
+      "type": "multiLookup",
+      "source": "permissions"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ],
+  "notes": "Permission matrix; grouped by module with select-all per module."
+}

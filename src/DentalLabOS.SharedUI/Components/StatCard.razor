@@ -1,0 +1,27 @@
+<div class="stat">
+    <div class="stat-top">
+        <span class="stat-label">@Label</span>
+        <span class="stat-icon @(Tone is null ? null : $"tone-{Tone}")"><Icon Name="@IconName" /></span>
+    </div>
+    <div class="stat-value">@Value@if (Suffix is not null) {<small>@Suffix</small>}</div>
+    @if (Percent is { } p)
+    {
+        <div class="meter @(p >= 85 ? "is-warning" : null)" role="progressbar" aria-valuenow="@p" aria-valuemin="0" aria-valuemax="100" aria-label="@Label">
+            <span style="width:@(Math.Clamp(p, 0, 100))%"></span>
+        </div>
+    }
+    @if (Footnote is not null)
+    {
+        <div class="stat-foot">@Footnote</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = default!;
+    [Parameter, EditorRequired] public string Value { get; set; } = default!;
+    [Parameter] public string? Suffix { get; set; }
+    [Parameter] public string IconName { get; set; } = "activity";
+    [Parameter] public string? Tone { get; set; }
+    [Parameter] public int? Percent { get; set; }
+    [Parameter] public string? Footnote { get; set; }
+}

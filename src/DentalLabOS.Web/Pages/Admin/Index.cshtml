@@ -1,0 +1,89 @@
+@page "/admin"
+@model DentalLabOS.Web.Pages.Admin.IndexModel
+@{
+    var d = Model.Data;
+    ViewData["Title"] = L["Admin.Dashboard.Title"];
+    var done = d.SetupSteps.Count(s => s.Done);
+    int Pct(int used, int max) => max <= 0 ? 0 : (int)Math.Round(used * 100.0 / max);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Admin.Dashboard.Hello", Model.FirstName] <span class="screen-id">ADM-01</span></h1>
+        <p class="lead">@L["Admin.Dashboard.Lead", d.TenantName]</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="/admin/users/invite"><icon name="user-plus" /> @L["Admin.Users.Invite"]</a>
+        <span class="btn btn-primary" aria-disabled="true" title="@L["Nav.SoonTitle", 3]"><icon name="scan-line" /> @L["Admin.Dashboard.NewWorkOrder"]</span>
+    </div>
+</div>
+
+@if (d.TenantStatus == "Trial")
+{
+    <div class="alert alert-warning mb-6"><icon name="clock" /><div><strong>@L["Admin.Dashboard.TrialTitle"]</strong><p>@L["Admin.Dashboard.TrialText", d.SubscriptionEndsOn?.ToString("d MMMM yyyy", CultureInfo.CurrentCulture) ?? "—"]</p></div></div>
+}
+
+<div class="stats mb-6">
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Admin.Stat.Users"].Value" param-Value="@d.ActiveUsers.ToString()" param-Suffix="@(d.MaxUsers > 0 ? $"/ {d.MaxUsers}" : null)" param-IconName="@("users")" param-Percent="@(d.MaxUsers > 0 ? Pct(d.ActiveUsers, d.MaxUsers) : (int?)null)" param-Footnote="@L["Admin.Stat.PendingInvites", d.PendingInvitations].Value" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Nav.Branches"].Value" param-Value="@d.Branches.ToString()" param-Suffix="@(d.MaxBranches > 0 ? $"/ {d.MaxBranches}" : null)" param-IconName="@("building-2")" param-Tone="@("violet")" param-Percent="@(d.MaxBranches > 0 ? Pct(d.Branches, d.MaxBranches) : (int?)null)" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Nav.Departments"].Value" param-Value="@d.Departments.ToString()" param-IconName="@("network")" param-Tone="@("info")" param-Footnote="@L["Admin.Stat.DepartmentsFoot"].Value" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Nav.Roles"].Value" param-Value="@d.Roles.ToString()" param-IconName="@("shield-check")" param-Tone="@("warning")" param-Footnote="@L["Admin.Stat.RolesFoot"].Value" />
+</div>
+
+<div class="grid grid-main">
+    <section class="card">
+        <div class="card-header">
+            <div><h2>@L["Admin.Setup.Title"]</h2><span class="sub">@L["Admin.Setup.Progress", done, d.SetupSteps.Count]</span></div>
+        </div>
+        <div class="card-body">
+            <div class="meter mb-4" style="margin-top:0"><span style="width:@(d.SetupSteps.Count == 0 ? 0 : done * 100 / d.SetupSteps.Count)%"></span></div>
+            <ul class="checklist">
+                @foreach (var s in d.SetupSteps)
+                {
+                    <li class="@(s.Done ? "done" : null)">
+                        <a href="@s.Route">
+                            <span class="tick"><icon name="check" class="icon-sm" /></span>
+                            <span><span class="label-text fw-600">@L[s.Key]</span><br /><span class="text-xs muted">@L[$"{s.Key}.Hint"]</span></span>
+                            <icon name="chevron-left" class="icon-dir" />
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </section>
+    <section class="card">
+        <div class="card-header">
+            <h2>@L["Admin.RecentActivity"]</h2>
+            <div class="actions"><a class="btn btn-ghost btn-sm" href="/admin/audit">@L["Common.ViewAll"]</a></div>
+        </div>
+        <div class="card-body" style="padding-block: var(--space-2)">
+            @if (d.RecentActivity.Count == 0)
+            {
+                <p class="muted text-sm" style="padding-block: var(--space-4)">@L["Audit.Empty"]</p>
+            }
+            <ul class="activity">
+                @foreach (var a in d.RecentActivity)
+                {
+                    <li>
+                        <span class="dot"><icon name="@StatusUi.AuditIcon(a.Action)" class="icon-sm" /></span>
+                        <div><div class="what"><strong>@L[$"AuditAction.{a.Action}"]</strong> · @L[$"Entity.{a.EntityType}"]</div><div class="when">@a.CreatedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div></div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </section>
+</div>
+
+<section class="card mt-6">
+    <div class="card-header"><h2>@L["Admin.Roadmap.Title"]</h2><span class="sub">@L["Admin.Roadmap.Lead"]</span></div>
+    <div class="card-body">
+        <div class="grid grid-3">
+            @foreach (var (phase, key, icon) in new[] { (2, "Roadmap.P2", "stethoscope"), (3, "Roadmap.P3", "factory"), (4, "Roadmap.P4", "microscope"), (5, "Roadmap.P5", "boxes"), (7, "Roadmap.P7", "receipt"), (11, "Roadmap.P11", "calculator") })
+            {
+                <div class="flex gap-3">
+                    <span class="stat-icon"><icon name="@icon" /></span>
+                    <div><span class="badge mb-4">@L["Nav.Phase", phase]</span><div class="fw-600">@L[key]</div><div class="text-xs muted">@L[$"{key}.Text"]</div></div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

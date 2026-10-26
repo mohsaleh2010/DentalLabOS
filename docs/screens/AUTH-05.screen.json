@@ -1,0 +1,77 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "AUTH-05",
+  "module": "auth",
+  "titleKey": "Auth.Invite.Title",
+  "route": "/invite/accept",
+  "pattern": "AuthPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "anonymous"
+  },
+  "entities": [
+    "UserInvitation",
+    "ApplicationUser",
+    "UserProfile",
+    "UserRole"
+  ],
+  "api": [],
+  "rules": [
+    "Only the SHA-256 hash of the token is stored",
+    "Expired, used or revoked invitations are rejected",
+    "The account is created inside the inviting lab with the invited role"
+  ],
+  "states": [
+    "expired",
+    "validationError",
+    "success"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "InviteAccepted"
+    ],
+    "secrets": [
+      "token",
+      "password"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "AUTH-05.happy",
+    "AUTH-05.expired",
+    "AUTH-05.reused"
+  ],
+  "relatedScreens": [
+    "ADM-06",
+    "PLT-03"
+  ],
+  "fields": [
+    {
+      "name": "token",
+      "type": "hidden",
+      "required": true
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "required": true
+    },
+    {
+      "name": "confirmPassword",
+      "type": "password",
+      "required": true
+    }
+  ]
+}

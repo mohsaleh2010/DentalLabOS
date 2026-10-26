@@ -1,0 +1,130 @@
+@inject LayoutContext Shell
+@{
+    var info = await Shell.GetAsync();
+    var granted = await Shell.GrantedAsync();
+    var sections = info.IsPlatform ? Navigation.Platform : Navigation.Tenant;
+    var path = Context.Request.Path.Value ?? "/";
+    var lang = UiPreferences.Lang;
+    var dir = UiPreferences.IsRtl ? "rtl" : "ltr";
+    var theme = UiPreferences.Theme(Context);
+    var title = ViewData["Title"] as string;
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir" data-theme="@theme">
+<head>
+    <partial name="_Head" />
+    <title>@(title is null ? L["App.Name"] : $"{title} · {L["App.Name"]}")</title>
+</head>
+<body>
+<a class="skip-link" href="#main">@L["Common.SkipToContent"]</a>
+<div class="app" data-sidebar="expanded" data-mobile-nav="closed">
+    <aside class="sidebar" aria-label="@L["Nav.Aria"]">
+        <a class="sidebar-brand" href="/">
+            <brand-mark />
+            <span class="brand-name">
+                <strong>@L["App.Name"]</strong>
+                <small>@(info.IsPlatform ? L["App.PlatformPortal"].Value : info.LabName)</small>
+            </span>
+        </a>
+        <nav class="sidebar-scroll">
+            @foreach (var section in sections)
+            {
+                var items = section.Items.Where(i => granted.Contains(i.Permission)).ToList();
+                if (items.Count == 0)
+                {
+                    continue;
+                }
+                <div class="nav-section">
+                    <div class="nav-title">@L[section.TitleKey]</div>
+                    @foreach (var item in items)
+                    {
+                        if (item.IsSoon)
+                        {
+                            <span class="nav-link is-soon" title="@L["Nav.SoonTitle", item.Phase!]" aria-disabled="true">
+                                <icon name="@item.Icon" />
+                                <span class="nav-label">@L[item.TitleKey]</span>
+                                <span class="badge nav-badge">@L["Nav.Phase", item.Phase!]</span>
+                            </span>
+                        }
+                        else
+                        {
+                            <a class="nav-link" href="@item.Href" aria-current="@(Navigation.IsActive(path, item.Href) ? "page" : null)" title="@L[item.TitleKey]">
+                                <icon name="@item.Icon" />
+                                <span class="nav-label">@L[item.TitleKey]</span>
+                            </a>
+                        }
+                    }
+                </div>
+            }
+        </nav>
+        @if (!info.IsPlatform && info.PlanName is not null)
+        {
+            <div class="sidebar-footer">
+                <div class="plan-card">
+                    <strong><icon name="sparkles" class="icon-sm" /> @info.PlanName @(info.IsTrial ? $"· {L["Plan.Trial"]}" : "")</strong>
+                    @if (info.PlanEnds is { } ends)
+                    {
+                        <span>@L["Plan.EndsOn", ends.ToString("d MMM yyyy", CultureInfo.CurrentCulture)]</span>
+                    }
+                </div>
+            </div>
+        }
+    </aside>
+    <div class="scrim" aria-hidden="true"></div>
+
+    <div class="main">
+        <div class="offline-banner" role="status"><icon name="wifi-off" class="icon-sm" /> @L["Offline.Banner"]</div>
+        <header class="topbar">
+            <button class="btn btn-ghost btn-icon hide-desktop" type="button" data-mobile-nav-toggle aria-label="@L["Nav.Open"]"><icon name="menu" /></button>
+            <button class="btn btn-ghost btn-icon hide-mobile" type="button" data-sidebar-toggle aria-label="@L["Nav.Collapse"]"><icon name="panel-right-close" class="icon-dir" /></button>
+            <form class="topbar-search" action="/search" method="get" role="search">
+                <icon name="search" />
+                <input class="input" type="search" name="q" placeholder="@L["Search.Placeholder"]" aria-label="@L["Search.Placeholder"]" data-global-search />
+                <kbd>/</kbd>
+            </form>
+            <div class="topbar-actions">
+                <details class="menu">
+                    <summary class="btn btn-ghost btn-icon" aria-label="@L["Prefs.Language"]"><icon name="languages" /></summary>
+                    <div class="menu-panel" style="min-width: 180px">
+                        <form method="post" action="/culture">
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                            <button class="menu-item @(lang == "ar" ? "is-active" : "")" name="culture" value="ar-EG">العربية</button>
+                            <button class="menu-item @(lang == "en" ? "is-active" : "")" name="culture" value="en-US">English</button>
+                        </form>
+                    </div>
+                </details>
+                <button class="btn btn-ghost btn-icon" type="button" data-theme-toggle aria-label="@L["Prefs.ToggleTheme"]"><icon name="moon" /></button>
+                <a class="btn btn-ghost btn-icon" href="/notifications" aria-label="@L["Nav.Notifications"]"><icon name="bell" /></a>
+                <details class="menu">
+                    <summary class="user-chip" aria-label="@L["Nav.UserMenu"]">
+                        <span class="avatar avatar-sm">@info.Initials</span>
+                        <span class="who"><strong>@info.UserName</strong><span>@(info.IsPlatform ? L["App.PlatformPortal"].Value : info.LabName)</span></span>
+                        <icon name="chevron-down" class="icon-sm muted" />
+                    </summary>
+                    <div class="menu-panel">
+                        <div class="menu-head"><strong>@info.UserName</strong><span>@(User.Identity?.Name)</span></div>
+                        <a class="menu-item" href="/account"><icon name="user" /> @L["Nav.Profile"]</a>
+                        <a class="menu-item" href="/account/preferences"><icon name="settings" /> @L["Nav.Preferences"]</a>
+                        <a class="menu-item" href="/account/password"><icon name="lock" /> @L["Nav.ChangePassword"]</a>
+                        <div class="menu-sep"></div>
+                        <button class="menu-item" type="button" data-theme-option="light"><icon name="sun" /> @L["Prefs.Theme.light"]</button>
+                        <button class="menu-item" type="button" data-theme-option="dark"><icon name="moon" /> @L["Prefs.Theme.dark"]</button>
+                        <button class="menu-item" type="button" data-theme-option="system"><icon name="monitor" /> @L["Prefs.Theme.system"]</button>
+                        <div class="menu-sep"></div>
+                        <form method="post" action="/logout">
+                            <button class="menu-item" type="submit"><icon name="log-out" class="icon-dir" /> @L["Nav.Logout"]</button>
+                        </form>
+                    </div>
+                </details>
+            </div>
+        </header>
+        <main id="main" class="content" tabindex="-1">
+            @RenderBody()
+        </main>
+    </div>
+</div>
+<partial name="_ConfirmDialog" />
+<partial name="_Flash" />
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

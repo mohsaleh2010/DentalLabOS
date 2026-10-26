@@ -1,0 +1,33 @@
+@using DentalLabOS.Contracts.Admin
+@model (PagedResult<AuditLogDto> Result, string PageUrl)
+<section class="card">
+    @if (Model.Result.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Audit.Empty"].Value" param-IconName="@("scroll-text")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Audit.When"]</th><th>@L["Audit.Who"]</th><th>@L["Audit.Action"]</th><th>@L["Audit.Entity"]</th><th>@L["Audit.Details"]</th><th>@L["Audit.Ip"]</th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.Result.Items)
+                {
+                    <tr>
+                        <td class="cell-primary nowrap">@a.CreatedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</td>
+                        <td data-label="@L["Audit.Who"]">@(a.UserName ?? L["Audit.System"].Value)</td>
+                        <td data-label="@L["Audit.Action"]"><span class="badge"><icon name="@StatusUi.AuditIcon(a.Action)" /> @L[$"AuditAction.{a.Action}"]</span></td>
+                        <td data-label="@L["Audit.Entity"]"><span class="fw-600">@L[$"Entity.{a.EntityType}"]</span></td>
+                        <td data-label="@L["Audit.Details"]" style="max-width: 420px">
+                            @if (a.Reason is not null) { <div class="text-xs">@a.Reason</div> }
+                            @if (a.ChangesJson is not null) { <code class="text-xs ltr truncate" style="display:block; max-width: 420px" title="@a.ChangesJson">@a.ChangesJson</code> }
+                        </td>
+                        <td data-label="@L["Audit.Ip"]" class="ltr text-xs muted">@(a.IpAddress ?? "—")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(Model.Result.Page, Model.Result.TotalPages, Model.Result.TotalCount, Model.PageUrl)" />
+    }
+</section>

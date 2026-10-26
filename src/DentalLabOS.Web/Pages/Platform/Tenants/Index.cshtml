@@ -1,0 +1,55 @@
+@page "/platform/tenants"
+@model DentalLabOS.Web.Pages.Platform.Tenants.IndexModel
+@{
+    ViewData["Title"] = L["Nav.Tenants"];
+    var r = Model.Result;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Tenants"] <span class="screen-id">PLT-02</span></h1>
+        <p class="lead">@L["Platform.Tenants.Lead"]</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="/platform/tenants/new"><icon name="plus" /> @L["Platform.Tenants.New"]</a></div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Platform.Tenants.Search"]" aria-label="@L["Common.Search"]" /></div>
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" onchange="this.form.submit()">
+            <option value="">@L["Common.AllStatuses"]</option>
+            @foreach (var s in new[] { "Active", "Trial", "Suspended", "Closed" })
+            {
+                <option value="@s" selected="@(Model.Status?.ToString() == s)">@L[$"TenantStatus.{s}"]</option>
+            }
+        </select>
+        <button class="btn" type="submit"><icon name="filter" /> @L["Common.Filter"]</button>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-Description="@L["Common.NoResultsText"].Value" param-IconName="@("search")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead>
+                <tr><th>@L["Fields.Lab"]</th><th>@L["Fields.Plan"]</th><th>@L["Fields.SubscriptionEnds"]</th><th>@L["Fields.Status"]</th><th class="num">@L["Fields.Users"]</th><th>@L["Fields.CreatedAt"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr>
+                </thead>
+                <tbody>
+                @foreach (var t in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="avatar avatar-sm">@t.Name[..1]</span><span><strong>@t.Name</strong><span class="ltr">@t.Slug</span></span></div></td>
+                        <td data-label="@L["Fields.Plan"]">@(t.PlanName ?? "—")</td>
+                        <td data-label="@L["Fields.SubscriptionEnds"]">@(t.SubscriptionEndsOn?.ToString("d MMM yyyy", CultureInfo.CurrentCulture) ?? "—")</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Tenant(t.Status)" /></td>
+                        <td class="num" data-label="@L["Fields.Users"]">@t.UserCount</td>
+                        <td data-label="@L["Fields.CreatedAt"]">@t.CreatedAtUtc.ToString("d MMM yyyy", CultureInfo.CurrentCulture)</td>
+                        <td class="actions"><a class="btn btn-sm" href="/platform/tenants/@t.Id">@L["Common.Details"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

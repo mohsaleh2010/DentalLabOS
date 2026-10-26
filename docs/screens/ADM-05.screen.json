@@ -1,0 +1,65 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-05",
+  "module": "admin",
+  "titleKey": "Nav.Users",
+  "route": "/admin/users",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.users.read",
+    "access": "permission",
+    "actions": {
+      "revokeInvitation": "admin.users.manage"
+    }
+  },
+  "entities": [
+    "UserProfile",
+    "UserInvitation",
+    "UserRole"
+  ],
+  "api": [],
+  "rules": [
+    "Pending invitations listed separately and can be revoked"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "StatusChange"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-05.happy",
+    "ADM-05.permissionDenied",
+    "ADM-05.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "email",
+    "roles",
+    "lastLogin",
+    "status"
+  ],
+  "filters": [
+    "search"
+  ]
+}

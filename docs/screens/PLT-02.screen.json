@@ -1,0 +1,67 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "PLT-02",
+  "module": "platform",
+  "titleKey": "Nav.Tenants",
+  "route": "/platform/tenants",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "platform.tenants.read",
+    "access": "permission"
+  },
+  "entities": [
+    "Tenant"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/platform/tenants",
+      "purpose": "Paged list"
+    }
+  ],
+  "rules": [
+    "Server-side paging (max 100 per page)"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "PLT-02.happy",
+    "PLT-02.permissionDenied"
+  ],
+  "relatedScreens": [
+    "PLT-03",
+    "PLT-04"
+  ],
+  "columns": [
+    "name",
+    "slug",
+    "plan",
+    "status",
+    "users",
+    "subscriptionEnds",
+    "createdAt"
+  ],
+  "filters": [
+    "search",
+    "status"
+  ]
+}

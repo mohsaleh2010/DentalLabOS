@@ -1,0 +1,70 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-11",
+  "module": "admin",
+  "titleKey": "Nav.Numbering",
+  "route": "/admin/numbering",
+  "pattern": "Custom",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.numbering.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "DocumentSequence"
+  ],
+  "api": [],
+  "rules": [
+    "Numbers are allocated under a row lock: gap-free and unique per lab, branch, type and year",
+    "Changing the format never renumbers issued documents"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-11.happy",
+    "ADM-11.permissionDenied",
+    "ADM-11.crossTenant",
+    "ADM-11.concurrentAllocation"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "prefix",
+      "type": "code",
+      "required": true,
+      "maxLength": 10
+    },
+    {
+      "name": "padding",
+      "type": "integer",
+      "required": true,
+      "min": 3,
+      "max": 10
+    },
+    {
+      "name": "resetYearly",
+      "type": "boolean"
+    }
+  ]
+}

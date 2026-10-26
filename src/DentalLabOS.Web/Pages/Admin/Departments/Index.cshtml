@@ -1,0 +1,45 @@
+@page "/admin/departments"
+@model DentalLabOS.Web.Pages.Admin.Departments.IndexModel
+@{
+    ViewData["Title"] = L["Nav.Departments"];
+    var r = Model.Result;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Departments"] <span class="screen-id">ADM-04</span></h1>
+        <p class="lead">@L["Admin.Departments.Lead"]</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="/admin/departments/new"><icon name="plus" /> @L["Admin.Departments.New"]</a></div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Common.SearchByNameCode"]" aria-label="@L["Common.Search"]" /></div>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Admin.Departments.EmptyTitle"].Value" param-Description="@L["Admin.Departments.EmptyText"].Value"
+                   param-IconName="@("network")" param-ActionText="@L["Admin.Departments.New"].Value" param-ActionHref="@("/admin/departments/new")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Code"]</th><th>@L["Fields.Branch"]</th><th>@L["Fields.Type"]</th><th>@L["Fields.Status"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr></thead>
+                <tbody>
+                @foreach (var d in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary fw-600">@d.Name</td>
+                        <td data-label="@L["Fields.Code"]"><code>@d.Code</code></td>
+                        <td data-label="@L["Fields.Branch"]">@(d.BranchName ?? L["Admin.Departments.AllBranches"].Value)</td>
+                        <td data-label="@L["Fields.Type"]">@if (d.IsProduction) {<span class="badge badge-violet"><icon name="factory" /> @L["Admin.Departments.Production"]</span>} else {<span class="badge">@L["Admin.Departments.Support"]</span>}</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(d.IsActive)" /></td>
+                        <td class="actions"><a class="btn btn-sm" href="/admin/departments/@d.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

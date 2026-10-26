@@ -1,0 +1,37 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "AUTH-09",
+  "module": "auth",
+  "titleKey": "Session.Title",
+  "route": "/session-expired",
+  "pattern": "StatusPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "anonymous"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [
+    "Shown after a session is ended because the user was deactivated or the lab suspended"
+  ],
+  "states": [
+    "expired"
+  ],
+  "offline": {
+    "mode": "available"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "AUTH-09.renders"
+  ],
+  "relatedScreens": []
+}

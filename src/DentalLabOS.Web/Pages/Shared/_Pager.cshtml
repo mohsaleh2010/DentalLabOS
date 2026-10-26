@@ -1,0 +1,5 @@
+@model (int Page, int TotalPages, int TotalCount, string UrlTemplate)
+<component type="typeof(Pager)" render-mode="Static"
+           param-Page="Model.Page" param-TotalPages="Model.TotalPages" param-UrlTemplate="Model.UrlTemplate"
+           param-Summary="@L["Pager.Summary", Model.TotalCount].Value" param-AriaLabel="@L["Pager.Aria"].Value"
+           param-PreviousLabel="@L["Pager.Previous"].Value" param-NextLabel="@L["Pager.Next"].Value" />

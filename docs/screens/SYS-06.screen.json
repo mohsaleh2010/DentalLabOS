@@ -1,0 +1,38 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SYS-06",
+  "module": "system",
+  "titleKey": "Offline.Title",
+  "route": "/offline",
+  "pattern": "StatusPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "anonymous"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [
+    "Served by the service worker when offline; no lab data is cached on the device"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "available",
+    "why": "offline fallback page"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SYS-06.renders"
+  ],
+  "relatedScreens": []
+}

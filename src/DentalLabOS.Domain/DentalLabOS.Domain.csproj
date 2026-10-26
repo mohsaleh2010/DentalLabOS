@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Domain must not depend on EF Core or ASP.NET Core (enforced by ArchitectureTests). -->
+</Project>

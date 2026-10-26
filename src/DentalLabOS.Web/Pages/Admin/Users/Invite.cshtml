@@ -1,0 +1,64 @@
+@page "/admin/users/invite"
+@model DentalLabOS.Web.Pages.Admin.Users.InviteModel
+@{
+    ViewData["Title"] = L["Admin.Users.Invite"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/admin/users">@L["Nav.Users"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Admin.Users.Invite"]</span></nav>
+        <h1>@L["Admin.Users.Invite"] <span class="screen-id">ADM-06</span></h1>
+        <p class="lead">@L["Admin.Users.InviteLead"]</p>
+    </div>
+</div>
+@if (Model.Result is { } res)
+{
+    <section class="card" style="max-width: 820px">
+        <div class="card-body">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="stat-icon"><icon name="mail" /></span>
+                <div><h2>@L["Admin.Users.InviteCreated"]</h2><p class="muted text-sm" style="margin:0">@L["Admin.Users.InviteCreatedText"]</p></div>
+            </div>
+            <div class="token-box"><code id="invite-link">@Model.InviteUrl</code><button class="btn btn-sm" type="button" data-copy="#invite-link" data-copied-text="@L["Common.Copied"]"><icon name="copy" class="icon-sm" /> @L["Common.Copy"]</button></div>
+            <p class="hint mt-2">@L["Platform.Wizard.InviteHint", res.ExpiresAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)]</p>
+            <div class="form-actions">
+                <a class="btn btn-primary" href="/admin/users">@L["Common.Done"]</a>
+                <a class="btn" href="/admin/users/invite">@L["Admin.Users.InviteAnother"]</a>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <form method="post" class="card" style="max-width: 860px" data-guard novalidate>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.FullName">@L["Fields.FullName"]<span class="req">*</span></label>
+                    <input class="input" asp-for="Input.FullName" required />
+                    <span class="field-error" asp-validation-for="Input.FullName"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.Email">@L["Fields.Email"]<span class="req">*</span></label>
+                    <input class="input input-ltr" asp-for="Input.Email" type="email" dir="ltr" required />
+                    <span class="field-error" asp-validation-for="Input.Email"></span>
+                </div>
+                <div class="field span-2">
+                    <label class="label" asp-for="Input.RoleId">@L["Fields.Role"]<span class="req">*</span></label>
+                    <select class="select" asp-for="Input.RoleId" required>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <option value="@role.Id">@role.Name</option>
+                        }
+                    </select>
+                    <span class="hint">@L["Admin.Users.RoleHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.RoleId"></span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="mail" /> @L["Admin.Users.SendInvite"]</button>
+                <a class="btn btn-ghost" href="/admin/users">@L["Common.Cancel"]</a>
+            </div>
+        </div>
+    </form>
+}

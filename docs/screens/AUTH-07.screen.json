@@ -1,0 +1,65 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "AUTH-07",
+  "module": "auth",
+  "titleKey": "Nav.ChangePassword",
+  "route": "/account/password",
+  "pattern": "FormPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "authenticated"
+  },
+  "entities": [
+    "ApplicationUser"
+  ],
+  "api": [],
+  "rules": [
+    "Password policy: 10+ chars with upper, lower and digit",
+    "Changing the password rotates the security stamp (other sessions end)"
+  ],
+  "states": [
+    "validationError",
+    "success"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "secrets": [
+      "currentPassword",
+      "newPassword"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "AUTH-07.happy",
+    "AUTH-07.wrongCurrent"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "currentPassword",
+      "type": "password",
+      "required": true
+    },
+    {
+      "name": "newPassword",
+      "type": "password",
+      "required": true
+    },
+    {
+      "name": "confirmPassword",
+      "type": "password",
+      "required": true
+    }
+  ]
+}

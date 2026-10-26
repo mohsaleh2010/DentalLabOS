@@ -1,0 +1,127 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "PLT-03",
+  "module": "platform",
+  "titleKey": "Platform.Tenants.New",
+  "route": "/platform/tenants/new",
+  "pattern": "FormPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "platform.tenants.create",
+    "access": "permission"
+  },
+  "entities": [
+    "Tenant",
+    "TenantSubscription",
+    "Branch",
+    "AppRole",
+    "RolePermission",
+    "DocumentSequence",
+    "UserInvitation"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/platform/tenants",
+      "purpose": "Provision a lab"
+    }
+  ],
+  "rules": [
+    "Creates the lab, main branch, 13 system roles, numbering sequences and an owner invitation in one transaction",
+    "Slug and owner e-mail must be unique across the platform",
+    "The invitation link is shown once; only its hash is stored (valid 7 days)"
+  ],
+  "states": [
+    "validationError",
+    "success"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Invite"
+    ],
+    "secrets": [
+      "inviteToken"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [],
+    "forbidden": [
+      "*"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "PLT-03.happy",
+    "PLT-03.duplicateSlug",
+    "PLT-03.permissionDenied"
+  ],
+  "relatedScreens": [
+    "PLT-02",
+    "AUTH-05"
+  ],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 200
+    },
+    {
+      "name": "slug",
+      "type": "slug",
+      "required": true,
+      "pattern": "^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$"
+    },
+    {
+      "name": "baseCurrencyCode",
+      "type": "code",
+      "required": true,
+      "maxLength": 3
+    },
+    {
+      "name": "defaultCulture",
+      "type": "enum",
+      "required": true,
+      "source": "ar-EG|en-US"
+    },
+    {
+      "name": "contactPhone",
+      "type": "text",
+      "maxLength": 32
+    },
+    {
+      "name": "mainBranchName",
+      "type": "text",
+      "maxLength": 150
+    },
+    {
+      "name": "planId",
+      "type": "lookup",
+      "required": true,
+      "source": "plans"
+    },
+    {
+      "name": "trialDays",
+      "type": "integer",
+      "min": 0,
+      "max": 90
+    },
+    {
+      "name": "ownerFullName",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "ownerEmail",
+      "type": "email",
+      "required": true
+    }
+  ]
+}

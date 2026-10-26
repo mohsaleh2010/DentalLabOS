@@ -1,0 +1,30 @@
+@* Status = color + text (+ optional icon) — color is never the only signal (plan 8.1). *@
+<span class="badge @ToneClass" title="@Title">
+    @if (IconName is not null)
+    {
+        <Icon Name="@IconName" />
+    }
+    else
+    {
+        <span class="dot" aria-hidden="true"></span>
+    }
+    @Text
+</span>
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = default!;
+    [Parameter] public BadgeTone Tone { get; set; } = BadgeTone.Neutral;
+    [Parameter] public string? IconName { get; set; }
+    [Parameter] public string? Title { get; set; }
+
+    private string ToneClass => Tone switch
+    {
+        BadgeTone.Success => "badge-success",
+        BadgeTone.Warning => "badge-warning",
+        BadgeTone.Danger => "badge-danger",
+        BadgeTone.Info => "badge-info",
+        BadgeTone.Violet => "badge-violet",
+        BadgeTone.Brand => "badge-brand",
+        _ => string.Empty,
+    };
+}

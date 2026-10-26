@@ -1,0 +1,125 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-03",
+  "module": "admin",
+  "titleKey": "Nav.Branches",
+  "route": "/admin/branches",
+  "pattern": "ListPage",
+  "phase": 1,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.branches.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "Branch"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/branches",
+      "purpose": "List"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/branches/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/branches",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/branches/{id}",
+      "purpose": "Update"
+    }
+  ],
+  "rules": [
+    "Code unique per lab",
+    "Plan branch limit enforced on create",
+    "The main branch must stay active",
+    "RowVersion detects concurrent edits"
+  ],
+  "states": [
+    "loading",
+    "empty",
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-03.happy",
+    "ADM-03.permissionDenied",
+    "ADM-03.crossTenant",
+    "ADM-03.planLimit",
+    "ADM-03.concurrency"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/admin/branches",
+    "/admin/branches/{id}"
+  ],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "required": true,
+      "maxLength": 16
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "maxLength": 300
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "maxLength": 32
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ],
+  "columns": [
+    "code",
+    "name",
+    "phone",
+    "isMain",
+    "status"
+  ],
+  "filters": [
+    "search"
+  ]
+}
