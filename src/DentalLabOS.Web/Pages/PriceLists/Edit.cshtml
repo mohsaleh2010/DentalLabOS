@@ -1,0 +1,142 @@
+@page "/price-lists/{id}"
+@model DentalLabOS.Web.Pages.PriceLists.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? L["PriceLists.New"] : Model.List!.Name;
+    var lines = Model.Lines;
+    var canManage = Model.CanManage;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/price-lists">@L["PriceLists.Title"]</a><icon name="chevron-left" class="icon-dir" /><span>@ViewData["Title"]</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@ViewData["Title"] @if (Model.List?.IsDefault == true) {<span class="badge badge-brand"><icon name="star" class="icon-sm" /> @L["PriceLists.Default"]</span>} <span class="screen-id">ITM-08</span></h1>
+    </div>
+</div>
+<div class="@(Model.IsNew ? null : "split")" style="@(Model.IsNew ? "max-width:720px" : null)">
+    @if (!Model.IsNew)
+    {
+        <section class="card" id="lines">
+            <div class="card-header"><h2>@L["PriceLists.Lines"]</h2><span class="sub">@L["PriceLists.LinesHint"]</span></div>
+            <form class="toolbar" method="get">
+                <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Items.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
+            </form>
+            @if (lines!.Items.Count == 0)
+            {
+                <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["PriceLists.NoLines"].Value" param-Description="@L["PriceLists.NoLinesText"].Value" param-IconName="@("receipt")" />
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="table table-responsive">
+                        <thead><tr><th>@L["Fields.Item"]</th><th class="num">@L["Fields.MinQty"]</th><th class="num">@L["Fields.Price"]</th><th class="num">@L["Items.DefaultPrice"]</th><th class="actions"></th></tr></thead>
+                        <tbody>
+                        @foreach (var l in lines.Items)
+                        {
+                            var diff = l.DefaultPrice == 0 ? 0 : Math.Round((l.Price - l.DefaultPrice) / l.DefaultPrice * 100, 1);
+                            <tr>
+                                <td class="cell-primary"><strong>@l.ItemName</strong> <code class="text-xs">@l.ItemSku</code></td>
+                                <td data-label="@L["Fields.MinQty"]" class="num">@Fmt.Qty(l.MinQty)</td>
+                                <td data-label="@L["Fields.Price"]" class="num money"><strong>@Fmt.Money(l.Price)</strong></td>
+                                <td data-label="@L["Items.DefaultPrice"]" class="num money muted">@Fmt.Money(l.DefaultPrice) @if (diff != 0) {<span class="text-xs @(diff > 0 ? "delta-up" : "delta-down")">(@(diff > 0 ? "+" : "")@diff.ToString("0.#", CultureInfo.InvariantCulture)%)</span>}</td>
+                                <td class="actions">
+                                    @if (canManage)
+                                    {
+                                        <form method="post" asp-page-handler="DeleteLine" asp-route-lineId="@l.Id" asp-route-q="@Model.Q">
+                                            <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Common.DeleteConfirm", l.ItemName]"><icon name="trash-2" class="icon-sm" /></button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <partial name="_Pager" model="(lines.Page, lines.TotalPages, lines.TotalCount, Model.PageUrl)" />
+            }
+        </section>
+    }
+    <div class="stack">
+        <form method="post" class="card" data-guard novalidate>
+            <div class="card-header"><h2>@L["PriceLists.Settings"]</h2></div>
+            <div class="card-body">
+                <partial name="_ValidationSummary" />
+                <input type="hidden" asp-for="Input.RowVersion" />
+                <fieldset disabled="@(!canManage)" style="border:0;padding:0;margin:0">
+                    <div class="field">
+                        <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                        <input class="input" asp-for="Input.Name" maxlength="150" required />
+                        <span class="field-error" asp-validation-for="Input.Name"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.CurrencyCode">@L["Fields.Currency"]</label>
+                        <select class="select" asp-for="Input.CurrencyCode">
+                            @foreach (var c in Model.Currencies)
+                            {
+                                <option value="@c.Code">@c.Code — @c.Name</option>
+                            }
+                        </select>
+                        <span class="field-error" asp-validation-for="Input.CurrencyCode"></span>
+                    </div>
+                    <div class="form-grid cols-2">
+                        <div class="field">
+                            <label class="label" asp-for="Input.ValidFrom">@L["Fields.ValidFrom"]</label>
+                            <input class="input" asp-for="Input.ValidFrom" type="date" />
+                        </div>
+                        <div class="field">
+                            <label class="label" asp-for="Input.ValidTo">@L["Fields.ValidTo"]</label>
+                            <input class="input" asp-for="Input.ValidTo" type="date" />
+                            <span class="field-error" asp-validation-for="Input.ValidTo"></span>
+                        </div>
+                    </div>
+                    <label class="switch"><input type="checkbox" asp-for="Input.IsDefault" disabled="@(Model.List?.IsDefault == true)" /> @L["PriceLists.MakeDefault"]</label>
+                    @if (Model.List?.IsDefault == true)
+                    {
+                        <input type="hidden" asp-for="Input.IsDefault" />
+                        <p class="hint">@L["PriceLists.DefaultLocked"]</p>
+                    }
+                    <span class="field-error" asp-validation-for="Input.IsDefault"></span>
+                    @if (!Model.IsNew)
+                    {
+                        <label class="switch mt-2"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"]</label>
+                        <span class="field-error" asp-validation-for="Input.IsActive"></span>
+                    }
+                </fieldset>
+                @if (canManage)
+                {
+                    <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button></div>
+                }
+            </div>
+        </form>
+        @if (!Model.IsNew && Model.ItemOptions.Count > 0)
+        {
+            <form method="post" asp-page-handler="Line" class="card" novalidate>
+                <div class="card-header"><h2>@L["PriceLists.SetPrice"]</h2></div>
+                <div class="card-body">
+                    <div class="field">
+                        <label class="label" asp-for="Line.ItemId">@L["Fields.Item"]<span class="req">*</span></label>
+                        <select class="select" asp-for="Line.ItemId" required>
+                            @foreach (var o in Model.ItemOptions)
+                            {
+                                <option value="@o.Id">@o.Name (@o.Code)</option>
+                            }
+                        </select>
+                        <span class="field-error" asp-validation-for="Line.ItemId"></span>
+                    </div>
+                    <div class="form-grid cols-2">
+                        <div class="field">
+                            <label class="label" asp-for="Line.Price">@L["Fields.Price"]<span class="req">*</span></label>
+                            <input class="input input-ltr" asp-for="Line.Price" type="number" step="0.01" min="0" dir="ltr" value="@(Model.Line.Price == 0 ? "" : Fmt.Input(Model.Line.Price))" required />
+                            <span class="field-error" asp-validation-for="Line.Price"></span>
+                        </div>
+                        <div class="field">
+                            <label class="label" asp-for="Line.MinQty">@L["Fields.MinQty"]</label>
+                            <input class="input input-ltr" asp-for="Line.MinQty" type="number" step="any" min="1" dir="ltr" value="@Fmt.Input(Model.Line.MinQty)" />
+                            <span class="field-error" asp-validation-for="Line.MinQty"></span>
+                        </div>
+                    </div>
+                    <p class="hint">@L["PriceLists.SetPriceHint"]</p>
+                    <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button></div>
+                </div>
+            </form>
+        }
+    </div>
+</div>

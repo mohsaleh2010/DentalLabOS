@@ -1,0 +1,41 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SUP-06",
+  "module": "suppliers",
+  "titleKey": "Fields.Rating",
+  "route": "/suppliers/{id}/rating",
+  "pattern": "Custom",
+  "phase": 6,
+  "status": "planned",
+  "permissions": {
+    "view": "suppliers.rating.manage",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SUP-06.happy",
+    "SUP-06.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "notes": "Planned: deferred from phase 2 until the documents it depends on exist."
+}

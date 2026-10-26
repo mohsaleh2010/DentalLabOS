@@ -1,0 +1,70 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-07",
+  "module": "items",
+  "titleKey": "PriceLists.Title",
+  "route": "/price-lists",
+  "pattern": "ListPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "pricelists.read",
+    "access": "permission",
+    "actions": {
+      "create": "pricelists.manage",
+      "bulk": "pricelists.bulk"
+    }
+  },
+  "entities": [
+    "PriceList"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/price-lists",
+      "purpose": "List"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pricing/quote",
+      "purpose": "Resolve a customer's price"
+    }
+  ],
+  "rules": [
+    "One general (default) list per lab, enforced by a filtered unique index",
+    "Price priority: customer price, customer/group list, general list, item price"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-07.happy",
+    "ITM-07.permissionDenied",
+    "ITM-07.crossTenant",
+    "ITM-07.pricePriority"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "currency",
+    "validity",
+    "lines",
+    "customers",
+    "status"
+  ]
+}

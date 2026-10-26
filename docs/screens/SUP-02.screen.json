@@ -1,0 +1,131 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SUP-02",
+  "module": "suppliers",
+  "titleKey": "Suppliers.Edit",
+  "route": "/suppliers/{id}/edit",
+  "pattern": "FormPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "suppliers.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "Supplier"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/suppliers",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/suppliers/{id}",
+      "purpose": "Update"
+    }
+  ],
+  "rules": [
+    "Empty code takes the next number (S-00001)",
+    "Code unique per lab",
+    "Suppliers are deactivated, never deleted"
+  ],
+  "states": [
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SUP-02.happy",
+    "SUP-02.permissionDenied",
+    "SUP-02.crossTenant",
+    "SUP-02.autoCode"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/suppliers/new/edit",
+    "/suppliers/{id}/edit"
+  ],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "maxLength": 20
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 200
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "maxLength": 256
+    },
+    {
+      "name": "address",
+      "type": "textarea",
+      "maxLength": 500
+    },
+    {
+      "name": "taxNumber",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "paymentTermsDays",
+      "type": "integer",
+      "min": 0,
+      "max": 365
+    },
+    {
+      "name": "openingBalance",
+      "type": "decimal",
+      "scale": 2
+    },
+    {
+      "name": "rating",
+      "type": "decimal",
+      "min": 0,
+      "max": 5
+    },
+    {
+      "name": "isOutsourcePartner",
+      "type": "boolean"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}

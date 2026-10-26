@@ -138,6 +138,38 @@
   window.dlos = { toast };
   document.querySelectorAll("[data-toast]").forEach((el) => toast(el.dataset.toast, el.dataset.toastError === "1"));
 
+  // ---- File drop zone: <label data-dropzone><input type=file><span data-file-name></span></label> ----
+  document.querySelectorAll("[data-dropzone]").forEach((zone) => {
+    const input = zone.querySelector("input[type=file]");
+    const name = zone.querySelector("[data-file-name]");
+    input.addEventListener("change", () => { name.textContent = input.files[0]?.name || ""; });
+    ["dragenter", "dragover"].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.add("is-over"); }));
+    ["dragleave", "drop"].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.remove("is-over"); }));
+    zone.addEventListener("drop", (e) => {
+      if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; input.dispatchEvent(new Event("change")); }
+    });
+  });
+
+  // ---- Item form: show stock or service fields by type; a new item takes its category's default type ----
+  document.querySelectorAll("form[data-item-form]").forEach((form) => {
+    const type = form.querySelector("[data-item-type]");
+    const category = form.querySelector("[data-category]");
+    const stock = ["Material", "Consumable", "FinishedGood"];
+    const sync = () => {
+      const isStock = stock.includes(type.value);
+      form.querySelector('[data-for="stock"]').hidden = !isStock;
+      form.querySelector('[data-for="service"]').hidden = isStock;
+    };
+    type.addEventListener("change", sync);
+    if (form.dataset.itemForm === "new") {
+      category.addEventListener("change", () => {
+        const t = category.selectedOptions[0]?.dataset.defaultType;
+        if (t) { type.value = t; sync(); }
+      });
+    }
+    sync();
+  });
+
   // ---- Online / offline indicator ----
   const setOnline = () => root.classList.toggle("is-offline", !navigator.onLine);
   addEventListener("online", setOnline);

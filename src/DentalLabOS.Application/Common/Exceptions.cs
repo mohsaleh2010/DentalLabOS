@@ -81,6 +81,16 @@ public sealed class Validator
         return this;
     }
 
+    public Validator Range(string field, decimal value, decimal min, decimal max)
+    {
+        if (value < min || value > max)
+        {
+            Add(field, "Validation.Range");
+        }
+
+        return this;
+    }
+
     public Validator When(bool condition, string field, string messageKey)
     {
         if (condition)

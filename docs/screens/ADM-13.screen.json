@@ -1,0 +1,106 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-13",
+  "module": "admin",
+  "titleKey": "Nav.Currencies",
+  "route": "/admin/currencies",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.currencies.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "Currency",
+    "ExchangeRate"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/currencies",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/currencies",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/currencies/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/currencies/rates",
+      "purpose": "Rates"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/currencies/rates",
+      "purpose": "Record a rate"
+    }
+  ],
+  "rules": [
+    "The base currency comes from the lab profile",
+    "Codes are fixed once created",
+    "One rate per pair and day (re-entry replaces it)"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-13.happy",
+    "ADM-13.permissionDenied",
+    "ADM-13.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "code",
+      "type": "code",
+      "required": true,
+      "maxLength": 3,
+      "pattern": "^[A-Za-z]{3}$"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 100
+    },
+    {
+      "name": "decimalPlaces",
+      "type": "integer",
+      "min": 0,
+      "max": 4
+    },
+    {
+      "name": "rate",
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    }
+  ]
+}

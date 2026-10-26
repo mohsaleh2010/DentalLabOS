@@ -1,0 +1,79 @@
+@page "/customers/{id:guid}/dentists"
+@model DentalLabOS.Web.Pages.Customers.DentistsModel
+@{
+    var c = Model.Customer;
+    ViewData["Title"] = L["Customers.Dentists"];
+    var editing = Model.Edit is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/customers">@L["Nav.Customers"]</a><icon name="chevron-left" class="icon-dir" /><a href="/customers/@c.Id">@c.Name</a><icon name="chevron-left" class="icon-dir" /><span>@L["Customers.Dentists"]</span></nav>
+        <h1>@L["Customers.Dentists"] <span class="screen-id">CUS-04</span></h1>
+        <p class="lead">@L["Customers.DentistsLead"]</p>
+    </div>
+</div>
+<div class="split">
+    <section class="card">
+        @if (Model.Dentists.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Customers.NoDentists"].Value" param-Description="@L["Customers.NoDentistsText"].Value" param-IconName="@("user-round")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.FullName"]</th><th>@L["Fields.Specialty"]</th><th>@L["Fields.Phone"]</th><th>@L["Fields.Status"]</th><th class="actions"></th></tr></thead>
+                    <tbody>
+                    @foreach (var d in Model.Dentists)
+                    {
+                        <tr aria-current="@(Model.Edit == d.Id ? "true" : null)">
+                            <td class="cell-primary"><strong>@d.FullName</strong>@if (d.Email is not null) {<div class="text-xs muted ltr">@d.Email</div>}</td>
+                            <td data-label="@L["Fields.Specialty"]">@(d.Specialty ?? "—")</td>
+                            <td data-label="@L["Fields.Phone"]" class="ltr">@(d.Phone ?? "—")</td>
+                            <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(d.IsActive)" /></td>
+                            <td class="actions"><a class="btn btn-sm" href="?edit=@d.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <form method="post" class="card" asp-route-edit="@Model.Edit" data-guard novalidate>
+        <div class="card-header"><h2>@(editing ? L["Customers.EditDentist"] : L["Customers.AddDentist"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div class="field">
+                <label class="label" asp-for="Input.FullName">@L["Fields.FullName"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.FullName" maxlength="150" required />
+                <span class="field-error" asp-validation-for="Input.FullName"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Specialty">@L["Fields.Specialty"]</label>
+                <input class="input" asp-for="Input.Specialty" maxlength="100" />
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Phone">@L["Fields.Phone"]</label>
+                <input class="input input-ltr" asp-for="Input.Phone" type="tel" dir="ltr" maxlength="50" />
+                <span class="field-error" asp-validation-for="Input.Phone"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Email">@L["Fields.Email"]</label>
+                <input class="input input-ltr" asp-for="Input.Email" type="email" dir="ltr" maxlength="256" />
+                <span class="field-error" asp-validation-for="Input.Email"></span>
+            </div>
+            @if (editing)
+            {
+                <label class="switch"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"]</label>
+            }
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+                @if (editing)
+                {
+                    <a class="btn btn-ghost" href="/customers/@c.Id/dentists">@L["Common.Cancel"]</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>

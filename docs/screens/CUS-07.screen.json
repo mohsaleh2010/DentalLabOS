@@ -1,0 +1,41 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "CUS-07",
+  "module": "customers",
+  "titleKey": "Fields.CreditLimit",
+  "route": "/customers/{id}/credit",
+  "pattern": "Custom",
+  "phase": 7,
+  "status": "planned",
+  "permissions": {
+    "view": "customers.credit.manage",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "CUS-07.happy",
+    "CUS-07.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "notes": "Planned: deferred from phase 2 until the documents it depends on exist."
+}

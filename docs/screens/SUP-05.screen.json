@@ -1,0 +1,114 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SUP-05",
+  "module": "suppliers",
+  "titleKey": "Suppliers.Items",
+  "route": "/suppliers/{id}/items",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "suppliers.items.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "SupplierItem"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/suppliers/{id}/items",
+      "purpose": "Add"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/suppliers/{id}/items/{lineId}",
+      "purpose": "Update"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/suppliers/{id}/items/{lineId}",
+      "purpose": "Remove"
+    }
+  ],
+  "rules": [
+    "One line per supplier and item",
+    "One preferred supplier per item",
+    "Price is kept unchanged when the editor can't see costs"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "hidesCostFor": [
+      "Technician",
+      "Reception",
+      "Sales"
+    ],
+    "auditActions": [
+      "Create",
+      "Update",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SUP-05.happy",
+    "SUP-05.permissionDenied",
+    "SUP-05.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "itemId",
+      "type": "lookup",
+      "required": true,
+      "source": "items"
+    },
+    {
+      "name": "supplierSku",
+      "type": "text",
+      "maxLength": 50
+    },
+    {
+      "name": "lastPrice",
+      "type": "decimal",
+      "min": 0,
+      "scale": 2
+    },
+    {
+      "name": "currencyCode",
+      "type": "lookup",
+      "required": true,
+      "source": "currencies"
+    },
+    {
+      "name": "leadTimeDays",
+      "type": "integer",
+      "min": 0,
+      "max": 365
+    },
+    {
+      "name": "minOrderQty",
+      "type": "decimal",
+      "min": 0
+    },
+    {
+      "name": "isPreferred",
+      "type": "boolean"
+    }
+  ]
+}

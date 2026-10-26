@@ -1,0 +1,86 @@
+@page "/customers/groups"
+@model DentalLabOS.Web.Pages.Customers.GroupsModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Customers.Groups"];
+    var editing = Model.Edit is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/customers">@L["Nav.Customers"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Customers.Groups"]</span></nav>
+        <h1>@L["Customers.Groups"] <span class="screen-id">CUS-05</span></h1>
+        <p class="lead">@L["Customers.GroupsLead"]</p>
+    </div>
+</div>
+<div class="split">
+    <section class="card">
+        @if (Model.Groups.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Customers.NoGroups"].Value" param-Description="@L["Customers.NoGroupsText"].Value" param-IconName="@("layers")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.PriceList"]</th><th class="num">@L["Nav.Customers"]</th><th class="actions"></th></tr></thead>
+                    <tbody>
+                    @foreach (var g in Model.Groups)
+                    {
+                        <tr>
+                            <td class="cell-primary"><strong>@g.Name</strong></td>
+                            <td data-label="@L["Fields.PriceList"]">@(g.DefaultPriceListName ?? "—")</td>
+                            <td data-label="@L["Nav.Customers"]" class="num"><a href="/customers?group=@g.Id">@g.CustomerCount</a></td>
+                            <td class="actions">
+                                <a class="btn btn-sm" href="?edit=@g.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a>
+                                @if (g.CustomerCount == 0)
+                                {
+                                    <form method="post" asp-page-handler="Delete" asp-route-groupId="@g.Id" style="display:inline">
+                                        <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Common.DeleteConfirm", g.Name]"><icon name="trash-2" class="icon-sm" /></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <form method="post" class="card" asp-route-edit="@Model.Edit" data-guard novalidate>
+        <div class="card-header"><h2>@(editing ? L["Customers.EditGroup"] : L["Customers.NewGroup"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" maxlength="150" required />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            @if (Model.Can(Permissions.PriceLists.Read))
+            {
+                <div class="field">
+                    <label class="label" asp-for="Input.DefaultPriceListId">@L["Fields.PriceList"]</label>
+                    <select class="select" asp-for="Input.DefaultPriceListId">
+                        <option value="">@L["Customers.PriceListInherit"]</option>
+                        @foreach (var p in Model.PriceLists)
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    </select>
+                    <span class="hint">@L["Customers.GroupPriceListHint"]</span>
+                </div>
+            }
+            else
+            {
+                <input type="hidden" asp-for="Input.DefaultPriceListId" />
+            }
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+                @if (editing)
+                {
+                    <a class="btn btn-ghost" href="/customers/groups">@L["Common.Cancel"]</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,3 +1,4 @@
+using DentalLabOS.Application.Common;
 using DentalLabOS.Domain.Organization;
 using DentalLabOS.Domain.Platform;
 using DentalLabOS.Domain.Security;
@@ -22,6 +23,25 @@ public sealed class DbInitializer(AppDbContext db, ILogger<DbInitializer> logger
 
         await SyncPermissionsAsync(ct);
         await SeedPlansAsync(ct);
+        await BackfillTenantDefaultsAsync(ct);
+    }
+
+    /// <summary>Labs created before a module shipped get that module's starter data (units, currency, numbering...).</summary>
+    private async Task BackfillTenantDefaultsAsync(CancellationToken ct)
+    {
+        var tenants = await db.Tenants.AsNoTracking().Select(t => new { t.Id, t.DefaultCulture, t.BaseCurrencyCode }).ToListAsync(ct);
+        var year = DateTime.UtcNow.Year;
+        foreach (var t in tenants)
+        {
+            using (db.TenantContext.BeginScope(t.Id))
+            {
+                if (await TenantCatalogDefaults.BackfillAsync(db, t.DefaultCulture, t.BaseCurrencyCode, year, ct))
+                {
+                    await db.SaveChangesAsync(ct);
+                    logger.LogInformation("Added starter catalog data for tenant {TenantId}", t.Id);
+                }
+            }
+        }
     }
 
     private async Task SyncPermissionsAsync(CancellationToken ct)

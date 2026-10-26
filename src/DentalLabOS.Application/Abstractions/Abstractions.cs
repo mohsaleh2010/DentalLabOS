@@ -1,6 +1,8 @@
+using DentalLabOS.Domain.Catalog;
 using DentalLabOS.Domain.Common;
 using DentalLabOS.Domain.Operations;
 using DentalLabOS.Domain.Organization;
+using DentalLabOS.Domain.Parties;
 using DentalLabOS.Domain.Platform;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +30,23 @@ public interface IApplicationDbContext
     DbSet<ApprovalPolicy> ApprovalPolicies { get; }
     DbSet<ApprovalRequest> ApprovalRequests { get; }
     DbSet<AuditLog> AuditLogs { get; }
+    DbSet<Customer> Customers { get; }
+    DbSet<CustomerGroup> CustomerGroups { get; }
+    DbSet<CustomerContact> CustomerContacts { get; }
+    DbSet<Dentist> Dentists { get; }
+    DbSet<Supplier> Suppliers { get; }
+    DbSet<SupplierItem> SupplierItems { get; }
+    DbSet<ItemCategory> ItemCategories { get; }
+    DbSet<UnitOfMeasure> Units { get; }
+    DbSet<UnitConversion> UnitConversions { get; }
+    DbSet<Item> Items { get; }
+    DbSet<BomLine> BomLines { get; }
+    DbSet<PriceList> PriceLists { get; }
+    DbSet<PriceListLine> PriceListLines { get; }
+    DbSet<CustomerItemPrice> CustomerItemPrices { get; }
+    DbSet<TaxCode> TaxCodes { get; }
+    DbSet<Currency> Currencies { get; }
+    DbSet<ExchangeRate> ExchangeRates { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
@@ -97,4 +116,17 @@ public interface INumberingService
 {
     /// <summary>Allocates the next document number inside the caller's transaction (gap-free on rollback).</summary>
     Task<string> NextAsync(string documentType, Guid? branchId, DateOnly date, CancellationToken cancellationToken = default);
+}
+
+/// <summary>The first worksheet of an uploaded workbook: header row plus data rows as text (numbers in invariant culture).</summary>
+public sealed record SheetData(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string?>> Rows);
+
+/// <summary>Excel boundary (ClosedXML lives in Infrastructure).</summary>
+public interface ISpreadsheetService
+{
+    /// <summary>Reads at most <paramref name="maxRows"/> data rows; throws <see cref="Common.ValidationException"/> for unreadable files.</summary>
+    SheetData Read(Stream stream, int maxRows);
+
+    /// <summary>A workbook with one data sheet (bold, frozen header) and an optional help sheet.</summary>
+    byte[] CreateTemplate(string sheetName, IReadOnlyList<string> headers, string? helpSheetName, IReadOnlyList<(string Column, string Help)> help);
 }

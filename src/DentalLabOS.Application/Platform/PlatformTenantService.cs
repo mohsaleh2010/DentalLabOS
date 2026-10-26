@@ -158,7 +158,7 @@ public sealed class PlatformTenantService(
             .ToListAsync(ct);
     }
 
-    /// <summary>PLT-03: provisions a lab with its main branch, built-in roles, numbering and an owner invitation.</summary>
+    /// <summary>PLT-03: provisions a lab with its main branch, built-in roles, numbering, starter catalog data and an owner invitation.</summary>
     public async Task<CreateTenantResult> CreateTenantAsync(CreateTenantRequest request, CancellationToken ct = default)
     {
         await permissions.DemandAsync(Permissions.Platform.TenantsCreate, ct);
@@ -251,6 +251,8 @@ public sealed class PlatformTenantService(
                 {
                     db.DocumentSequences.Add(new DocumentSequence { DocumentType = type, Prefix = prefix, Year = today.Year });
                 }
+
+                TenantCatalogDefaults.Add(db, request.DefaultCulture, request.BaseCurrencyCode, today.Year);
 
                 var invitation = new UserInvitation
                 {

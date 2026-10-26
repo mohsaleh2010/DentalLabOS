@@ -1,0 +1,205 @@
+@page "/items/{id}/edit"
+@model DentalLabOS.Web.Pages.Items.EditModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = Model.IsNew ? L["Items.New"] : L["Items.Edit"];
+    var showCost = Model.Can(Permissions.Items.CostRead);
+    var baseUnit = Model.Units.FirstOrDefault(u => u.Id == Model.Input.BaseUnitId);
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/items">@L["Nav.Items"]</a><icon name="chevron-left" class="icon-dir" />@if (!Model.IsNew) {<a href="/items/@Model.Id">@Model.Input.Name</a><icon name="chevron-left" class="icon-dir" />}<span>@ViewData["Title"]</span></nav>
+        <h1>@ViewData["Title"] <span class="screen-id">ITM-02</span></h1>
+    </div>
+</div>
+<form method="post" class="card" style="max-width: 980px" data-guard novalidate id="item-form" data-item-form="@(Model.IsNew ? "new" : "edit")">
+    <div class="card-body">
+        <partial name="_ValidationSummary" />
+        <input type="hidden" asp-for="Input.RowVersion" />
+        <div class="form-section">
+            <h2 class="form-section-title">@L["Items.Section.Basic"]</h2>
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                    <input class="input" asp-for="Input.Name" required maxlength="200" autofocus />
+                    <span class="field-error" asp-validation-for="Input.Name"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.NameEn">@L["Fields.NameEn"]</label>
+                    <input class="input input-ltr" asp-for="Input.NameEn" dir="ltr" maxlength="200" />
+                    <span class="field-error" asp-validation-for="Input.NameEn"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.Sku">@L["Fields.Sku"]@if (!Model.IsNew) {<span class="req">*</span>}</label>
+                    <input class="input input-ltr" asp-for="Input.Sku" dir="ltr" maxlength="30" placeholder="@(Model.IsNew ? "ITM-00001" : null)" />
+                    <span class="hint">@(Model.IsNew ? L["Fields.AutoCodeHint"] : L["Fields.CodeHint"])</span>
+                    <span class="field-error" asp-validation-for="Input.Sku"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.Type">@L["Fields.Type"]<span class="req">*</span></label>
+                    <select class="select" asp-for="Input.Type" data-item-type>
+                        @foreach (var t in DentalLabOS.Web.Pages.Items.IndexModel.Types)
+                        {
+                            <option value="@t">@L[$"ItemType.{t}"]</option>
+                        }
+                    </select>
+                    <span class="hint">@L["Items.TypeHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.Type"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.CategoryId">@L["Fields.Category"]<span class="req">*</span></label>
+                    <select class="select" asp-for="Input.CategoryId" data-category required>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Id" data-default-type="@c.DefaultType">@(c.ParentName is null ? c.Name : $"{c.ParentName} › {c.Name}")</option>
+                        }
+                    </select>
+                    <span class="field-error" asp-validation-for="Input.CategoryId"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.BaseUnitId">@L["Fields.Unit"]<span class="req">*</span></label>
+                    <select class="select" asp-for="Input.BaseUnitId" required>
+                        @foreach (var u in Model.Units)
+                        {
+                            <option value="@u.Id">@u.Name (@u.Code)</option>
+                        }
+                    </select>
+                    <span class="field-error" asp-validation-for="Input.BaseUnitId"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.Barcode">@L["Fields.Barcode"]</label>
+                    <input class="input input-ltr" asp-for="Input.Barcode" dir="ltr" maxlength="50" />
+                    <span class="field-error" asp-validation-for="Input.Barcode"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-section">
+            <h2 class="form-section-title">@L["Items.Section.Pricing"]</h2>
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.DefaultSalesPrice">@L["Items.DefaultPrice"]</label>
+                    <input class="input input-ltr" asp-for="Input.DefaultSalesPrice" type="number" step="0.01" min="0" dir="ltr" value="@Fmt.Input(Model.Input.DefaultSalesPrice)" />
+                    <span class="hint">@L["Items.DefaultPriceHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.DefaultSalesPrice"></span>
+                </div>
+                @if (showCost)
+                {
+                    <div class="field">
+                        <label class="label" asp-for="Input.StandardCost">@L["Fields.StandardCost"]</label>
+                        <input class="input input-ltr" asp-for="Input.StandardCost" type="number" step="0.01" min="0" dir="ltr" value="@Fmt.Input(Model.Input.StandardCost ?? 0)" />
+                        <span class="field-error" asp-validation-for="Input.StandardCost"></span>
+                    </div>
+                }
+                <div class="field">
+                    <label class="label" asp-for="Input.TaxCodeId">@L["Fields.TaxCode"]</label>
+                    <select class="select" asp-for="Input.TaxCodeId">
+                        <option value="">@L["Items.NoTax"]</option>
+                        @foreach (var t in Model.TaxCodes)
+                        {
+                            <option value="@t.Id">@t.Name (@t.Rate.ToString("0.##", CultureInfo.InvariantCulture)%)</option>
+                        }
+                    </select>
+                    <span class="field-error" asp-validation-for="Input.TaxCodeId"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-section" data-for="service">
+            <h2 class="form-section-title">@L["Items.Section.Production"]</h2>
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.StandardLeadHours">@L["Fields.StandardLeadHours"]</label>
+                    <input class="input input-ltr" asp-for="Input.StandardLeadHours" type="number" step="0.5" min="0" dir="ltr" value="@Fmt.Input(Model.Input.StandardLeadHours)" />
+                    <span class="hint">@L["Items.LeadHoursHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.StandardLeadHours"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.DifficultyFactor">@L["Fields.DifficultyFactor"]</label>
+                    <input class="input input-ltr" asp-for="Input.DifficultyFactor" type="number" step="0.1" min="0.1" max="10" dir="ltr" value="@Fmt.Input(Model.Input.DifficultyFactor)" />
+                    <span class="hint">@L["Items.DifficultyHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.DifficultyFactor"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-section" data-for="stock">
+            <h2 class="form-section-title">@L["Items.Section.Stock"]</h2>
+            <div class="form-grid cols-2">
+                <div class="field">
+                    <label class="label" asp-for="Input.ReorderLevel">@L["Fields.ReorderLevel"]</label>
+                    <input class="input input-ltr" asp-for="Input.ReorderLevel" type="number" step="any" min="0" dir="ltr" value="@Fmt.Input(Model.Input.ReorderLevel)" />
+                    <span class="field-error" asp-validation-for="Input.ReorderLevel"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.ReorderQty">@L["Fields.ReorderQty"]</label>
+                    <input class="input input-ltr" asp-for="Input.ReorderQty" type="number" step="any" min="0" dir="ltr" value="@Fmt.Input(Model.Input.ReorderQty)" />
+                    <span class="field-error" asp-validation-for="Input.ReorderQty"></span>
+                </div>
+                <label class="switch"><input type="checkbox" asp-for="Input.TracksBatches" /> @L["Fields.TracksBatches"]</label>
+                <label class="switch"><input type="checkbox" asp-for="Input.TracksExpiry" /> @L["Fields.TracksExpiry"]</label>
+            </div>
+        </div>
+        @if (!Model.IsNew)
+        {
+            <label class="switch"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"] <span class="hint">@L["Items.InactiveHint"]</span></label>
+        }
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+            <a class="btn btn-ghost" href="@(Model.IsNew ? "/items" : $"/items/{Model.Id}")">@L["Common.Cancel"]</a>
+        </div>
+    </div>
+</form>
+@if (!Model.IsNew)
+{
+    <section class="card mt-6" style="max-width: 980px" id="conversions">
+        <div class="card-header"><h2>@L["Items.Conversions"]</h2><span class="sub">@L["Items.ConversionsHint", baseUnit?.Code ?? ""]</span></div>
+        <div class="card-body">
+            @if (Model.Conversions.Count > 0)
+            {
+                <div class="table-wrap mb-4">
+                    <table class="table">
+                        <tbody>
+                        @foreach (var c in Model.Conversions)
+                        {
+                            <tr>
+                                <td class="ltr" style="text-align:start">1 <code>@c.FromUnitCode</code> = @Fmt.Qty(c.Factor) <code>@c.ToUnitCode</code></td>
+                                <td class="actions">
+                                    <form method="post" asp-page-handler="DeleteConversion" asp-route-conversionId="@c.Id">
+                                        <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]"><icon name="trash-2" class="icon-sm" /></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <form method="post" asp-page-handler="AddConversion" class="inline-form" novalidate>
+                <div class="field narrow">
+                    <label class="label" asp-for="Conversion.FromUnitId">@L["Items.ConversionFrom"]</label>
+                    <select class="select" asp-for="Conversion.FromUnitId">
+                        @foreach (var u in Model.Units)
+                        {
+                            <option value="@u.Id">@u.Code</option>
+                        }
+                    </select>
+                </div>
+                <div class="field narrow">
+                    <label class="label" asp-for="Conversion.Factor">@L["Items.ConversionFactor"]</label>
+                    <input class="input input-ltr" asp-for="Conversion.Factor" type="number" step="any" min="0" dir="ltr" value="" required />
+                </div>
+                <div class="field narrow">
+                    <label class="label" asp-for="Conversion.ToUnitId">@L["Items.ConversionTo"]</label>
+                    <select class="select" asp-for="Conversion.ToUnitId">
+                        @foreach (var u in Model.Units)
+                        {
+                            <option value="@u.Id" selected="@(u.Id == Model.Input.BaseUnitId)">@u.Code</option>
+                        }
+                    </select>
+                </div>
+                <button class="btn" type="submit"><icon name="plus" /> @L["Common.Add"]</button>
+            </form>
+            <span class="field-error" asp-validation-for="Conversion.Factor"></span>
+            <span class="field-error" asp-validation-for="Conversion.ToUnitId"></span>
+            <span class="field-error" asp-validation-for="Conversion.FromUnitId"></span>
+        </div>
+    </section>
+}

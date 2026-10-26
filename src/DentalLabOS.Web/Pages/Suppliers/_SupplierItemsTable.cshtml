@@ -1,0 +1,34 @@
+@model (IReadOnlyList<DentalLabOS.Contracts.Parties.SupplierItemDto> Items, bool Editable, Guid? Editing)
+@if (Model.Items.Count == 0)
+{
+    <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Suppliers.NoItems"].Value" param-Description="@L["Suppliers.NoItemsText"].Value" param-IconName="@("package")" />
+}
+else
+{
+    <div class="table-wrap">
+        <table class="table table-responsive">
+            <thead><tr><th>@L["Fields.Item"]</th><th>@L["Suppliers.SupplierSku"]</th><th class="num">@L["Suppliers.LastPrice"]</th><th class="num">@L["Suppliers.LeadTime"]</th><th class="num">@L["Suppliers.MinOrder"]</th><th class="actions"></th></tr></thead>
+            <tbody>
+            @foreach (var x in Model.Items)
+            {
+                <tr aria-current="@(Model.Editing == x.Id ? "true" : null)">
+                    <td class="cell-primary"><strong>@x.ItemName</strong> <code class="text-xs">@x.ItemSku</code> @if (x.IsPreferred) {<span class="badge badge-success"><icon name="star" class="icon-sm" /> @L["Suppliers.Preferred"]</span>}</td>
+                    <td data-label="@L["Suppliers.SupplierSku"]" class="ltr">@(x.SupplierSku ?? "—")</td>
+                    <td data-label="@L["Suppliers.LastPrice"]" class="num money">@(x.LastPrice is { } p ? $"{Fmt.Money(p)} {x.CurrencyCode}" : "•••")</td>
+                    <td data-label="@L["Suppliers.LeadTime"]" class="num">@L["Common.Days", x.LeadTimeDays]</td>
+                    <td data-label="@L["Suppliers.MinOrder"]" class="num">@Fmt.Qty(x.MinOrderQty)</td>
+                    <td class="actions">
+                        @if (Model.Editable)
+                        {
+                            <a class="btn btn-sm" href="?edit=@x.Id"><icon name="pencil" class="icon-sm" /></a>
+                            <form method="post" asp-page-handler="Delete" asp-route-lineId="@x.Id" style="display:inline">
+                                <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Common.DeleteConfirm", x.ItemName]"><icon name="trash-2" class="icon-sm" /></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

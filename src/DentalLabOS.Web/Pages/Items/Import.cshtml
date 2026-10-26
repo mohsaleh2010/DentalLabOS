@@ -1,0 +1,13 @@
+@page "/items/import"
+@model DentalLabOS.Web.Pages.Items.ImportModel
+@{
+    ViewData["Title"] = L["Items.Import"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/items">@L["Nav.Items"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Items.Import"]</span></nav>
+        <h1>@L["Items.Import"] <span class="screen-id">ITM-11</span></h1>
+        <p class="lead">@L["Import.Items.Lead"]</p>
+    </div>
+</div>
+<partial name="_ImportWizard" model="Model" />

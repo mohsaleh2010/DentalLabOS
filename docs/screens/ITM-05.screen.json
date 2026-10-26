@@ -1,0 +1,57 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-05",
+  "module": "items",
+  "titleKey": "Items.ServicesCatalog",
+  "route": "/catalog/services",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.services.read",
+    "access": "permission",
+    "actions": {
+      "create": "items.manage"
+    }
+  },
+  "entities": [
+    "Item"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/items",
+      "purpose": "List (services)"
+    }
+  ],
+  "rules": [
+    "Active services only, grouped by category",
+    "Shows the default price; customer prices come from the price quote"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "services"
+    ]
+  },
+  "tests": [
+    "ITM-05.happy",
+    "ITM-05.permissionDenied"
+  ],
+  "relatedScreens": [],
+  "notes": "Shows up to 100 services; use search to narrow larger catalogs."
+}

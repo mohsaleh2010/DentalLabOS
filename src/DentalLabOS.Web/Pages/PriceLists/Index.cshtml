@@ -1,0 +1,44 @@
+@page "/price-lists"
+@model DentalLabOS.Web.Pages.PriceLists.IndexModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["PriceLists.Title"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["PriceLists.Title"] <span class="screen-id">ITM-07</span></h1>
+        <p class="lead">@L["PriceLists.Lead"]</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.PriceLists.Bulk))
+        {
+            <a class="btn" href="/price-lists/bulk-update"><icon name="percent" /> @L["PriceLists.Bulk"]</a>
+        }
+        @if (Model.Can(Permissions.PriceLists.Manage))
+        {
+            <a class="btn btn-primary" href="/price-lists/new"><icon name="plus" /> @L["PriceLists.New"]</a>
+        }
+    </div>
+</div>
+<div class="alert mb-6"><icon name="info" /><div>@L["PriceLists.PriorityRule"]</div></div>
+<section class="card">
+    <div class="table-wrap">
+        <table class="table table-responsive">
+            <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Currency"]</th><th>@L["PriceLists.Validity"]</th><th class="num">@L["PriceLists.Lines"]</th><th class="num">@L["Nav.Customers"]</th><th>@L["Fields.Status"]</th><th class="actions"></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model.Lists)
+            {
+                <tr>
+                    <td class="cell-primary"><div class="cell-main"><span class="stat-icon" style="width:34px;height:34px"><icon name="receipt" class="icon-sm" /></span><span><a href="/price-lists/@p.Id"><strong>@p.Name</strong></a>@if (p.IsDefault) {<span>@L["PriceLists.DefaultHint"]</span>}</span></div></td>
+                    <td data-label="@L["Fields.Currency"]"><code>@p.CurrencyCode</code></td>
+                    <td data-label="@L["PriceLists.Validity"]">@(p.ValidFrom is null && p.ValidTo is null ? L["PriceLists.Always"].Value : $"{Fmt.Date(p.ValidFrom)} → {Fmt.Date(p.ValidTo)}")</td>
+                    <td data-label="@L["PriceLists.Lines"]" class="num">@p.LineCount</td>
+                    <td data-label="@L["Nav.Customers"]" class="num">@p.CustomerCount</td>
+                    <td data-label="@L["Fields.Status"]">@if (p.IsDefault) {<span class="badge badge-brand"><icon name="star" class="icon-sm" /> @L["PriceLists.Default"]</span>} else {<partial name="_StatusBadge" model="StatusUi.Active(p.IsActive)" />}</td>
+                    <td class="actions"><a class="btn btn-sm" href="/price-lists/@p.Id"><icon name="@(Model.Can(Permissions.PriceLists.Manage) ? "pencil" : "eye")" class="icon-sm" /> @(Model.Can(Permissions.PriceLists.Manage) ? L["Common.Edit"] : L["Common.Details"])</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

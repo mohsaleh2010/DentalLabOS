@@ -1,0 +1,82 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-23",
+  "module": "admin",
+  "titleKey": "Import.Title",
+  "route": "/admin/import",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.import.manage",
+    "access": "permission",
+    "actions": {
+      "customers": "customers.manage",
+      "items": "items.import"
+    }
+  },
+  "entities": [
+    "Customer",
+    "Dentist",
+    "CustomerGroup",
+    "Item"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/import/{kind}/template",
+      "purpose": "Template"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/import/{kind}/preview",
+      "purpose": "Validate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/import/{kind}",
+      "purpose": "Import"
+    }
+  ],
+  "rules": [
+    "Download template, upload, review, import",
+    "Nothing is saved unless every row is valid (single transaction)",
+    "The previewed file is kept 15 minutes for the same user only",
+    "Empty codes are numbered automatically",
+    "Credit limits need customers.credit.manage"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "errors"
+    ]
+  },
+  "tests": [
+    "ADM-23.happy",
+    "ADM-23.permissionDenied",
+    "ADM-23.crossTenant",
+    "ADM-23.allOrNothing",
+    "ADM-23.duplicateCodes"
+  ],
+  "relatedScreens": [
+    "ITM-11"
+  ]
+}

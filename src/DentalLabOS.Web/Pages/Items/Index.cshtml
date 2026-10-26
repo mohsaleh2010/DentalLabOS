@@ -1,0 +1,102 @@
+@page "/items"
+@model DentalLabOS.Web.Pages.Items.IndexModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.Items"];
+    var r = Model.Result;
+    var showCost = Model.Can(Permissions.Items.CostRead);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Items"] <span class="screen-id">ITM-01</span></h1>
+        <p class="lead">@L["Items.Lead"]</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.Items.ServicesRead))
+        {
+            <a class="btn" href="/catalog/services"><icon name="layers" /> @L["Items.ServicesCatalog"]</a>
+        }
+        @if (Model.Can(Permissions.Items.CategoriesManage))
+        {
+            <a class="btn" href="/items/categories"><icon name="folder-tree" /> @L["Items.Categories"]</a>
+        }
+        @if (Model.Can(Permissions.Items.Import))
+        {
+            <a class="btn" href="/items/import"><icon name="file-spreadsheet" /> @L["Import.FromExcel"]</a>
+        }
+        @if (Model.Can(Permissions.Items.Manage))
+        {
+            <a class="btn btn-primary" href="/items/new/edit"><icon name="plus" /> @L["Items.New"]</a>
+        }
+    </div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Items.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
+        <select class="select" name="type" aria-label="@L["Fields.Type"]" onchange="this.form.submit()">
+            <option value="">@L["Items.AllTypes"]</option>
+            @foreach (var t in DentalLabOS.Web.Pages.Items.IndexModel.Types)
+            {
+                <option value="@t" selected="@(Model.Type == t)">@L[$"ItemType.{t}"]</option>
+            }
+        </select>
+        <select class="select" name="category" aria-label="@L["Fields.Category"]" onchange="this.form.submit()">
+            <option value="">@L["Items.AllCategories"]</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c.Id" selected="@(Model.Category == c.Id)">@(c.ParentName is null ? c.Name : $"{c.ParentName} › {c.Name}")</option>
+            }
+        </select>
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" onchange="this.form.submit()">
+            <option value="">@L["Common.AllStatuses"]</option>
+            <option value="active" selected="@(Model.Status == "active")">@L["Common.Active"]</option>
+            <option value="inactive" selected="@(Model.Status == "inactive")">@L["Common.Inactive"]</option>
+        </select>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        @if (string.IsNullOrEmpty(Model.Q) && Model.Type is null && Model.Category is null && Model.Status is null && Model.Can(Permissions.Items.Manage))
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Items.EmptyTitle"].Value" param-Description="@L["Items.EmptyText"].Value"
+                       param-IconName="@("tag")" param-ActionText="@L["Items.New"].Value" param-ActionHref="@("/items/new/edit")" />
+        }
+        else
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-Description="@L["Common.NoResultsText"].Value" param-IconName="@("search")" />
+        }
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Sku"]</th><th>@L["Fields.Type"]</th><th>@L["Fields.Category"]</th><th>@L["Fields.Unit"]</th><th class="num">@L["Items.DefaultPrice"]</th>@if (showCost) {<th class="num">@L["Fields.StandardCost"]</th>}<th>@L["Fields.Status"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr></thead>
+                <tbody>
+                @foreach (var i in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon @(i.IsStockTracked ? "tone-info" : null)" style="width:34px;height:34px"><icon name="@(i.IsStockTracked ? "package" : "tag")" class="icon-sm" /></span><span><a href="/items/@i.Id"><strong>@i.Name</strong></a>@if (i.NameEn is not null) {<span class="ltr">@i.NameEn</span>}</span></div></td>
+                        <td data-label="@L["Fields.Sku"]"><code>@i.Sku</code></td>
+                        <td data-label="@L["Fields.Type"]"><span class="badge @(i.IsStockTracked ? "badge-info" : "badge-brand")">@L[$"ItemType.{i.Type}"]</span></td>
+                        <td data-label="@L["Fields.Category"]">@i.CategoryName</td>
+                        <td data-label="@L["Fields.Unit"]"><code>@i.UnitCode</code></td>
+                        <td data-label="@L["Items.DefaultPrice"]" class="num money">@Fmt.Money(i.DefaultSalesPrice)</td>
+                        @if (showCost)
+                        {
+                            <td data-label="@L["Fields.StandardCost"]" class="num money muted">@Fmt.Money(i.StandardCost)</td>
+                        }
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(i.IsActive)" /></td>
+                        <td class="actions">
+                            <a class="btn btn-sm" href="/items/@i.Id"><icon name="eye" class="icon-sm" /> @L["Common.Details"]</a>
+                            @if (Model.Can(Permissions.Items.Manage))
+                            {
+                                <a class="btn btn-sm btn-ghost" href="/items/@i.Id/edit" aria-label="@L["Common.Edit"]"><icon name="pencil" class="icon-sm" /></a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

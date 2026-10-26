@@ -1,5 +1,6 @@
 using DentalLabOS.Application.Abstractions;
 using DentalLabOS.Application.Common;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 
@@ -14,6 +15,21 @@ public abstract class AppPageModel : PageModel
     protected IStringLocalizer L => HttpContext.RequestServices.GetRequiredService<IStringLocalizer>();
 
     protected IPermissionService PermissionService => HttpContext.RequestServices.GetRequiredService<IPermissionService>();
+
+    /// <summary>The signed-in user's permissions, used to show or hide actions (the server still checks each one).</summary>
+    public IReadOnlySet<string> Granted { get; private set; } = new HashSet<string>();
+
+    public bool Can(string permission) => Granted.Contains(permission);
+
+    public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            Granted = await PermissionService.GetGrantedAsync();
+        }
+
+        await next();
+    }
 
     /// <summary>Runs a command; maps validation/concurrency failures to ModelState and returns false.</summary>
     protected async Task<bool> TryExecuteAsync(Func<Task> action, string prefix = "Input")

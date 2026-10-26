@@ -1,0 +1,126 @@
+@model DentalLabOS.Web.Infrastructure.ImportPageModel
+@{
+    var p = Model.Preview;
+    var kindKey = Model.Kind.ToString();
+    var listUrl = Model.Kind == DentalLabOS.Contracts.Catalog.ImportKind.Customers ? "/customers" : "/items";
+    var kindQuery = $"kind={kindKey.ToLowerInvariant()}";
+    var step = Model.Result is not null ? 3 : p is not null ? 2 : 1;
+}
+<ol class="steps">
+    <li class="@(step == 1 ? "is-current" : null)">@L["Import.Step.Upload"]</li>
+    <li class="@(step == 2 ? "is-current" : null)">@L["Import.Step.Review"]</li>
+    <li class="@(step == 3 ? "is-current" : null)">@L["Import.Step.Done"]</li>
+</ol>
+<partial name="_ValidationSummary" />
+@if (Model.Result is { } done)
+{
+    <section class="card">
+        <div class="card-body">
+            <div class="empty">
+                <span class="empty-art"><icon name="circle-check" class="icon-xl" /></span>
+                <h3>@L["Import.Success", done.Created]</h3>
+                <p>@L[$"Import.{kindKey}.AfterImport"]</p>
+                <div class="flex gap-2 mt-4" style="justify-content:center">
+                    <a class="btn btn-primary" href="@listUrl">@L[$"Import.{kindKey}.Open"]</a>
+                    <a class="btn" href="?@kindQuery">@L["Import.Another"]</a>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else if (p is not null)
+{
+    <section class="card mb-6">
+        <div class="card-header">
+            <h2>@L["Import.ReviewTitle"]</h2>
+            <span class="sub"><icon name="file-spreadsheet" class="icon-sm" /> @Model.FileName</span>
+        </div>
+        <div class="card-body">
+            <div class="kpis mb-4">
+                <div class="kpi"><span>@L["Import.Rows"]</span><strong>@p.TotalRows</strong></div>
+                <div class="kpi"><span>@L["Import.ValidRows"]</span><strong class="delta-up">@p.ValidRows</strong></div>
+                <div class="kpi"><span>@L["Import.Errors"]</span><strong class="@(p.Errors.Count > 0 ? "delta-down" : null)">@p.Errors.Count</strong></div>
+            </div>
+            @if (p.CanImport)
+            {
+                <div class="alert alert-success"><icon name="circle-check" /><div>@L["Import.Ready", p.TotalRows]</div></div>
+            }
+            else if (p.TotalRows == 0 && p.Errors.Count == 0)
+            {
+                <div class="alert alert-warning"><icon name="triangle-alert" /><div>@L["Import.Empty"]</div></div>
+            }
+            else
+            {
+                <div class="alert alert-danger"><icon name="circle-alert" /><div>@L["Import.FixErrors"]</div></div>
+                <div class="table-wrap mt-4">
+                    <table class="table">
+                        <thead><tr><th class="num">@L["Import.Row"]</th><th>@L["Import.Column"]</th><th>@L["Import.Problem"]</th></tr></thead>
+                        <tbody>
+                        @foreach (var e in p.Errors)
+                        {
+                            <tr class="row-error"><td class="num">@e.Row</td><td>@Model.Header(e.Column)</td><td>@L[e.MessageKey]</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </section>
+    @if (p.Sample.Count > 0)
+    {
+        <section class="card mb-6">
+            <div class="card-header"><h2>@L["Import.Sample"]</h2><span class="sub">@L["Import.SampleHint", p.Sample.Count]</span></div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr>@foreach (var c in p.Columns) {<th>@Model.Header(c)</th>}</tr></thead>
+                    <tbody>
+                    @foreach (var row in p.Sample)
+                    {
+                        <tr>@foreach (var v in row) {<td>@(v ?? "—")</td>}</tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    <div class="flex gap-2 wrap">
+        @if (p.CanImport)
+        {
+            <form method="post" asp-page-handler="Import">
+                <input type="hidden" name="token" value="@Model.Token" />
+                <input type="hidden" name="kind" value="@kindKey.ToLowerInvariant()" />
+                <button class="btn btn-primary" type="submit"><icon name="upload" /> @L["Import.Confirm", p.TotalRows]</button>
+            </form>
+        }
+        <a class="btn" href="?@kindQuery">@L["Import.Restart"]</a>
+    </div>
+}
+else
+{
+    <div class="grid grid-main">
+        <form method="post" asp-page-handler="Preview" enctype="multipart/form-data" class="card">
+            <div class="card-body">
+                <input type="hidden" name="kind" value="@kindKey.ToLowerInvariant()" />
+                <label class="dropzone" data-dropzone>
+                    <icon name="file-spreadsheet" class="icon-xl" />
+                    <strong>@L["Import.Choose"]</strong>
+                    <span class="hint">@L["Import.ChooseHint"]</span>
+                    <span class="file-name" data-file-name></span>
+                    <input type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
+                </label>
+                <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="eye" /> @L["Import.PreviewButton"]</button></div>
+            </div>
+        </form>
+        <section class="card" style="align-self:start">
+            <div class="card-header"><h2>@L["Import.HowTo"]</h2></div>
+            <div class="card-body">
+                <ol class="checklist">
+                    <li>@L["Import.HowTo1"]</li>
+                    <li>@L[$"Import.{kindKey}.HowTo2"]</li>
+                    <li>@L["Import.HowTo3"]</li>
+                </ol>
+                <a class="btn btn-block mt-4" href="?handler=Template&@kindQuery"><icon name="download" /> @L["Import.Template"]</a>
+            </div>
+        </section>
+    </div>
+}

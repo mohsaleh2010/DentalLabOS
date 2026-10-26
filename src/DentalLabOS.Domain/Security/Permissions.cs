@@ -36,6 +36,45 @@ public static class Permissions
         public const string AuditRead = "admin.audit.read";
         public const string SubscriptionRead = "admin.subscription.read";
         public const string ApprovalsManage = "admin.approvals.manage";
+        public const string TaxesManage = "admin.taxes.manage";
+        public const string CurrenciesManage = "admin.currencies.manage";
+        public const string UnitsManage = "admin.units.manage";
+        public const string ImportManage = "admin.import.manage";
+    }
+
+    public static class Customers
+    {
+        public const string Read = "customers.read";
+        public const string Manage = "customers.manage";
+        public const string DentistsManage = "customers.dentists.manage";
+        public const string GroupsManage = "customers.groups.manage";
+        public const string CreditManage = "customers.credit.manage";
+    }
+
+    public static class Suppliers
+    {
+        public const string Read = "suppliers.read";
+        public const string Manage = "suppliers.manage";
+        public const string ItemsManage = "suppliers.items.manage";
+    }
+
+    public static class Items
+    {
+        public const string Read = "items.read";
+        public const string Manage = "items.manage";
+        public const string CategoriesManage = "items.categories.manage";
+        public const string ServicesRead = "items.services.read";
+        public const string BomManage = "items.bom.manage";
+        public const string Import = "items.import";
+        /// <summary>Standard cost and supplier prices are hidden from roles without inventory valuation access.</summary>
+        public const string CostRead = "inventory.valuation.read";
+    }
+
+    public static class PriceLists
+    {
+        public const string Read = "pricelists.read";
+        public const string Manage = "pricelists.manage";
+        public const string Bulk = "pricelists.bulk";
     }
 
     /// <summary>Every tenant-level permission key (platform keys are in <see cref="PlatformKeys"/>).</summary>

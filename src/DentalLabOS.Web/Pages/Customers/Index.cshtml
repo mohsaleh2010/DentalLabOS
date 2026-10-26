@@ -1,0 +1,97 @@
+@page "/customers"
+@model DentalLabOS.Web.Pages.Customers.IndexModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.Customers"];
+    var r = Model.Result;
+    string[] types = ["Clinic", "Center", "Dentist", "Individual"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Customers"] <span class="screen-id">CUS-01</span></h1>
+        <p class="lead">@L["Customers.Lead"]</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.Customers.GroupsManage))
+        {
+            <a class="btn" href="/customers/groups"><icon name="layers" /> @L["Customers.Groups"]</a>
+        }
+        @if (Model.Can(Permissions.Admin.ImportManage) && Model.Can(Permissions.Customers.Manage))
+        {
+            <a class="btn" href="/admin/import?kind=customers"><icon name="file-spreadsheet" /> @L["Import.FromExcel"]</a>
+        }
+        @if (Model.Can(Permissions.Customers.Manage))
+        {
+            <a class="btn btn-primary" href="/customers/new/edit"><icon name="plus" /> @L["Customers.New"]</a>
+        }
+    </div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Customers.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
+        <select class="select" name="type" aria-label="@L["Fields.Type"]" onchange="this.form.submit()">
+            <option value="">@L["Customers.AllTypes"]</option>
+            @foreach (var t in types)
+            {
+                <option value="@t" selected="@(Model.Type == t)">@L[$"PartyType.{t}"]</option>
+            }
+        </select>
+        @if (Model.Groups.Count > 0)
+        {
+            <select class="select" name="group" aria-label="@L["Fields.Group"]" onchange="this.form.submit()">
+                <option value="">@L["Customers.AllGroups"]</option>
+                @foreach (var g in Model.Groups)
+                {
+                    <option value="@g.Id" selected="@(Model.Group == g.Id)">@g.Name</option>
+                }
+            </select>
+        }
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" onchange="this.form.submit()">
+            <option value="">@L["Common.AllStatuses"]</option>
+            <option value="active" selected="@(Model.Status == "active")">@L["Common.Active"]</option>
+            <option value="inactive" selected="@(Model.Status == "inactive")">@L["Common.Inactive"]</option>
+        </select>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        @if (string.IsNullOrEmpty(Model.Q) && Model.Type is null && Model.Group is null && Model.Status is null && Model.Can(Permissions.Customers.Manage))
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Customers.EmptyTitle"].Value" param-Description="@L["Customers.EmptyText"].Value"
+                       param-IconName="@("stethoscope")" param-ActionText="@L["Customers.New"].Value" param-ActionHref="@("/customers/new/edit")" />
+        }
+        else
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-Description="@L["Common.NoResultsText"].Value" param-IconName="@("search")" />
+        }
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Code"]</th><th>@L["Fields.Type"]</th><th>@L["Fields.Group"]</th><th>@L["Fields.Phone"]</th><th class="num">@L["Customers.Dentists"]</th><th>@L["Fields.Status"]</th><th class="actions"><span class="sr-only">@L["Common.Actions"]</span></th></tr></thead>
+                <tbody>
+                @foreach (var c in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span class="stat-icon" style="width:34px;height:34px"><icon name="@(c.Type == "Dentist" || c.Type == "Individual" ? "user-round" : "stethoscope")" class="icon-sm" /></span><span><a href="/customers/@c.Id"><strong>@c.Name</strong></a>@if (c.City is not null) {<span>@c.City</span>}</span></div></td>
+                        <td data-label="@L["Fields.Code"]"><code>@c.Code</code></td>
+                        <td data-label="@L["Fields.Type"]">@L[$"PartyType.{c.Type}"]</td>
+                        <td data-label="@L["Fields.Group"]">@(c.GroupName ?? "—")</td>
+                        <td data-label="@L["Fields.Phone"]" class="ltr">@(c.Mobile ?? c.Phone ?? "—")</td>
+                        <td data-label="@L["Customers.Dentists"]" class="num">@c.DentistCount</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(c.IsActive)" /></td>
+                        <td class="actions">
+                            <a class="btn btn-sm" href="/customers/@c.Id"><icon name="eye" class="icon-sm" /> @L["Common.Details"]</a>
+                            @if (Model.Can(Permissions.Customers.Manage))
+                            {
+                                <a class="btn btn-sm btn-ghost" href="/customers/@c.Id/edit" aria-label="@L["Common.Edit"]"><icon name="pencil" class="icon-sm" /></a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

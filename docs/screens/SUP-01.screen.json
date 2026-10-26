@@ -1,0 +1,72 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "SUP-01",
+  "module": "suppliers",
+  "titleKey": "Nav.Suppliers",
+  "route": "/suppliers",
+  "pattern": "ListPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "suppliers.read",
+    "access": "permission",
+    "actions": {
+      "create": "suppliers.manage"
+    }
+  },
+  "entities": [
+    "Supplier"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/suppliers",
+      "purpose": "List"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/suppliers/options",
+      "purpose": "Picker"
+    }
+  ],
+  "rules": [
+    "Server-side paging and search"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "SUP-01.happy",
+    "SUP-01.permissionDenied",
+    "SUP-01.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "code",
+    "phone",
+    "items",
+    "rating",
+    "status"
+  ],
+  "filters": [
+    "search",
+    "status"
+  ]
+}

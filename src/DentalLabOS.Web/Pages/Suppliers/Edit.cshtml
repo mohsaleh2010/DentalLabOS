@@ -1,0 +1,74 @@
+@page "/suppliers/{id}/edit"
+@model DentalLabOS.Web.Pages.Suppliers.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? L["Suppliers.New"] : L["Suppliers.Edit"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/suppliers">@L["Nav.Suppliers"]</a><icon name="chevron-left" class="icon-dir" />@if (!Model.IsNew) {<a href="/suppliers/@Model.Id">@Model.Input.Name</a><icon name="chevron-left" class="icon-dir" />}<span>@ViewData["Title"]</span></nav>
+        <h1>@ViewData["Title"] <span class="screen-id">SUP-02</span></h1>
+    </div>
+</div>
+<form method="post" class="card" style="max-width: 980px" data-guard novalidate>
+    <div class="card-body">
+        <partial name="_ValidationSummary" />
+        <input type="hidden" asp-for="Input.RowVersion" />
+        <div class="form-grid cols-2">
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" required maxlength="200" autofocus />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Code">@L["Fields.Code"]@if (!Model.IsNew) {<span class="req">*</span>}</label>
+                <input class="input input-ltr" asp-for="Input.Code" dir="ltr" maxlength="20" placeholder="@(Model.IsNew ? "S-00001" : null)" />
+                <span class="hint">@(Model.IsNew ? L["Fields.AutoCodeHint"] : L["Fields.CodeHint"])</span>
+                <span class="field-error" asp-validation-for="Input.Code"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Phone">@L["Fields.Phone"]</label>
+                <input class="input input-ltr" asp-for="Input.Phone" type="tel" dir="ltr" maxlength="50" />
+                <span class="field-error" asp-validation-for="Input.Phone"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Email">@L["Fields.Email"]</label>
+                <input class="input input-ltr" asp-for="Input.Email" type="email" dir="ltr" maxlength="256" />
+                <span class="field-error" asp-validation-for="Input.Email"></span>
+            </div>
+            <div class="field span-2">
+                <label class="label" asp-for="Input.Address">@L["Fields.Address"]</label>
+                <textarea class="textarea" asp-for="Input.Address" maxlength="500" rows="2"></textarea>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.TaxNumber">@L["Fields.TaxNumber"]</label>
+                <input class="input input-ltr" asp-for="Input.TaxNumber" dir="ltr" maxlength="50" />
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.PaymentTermsDays">@L["Fields.PaymentTermsDays"]</label>
+                <input class="input" asp-for="Input.PaymentTermsDays" type="number" min="0" max="365" />
+                <span class="field-error" asp-validation-for="Input.PaymentTermsDays"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.OpeningBalance">@L["Fields.OpeningBalance"]</label>
+                <input class="input input-ltr" asp-for="Input.OpeningBalance" type="number" step="0.01" dir="ltr" value="@Fmt.Input(Model.Input.OpeningBalance)" />
+                <span class="hint">@L["Suppliers.OpeningBalanceHint"]</span>
+                <span class="field-error" asp-validation-for="Input.OpeningBalance"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Rating">@L["Fields.Rating"]</label>
+                <input class="input input-ltr" asp-for="Input.Rating" type="number" step="0.5" min="0" max="5" dir="ltr" />
+                <span class="hint">@L["Suppliers.RatingHint"]</span>
+                <span class="field-error" asp-validation-for="Input.Rating"></span>
+            </div>
+            <label class="switch span-2"><input type="checkbox" asp-for="Input.IsOutsourcePartner" /> @L["Suppliers.OutsourcePartner"] <span class="hint">@L["Suppliers.OutsourceHint"]</span></label>
+            @if (!Model.IsNew)
+            {
+                <label class="switch span-2"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"]</label>
+            }
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+            <a class="btn btn-ghost" href="@(Model.IsNew ? "/suppliers" : $"/suppliers/{Model.Id}")">@L["Common.Cancel"]</a>
+        </div>
+    </div>
+</form>

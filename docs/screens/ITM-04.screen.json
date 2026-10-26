@@ -1,0 +1,98 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-04",
+  "module": "items",
+  "titleKey": "Items.Categories",
+  "route": "/items/categories",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.categories.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "ItemCategory"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/item-categories",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/item-categories",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/item-categories/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/item-categories/{id}",
+      "purpose": "Delete unused"
+    }
+  ],
+  "rules": [
+    "Name unique under the same parent",
+    "No cycles",
+    "Categories with items or children can't be deleted"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update",
+      "Delete"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-04.happy",
+    "ITM-04.permissionDenied",
+    "ITM-04.crossTenant",
+    "ITM-04.cycle"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "parentId",
+      "type": "lookup",
+      "source": "itemCategories"
+    },
+    {
+      "name": "defaultType",
+      "type": "enum",
+      "source": "ItemType"
+    }
+  ],
+  "columns": [
+    "name",
+    "defaultType",
+    "items"
+  ]
+}

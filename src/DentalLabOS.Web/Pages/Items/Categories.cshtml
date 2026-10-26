@@ -1,0 +1,89 @@
+@page "/items/categories"
+@model DentalLabOS.Web.Pages.Items.CategoriesModel
+@{
+    ViewData["Title"] = L["Items.Categories"];
+    var editing = Model.Edit is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/items">@L["Nav.Items"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Items.Categories"]</span></nav>
+        <h1>@L["Items.Categories"] <span class="screen-id">ITM-04</span></h1>
+        <p class="lead">@L["Items.CategoriesLead"]</p>
+    </div>
+</div>
+<div class="split">
+    <section class="card">
+        @if (Model.Categories.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Common.NoResults"].Value" param-IconName="@("folder-tree")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Name"]</th><th>@L["Items.DefaultType"]</th><th class="num">@L["Nav.Items"]</th><th class="actions"></th></tr></thead>
+                    <tbody>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <tr class="@(c.ParentId is null ? null : "tree-child")">
+                            <td class="cell-primary">@if (c.ParentId is not null) {<span class="muted">└ </span>}<strong>@c.Name</strong></td>
+                            <td data-label="@L["Items.DefaultType"]">@(c.DefaultType is null ? "—" : L[$"ItemType.{c.DefaultType}"].Value)</td>
+                            <td data-label="@L["Nav.Items"]" class="num"><a href="/items?category=@c.Id">@c.ItemCount</a></td>
+                            <td class="actions">
+                                <a class="btn btn-sm" href="?edit=@c.Id"><icon name="pencil" class="icon-sm" /> @L["Common.Edit"]</a>
+                                @if (c.ItemCount == 0 && !Model.Categories.Any(x => x.ParentId == c.Id))
+                                {
+                                    <form method="post" asp-page-handler="Delete" asp-route-categoryId="@c.Id" style="display:inline">
+                                        <button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["Common.DeleteConfirm", c.Name]"><icon name="trash-2" class="icon-sm" /></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <form method="post" class="card" asp-route-edit="@Model.Edit" data-guard novalidate>
+        <div class="card-header"><h2>@(editing ? L["Items.EditCategory"] : L["Items.NewCategory"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" maxlength="150" required />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.ParentId">@L["Items.ParentCategory"]</label>
+                <select class="select" asp-for="Input.ParentId">
+                    <option value="">@L["Items.RootCategory"]</option>
+                    @foreach (var c in Model.Categories.Where(c => c.ParentId is null && c.Id != Model.Edit))
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+                <span class="field-error" asp-validation-for="Input.ParentId"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.DefaultType">@L["Items.DefaultType"]</label>
+                <select class="select" asp-for="Input.DefaultType">
+                    <option value="">—</option>
+                    @foreach (var t in DentalLabOS.Web.Pages.Items.IndexModel.Types)
+                    {
+                        <option value="@t">@L[$"ItemType.{t}"]</option>
+                    }
+                </select>
+                <span class="hint">@L["Items.DefaultTypeHint"]</span>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+                @if (editing)
+                {
+                    <a class="btn btn-ghost" href="/items/categories">@L["Common.Cancel"]</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>

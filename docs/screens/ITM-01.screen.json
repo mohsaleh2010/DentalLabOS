@@ -1,0 +1,89 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-01",
+  "module": "items",
+  "titleKey": "Nav.Items",
+  "route": "/items",
+  "pattern": "ListPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.read",
+    "access": "permission",
+    "actions": {
+      "create": "items.manage",
+      "import": "items.import",
+      "categories": "items.categories.manage",
+      "cost": "inventory.valuation.read"
+    }
+  },
+  "entities": [
+    "Item",
+    "ItemCategory",
+    "UnitOfMeasure"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/items",
+      "purpose": "List"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/items/options",
+      "purpose": "Picker"
+    }
+  ],
+  "rules": [
+    "Standard cost column only with inventory.valuation.read",
+    "Search also matches the exact barcode"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "hidesCostFor": [
+      "Technician",
+      "Reception",
+      "Sales"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-01.happy",
+    "ITM-01.permissionDenied",
+    "ITM-01.crossTenant",
+    "ITM-01.costHidden"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "sku",
+    "type",
+    "category",
+    "unit",
+    "salesPrice",
+    "standardCost",
+    "status"
+  ],
+  "filters": [
+    "search",
+    "type",
+    "category",
+    "status"
+  ]
+}

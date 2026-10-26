@@ -1,0 +1,190 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-02",
+  "module": "items",
+  "titleKey": "Items.Edit",
+  "route": "/items/{id}/edit",
+  "pattern": "FormPage",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.manage",
+    "access": "permission",
+    "actions": {
+      "cost": "inventory.valuation.read"
+    }
+  },
+  "entities": [
+    "Item",
+    "UnitConversion"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/items",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/items/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/items/{id}/conversions",
+      "purpose": "Add conversion"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/items/{id}/conversions/{conversionId}",
+      "purpose": "Remove conversion"
+    }
+  ],
+  "rules": [
+    "Empty SKU takes the next number (ITM-00001)",
+    "SKU and barcode unique per lab",
+    "Materials, consumables and finished goods are stock-tracked; services are not",
+    "Batch/expiry tracking and reorder levels apply to stock items only",
+    "Standard cost is kept unchanged when the editor can't see costs",
+    "Type can't switch between service and material while used in a BOM",
+    "Unit conversions must involve the base unit"
+  ],
+  "states": [
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "hidesCostFor": [
+      "Technician",
+      "Reception",
+      "Sales"
+    ],
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-02.happy",
+    "ITM-02.permissionDenied",
+    "ITM-02.crossTenant",
+    "ITM-02.autoCode",
+    "ITM-02.costHidden",
+    "ITM-02.concurrency"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/items/new/edit",
+    "/items/{id}/edit"
+  ],
+  "fields": [
+    {
+      "name": "sku",
+      "type": "code",
+      "maxLength": 30
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 200
+    },
+    {
+      "name": "nameEn",
+      "type": "text",
+      "maxLength": 200
+    },
+    {
+      "name": "type",
+      "type": "enum",
+      "required": true,
+      "source": "ItemType"
+    },
+    {
+      "name": "categoryId",
+      "type": "lookup",
+      "required": true,
+      "source": "itemCategories"
+    },
+    {
+      "name": "baseUnitId",
+      "type": "lookup",
+      "required": true,
+      "source": "units"
+    },
+    {
+      "name": "barcode",
+      "type": "text",
+      "maxLength": 50,
+      "scan": true
+    },
+    {
+      "name": "defaultSalesPrice",
+      "type": "decimal",
+      "min": 0,
+      "scale": 2
+    },
+    {
+      "name": "standardCost",
+      "type": "decimal",
+      "min": 0,
+      "scale": 2
+    },
+    {
+      "name": "taxCodeId",
+      "type": "lookup",
+      "source": "taxCodes"
+    },
+    {
+      "name": "standardLeadHours",
+      "type": "decimal",
+      "min": 0
+    },
+    {
+      "name": "difficultyFactor",
+      "type": "decimal",
+      "min": 0.1,
+      "max": 10
+    },
+    {
+      "name": "reorderLevel",
+      "type": "decimal",
+      "min": 0
+    },
+    {
+      "name": "reorderQty",
+      "type": "decimal",
+      "min": 0
+    },
+    {
+      "name": "tracksBatches",
+      "type": "boolean"
+    },
+    {
+      "name": "tracksExpiry",
+      "type": "boolean"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ITM-11",
+  "module": "items",
+  "titleKey": "Items.Import",
+  "route": "/items/import",
+  "pattern": "Custom",
+  "phase": 2,
+  "status": "implemented",
+  "permissions": {
+    "view": "items.import",
+    "access": "permission"
+  },
+  "entities": [
+    "Item",
+    "ItemCategory"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/import/items/template",
+      "purpose": "Template"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/import/items/preview",
+      "purpose": "Validate"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/import/items",
+      "purpose": "Import"
+    }
+  ],
+  "rules": [
+    "Arabic or English headers",
+    "Nothing is saved unless every row is valid (single transaction)",
+    "New categories are created",
+    "Units must exist",
+    "Max 5 MB / 5,000 rows",
+    "Standard cost is ignored without the cost permission"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ITM-11.happy",
+    "ITM-11.permissionDenied",
+    "ITM-11.crossTenant",
+    "ITM-11.allOrNothing"
+  ],
+  "relatedScreens": [
+    "ADM-23"
+  ]
+}

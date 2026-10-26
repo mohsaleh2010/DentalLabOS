@@ -1,0 +1,77 @@
+@page "/suppliers/{id:guid}/items"
+@model DentalLabOS.Web.Pages.Suppliers.ItemsModel
+@{
+    var s = Model.Supplier;
+    ViewData["Title"] = L["Suppliers.Items"];
+    var editing = Model.Edit is not null;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/suppliers">@L["Nav.Suppliers"]</a><icon name="chevron-left" class="icon-dir" /><a href="/suppliers/@s.Id">@s.Name</a><icon name="chevron-left" class="icon-dir" /><span>@L["Suppliers.Items"]</span></nav>
+        <h1>@L["Suppliers.Items"] <span class="screen-id">SUP-05</span></h1>
+        <p class="lead">@L["Suppliers.ItemsLead"]</p>
+    </div>
+</div>
+<div class="split">
+    <section class="card">
+        <partial name="_SupplierItemsTable" model="(Model.Lines, true, Model.Edit)" />
+    </section>
+    <form method="post" class="card" asp-route-edit="@Model.Edit" data-guard novalidate>
+        <div class="card-header"><h2>@(editing ? L["Suppliers.EditItem"] : L["Suppliers.AddItem"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <div class="field">
+                <label class="label" asp-for="Input.ItemId">@L["Fields.Item"]<span class="req">*</span></label>
+                <select class="select" asp-for="Input.ItemId" required>
+                    @foreach (var o in Model.ItemOptions)
+                    {
+                        <option value="@o.Id">@o.Name (@o.Code)</option>
+                    }
+                </select>
+                <span class="field-error" asp-validation-for="Input.ItemId"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.SupplierSku">@L["Suppliers.SupplierSku"]</label>
+                <input class="input input-ltr" asp-for="Input.SupplierSku" dir="ltr" maxlength="50" />
+            </div>
+            <div class="form-grid cols-2">
+                @if (Model.Can(DentalLabOS.Domain.Security.Permissions.Items.CostRead))
+                {
+                    <div class="field">
+                        <label class="label" asp-for="Input.LastPrice">@L["Suppliers.LastPrice"]</label>
+                        <input class="input input-ltr" asp-for="Input.LastPrice" type="number" step="0.01" min="0" dir="ltr" value="@Fmt.Input(Model.Input.LastPrice)" />
+                        <span class="field-error" asp-validation-for="Input.LastPrice"></span>
+                    </div>
+                }
+                <div class="field">
+                    <label class="label" asp-for="Input.CurrencyCode">@L["Fields.Currency"]</label>
+                    <select class="select" asp-for="Input.CurrencyCode">
+                        @foreach (var c in Model.Currencies)
+                        {
+                            <option value="@c.Code">@c.Code — @c.Name</option>
+                        }
+                    </select>
+                    <span class="field-error" asp-validation-for="Input.CurrencyCode"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.LeadTimeDays">@L["Suppliers.LeadTimeDays"]</label>
+                    <input class="input" asp-for="Input.LeadTimeDays" type="number" min="0" max="365" />
+                    <span class="field-error" asp-validation-for="Input.LeadTimeDays"></span>
+                </div>
+                <div class="field">
+                    <label class="label" asp-for="Input.MinOrderQty">@L["Suppliers.MinOrder"]</label>
+                    <input class="input input-ltr" asp-for="Input.MinOrderQty" type="number" step="any" min="0" dir="ltr" value="@Fmt.Input(Model.Input.MinOrderQty)" />
+                    <span class="field-error" asp-validation-for="Input.MinOrderQty"></span>
+                </div>
+            </div>
+            <label class="switch"><input type="checkbox" asp-for="Input.IsPreferred" /> @L["Suppliers.Preferred"] <span class="hint">@L["Suppliers.PreferredHint"]</span></label>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+                @if (editing)
+                {
+                    <a class="btn btn-ghost" href="/suppliers/@s.Id/items">@L["Common.Cancel"]</a>
+                }
+            </div>
+        </div>
+    </form>
+</div>
