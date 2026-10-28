@@ -128,8 +128,9 @@ public sealed class ProductionSetupService(
                            select new { p.UserId, p.FullName, t.DepartmentId }).ToListAsync(ct);
         if (techs.Count == 0 && !await db.TechnicianProfiles.AnyAsync(ct))
         {
-            techs = await db.UserProfiles.AsNoTracking().Where(p => p.IsActive)
-                .Select(p => new { p.UserId, p.FullName, DepartmentId = Guid.Empty }).ToListAsync(ct);
+            // Projected in memory: a Guid constant in the SQL projection comes back as text.
+            techs = (await db.UserProfiles.AsNoTracking().Where(p => p.IsActive).Select(p => new { p.UserId, p.FullName }).ToListAsync(ct))
+                .Select(p => new { p.UserId, p.FullName, DepartmentId = Guid.Empty }).ToList();
         }
 
         var userIds = techs.Select(t => t.UserId).ToList();

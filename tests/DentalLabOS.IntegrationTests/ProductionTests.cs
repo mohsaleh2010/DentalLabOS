@@ -208,6 +208,12 @@ public sealed class ProductionTests(SqlServerFixture fx)
         var list = await b.GetFromJsonAsync<PagedResult<WorkOrderListItemDto>>($"/api/v1/workorders?search={wo.Number}");
         Assert.Empty(list!.Items);
 
+        // The technician picker (falling back to all active users when a lab has no technician profiles) stays within the lab.
+        var techs = await Ok<List<TechnicianOptionDto>>(await b.GetAsync("/api/v1/production/technicians"));
+        var labATechs = await Ok<List<TechnicianOptionDto>>(await a.GetAsync("/api/v1/production/technicians"));
+        Assert.NotEmpty(techs);
+        Assert.Empty(techs.Select(t => t.UserId).Intersect(labATechs.Select(t => t.UserId)));
+
         // Lab B can't file intake against Lab A's customer or service.
         var cross = await b.PostAsJsonAsync("/api/v1/workorders/intake", Intake(s, "11"));
         Assert.Equal(HttpStatusCode.BadRequest, cross.StatusCode);

@@ -35,11 +35,12 @@
                 <span class="badge" data-selected-count data-template="@L["Assign.Selected", "{0}"]">@L["Assign.Selected", 0]</span>
                 <span class="spacer"></span>
                 <select class="select" name="UserId" aria-label="@L["Fields.Technician"]">
-                    <option value="">@L["Assign.Unassign"]</option>
+                    @* Technicians first so the default choice assigns; clearing an assignment is a deliberate last option. *@
                     @foreach (var t in Model.Technicians)
                     {
                         <option value="@t.UserId">@t.FullName@if (t.DepartmentName is not null) {<text> · @t.DepartmentName</text>} (@L["Assign.OpenTasks", t.OpenTasks])</option>
                     }
+                    <option value="">@L["Assign.Unassign"]</option>
                 </select>
                 <button class="btn btn-primary" type="submit"><icon name="user-check" /> @L["Assign.Apply"]</button>
             </div>

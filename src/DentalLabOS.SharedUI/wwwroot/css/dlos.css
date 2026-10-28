@@ -859,6 +859,9 @@ html.is-offline .offline-banner { display: flex; }
 .seg-high input:checked + span { background: var(--warning-bg); color: var(--warning-fg); }
 .seg-urgent input:checked + span { background: var(--danger-bg); color: var(--danger-fg); }
 
+/* The hidden attribute wins over component display rules (e.g. .field). */
+[hidden] { display: none !important; }
+
 /* FDI tooth chart */
 .tooth-chart { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); padding: var(--space-3) var(--space-4); }
 .tooth-tools { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3); }
@@ -867,22 +870,23 @@ html.is-offline .offline-banner { display: flex; }
 .arch-label { display: flex; justify-content: space-between; width: 100%; max-width: 640px; font-size: var(--fs-xs); color: var(--text-muted); }
 .arch-label strong { color: var(--text-2); }
 .arch-divider { width: 100%; max-width: 640px; border-top: 1px dashed var(--border-strong); }
-.tooth-row { display: flex; gap: 10px; }
-.tooth-half { display: flex; gap: 3px; }
-.tooth-half + .tooth-half { padding-inline-start: 10px; border-inline-start: 2px solid var(--border-strong); }
-.tooth { position: relative; cursor: pointer; }
+.tooth-row { display: flex; gap: 8px; width: 100%; max-width: 640px; min-width: 400px; }
+.tooth-half { display: flex; gap: 3px; flex: 1; min-width: 0; }
+.tooth-half + .tooth-half { padding-inline-start: 8px; border-inline-start: 2px solid var(--border-strong); }
+.tooth { position: relative; cursor: pointer; flex: 1 1 0; min-width: 0; }
 .tooth input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.tooth span { display: grid; place-items: center; width: 34px; height: 42px; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-2);
+.tooth span { display: grid; place-items: center; width: 100%; height: 42px; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-2);
   font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; transition: background 0.12s, border-color 0.12s, transform 0.12s; }
 .upper .tooth span { border-radius: 10px 10px 16px 16px; }
 .lower .tooth span { border-radius: 16px 16px 10px 10px; }
-.tooth.molar span { width: 38px; }
-.tooth.incisor span { width: 30px; }
+.tooth.molar { flex-grow: 1.2; }
+.tooth.incisor { flex-grow: 0.9; }
 .tooth:hover span { border-color: var(--primary); transform: translateY(-1px); }
 .tooth input:checked + span { background: var(--primary); border-color: var(--primary); color: var(--text-inverse); }
 .tooth input:focus-visible + span { box-shadow: var(--focus-ring); }
 .tooth-primary { margin-top: var(--space-3); }
 .tooth-primary summary { cursor: pointer; font-size: var(--fs-sm); color: var(--text-muted); font-weight: 600; margin-bottom: var(--space-2); }
+.tooth-primary .tooth-row { max-width: 420px; min-width: 280px; }
 .tooth-map { display: inline-flex; flex-direction: column; gap: 3px; max-width: 100%; overflow-x: auto; }
 .tooth-map-row { display: flex; gap: 2px; }
 .tm { display: grid; place-items: center; width: 26px; height: 24px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
@@ -974,8 +978,12 @@ html.is-offline .offline-banner { display: flex; }
 
 /* Workflow designer */
 .stage-editor td { vertical-align: middle; }
-.stage-editor .input-step { width: 70px; }
-.stage-editor .input-hours { width: 90px; }
+.stage-editor th, .stage-editor td { padding-inline: 6px; }
+.stage-editor .input-step { width: 58px; }
+.stage-editor .input-hours { width: 72px; }
+.stage-editor [data-f="Name"] { min-width: 140px; }
+.stage-editor [data-f="DepartmentId"] { min-width: 120px; }
+.stage-editor .actions .btn { padding-inline: 6px; }
 .flow-preview { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); counter-reset: step; }
 .flow-preview li { counter-increment: step; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); position: relative; }
 .flow-preview li::before { content: counter(step); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: var(--text-inverse); font-size: var(--fs-xs); font-weight: 700; }
