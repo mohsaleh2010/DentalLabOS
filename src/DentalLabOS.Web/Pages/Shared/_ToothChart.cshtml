@@ -1,0 +1,61 @@
+@* Interactive FDI chart (viewer facing the patient: upper right quadrant on the left). Plain checkboxes, so it works without JS;
+   dlos.js adds the quick-select buttons and the live count. *@
+@model (string Name, IReadOnlyCollection<string> Selected)
+@{
+    int[] ur = [18, 17, 16, 15, 14, 13, 12, 11], ul = [21, 22, 23, 24, 25, 26, 27, 28];
+    int[] lr = [48, 47, 46, 45, 44, 43, 42, 41], ll = [31, 32, 33, 34, 35, 36, 37, 38];
+    int[] pur = [55, 54, 53, 52, 51], pul = [61, 62, 63, 64, 65], plr = [85, 84, 83, 82, 81], pll = [71, 72, 73, 74, 75];
+    var hasPrimary = Model.Selected.Any(s => s.Length == 2 && s[0] is >= '5' and <= '8');
+    var selected = Model.Selected;
+    var name = Model.Name;
+}
+@functions {
+    private static string Molarity(int code) => (code % 10) switch { >= 6 => "molar", >= 4 => "premolar", 3 => "canine", _ => "incisor" };
+}
+@{
+    void Row(int[] right, int[] left, string arch)
+    {
+        <div class="tooth-row @arch">
+            <div class="tooth-half">
+                @foreach (var t in right)
+                {
+                    <label class="tooth @Molarity(t)" title="@L["Teeth.Tooth", t]"><input type="checkbox" name="@name" value="@t" checked="@selected.Contains(t.ToString())" data-tooth /><span>@t</span></label>
+                }
+            </div>
+            <div class="tooth-half">
+                @foreach (var t in left)
+                {
+                    <label class="tooth @Molarity(t)" title="@L["Teeth.Tooth", t]"><input type="checkbox" name="@name" value="@t" checked="@selected.Contains(t.ToString())" data-tooth /><span>@t</span></label>
+                }
+            </div>
+        </div>
+    }
+}
+<div class="tooth-chart" data-tooth-chart>
+    <div class="tooth-tools">
+        <span class="badge badge-brand" data-tooth-count data-template="@L["Teeth.Selected", "{0}"]">@L["Teeth.Selected", selected.Count]</span>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-sm btn-ghost" data-teeth-select="upper" hidden>@L["Teeth.AllUpper"]</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-teeth-select="lower" hidden>@L["Teeth.AllLower"]</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-teeth-select="none" hidden><icon name="x" class="icon-sm" /> @L["Teeth.Clear"]</button>
+    </div>
+    <div class="tooth-arches" dir="ltr">
+        <div class="arch-label"><span>@L["Teeth.Right"]</span><strong>@L["Teeth.Upper"]</strong><span>@L["Teeth.Left"]</span></div>
+        @{ Row(ur, ul, "upper"); }
+        <div class="arch-divider"></div>
+        @{ Row(lr, ll, "lower"); }
+        <div class="arch-label"><span>@L["Teeth.Right"]</span><strong>@L["Teeth.Lower"]</strong><span>@L["Teeth.Left"]</span></div>
+    </div>
+    <details class="tooth-primary" open="@hasPrimary">
+        <summary>@L["Teeth.Primary"]</summary>
+        <div class="tooth-arches" dir="ltr">
+            @{ Row(pur, pul, "upper"); }
+            <div class="arch-divider"></div>
+            @{ Row(plr, pll, "lower"); }
+        </div>
+    </details>
+    <div class="chip-row mt-2">
+        <label class="check"><input type="checkbox" name="@name" value="UPPER" checked="@selected.Contains("UPPER")" /> @L["Teeth.WholeUpper"]</label>
+        <label class="check"><input type="checkbox" name="@name" value="LOWER" checked="@selected.Contains("LOWER")" /> @L["Teeth.WholeLower"]</label>
+    </div>
+</div>

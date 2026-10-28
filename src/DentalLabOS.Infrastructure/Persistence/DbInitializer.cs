@@ -35,7 +35,9 @@ public sealed class DbInitializer(AppDbContext db, ILogger<DbInitializer> logger
         {
             using (db.TenantContext.BeginScope(t.Id))
             {
-                if (await TenantCatalogDefaults.BackfillAsync(db, t.DefaultCulture, t.BaseCurrencyCode, year, ct))
+                var changed = await TenantCatalogDefaults.BackfillAsync(db, t.DefaultCulture, t.BaseCurrencyCode, year, ct);
+                changed |= await ProductionDefaults.BackfillAsync(db, t.DefaultCulture, ct);
+                if (changed)
                 {
                     await db.SaveChangesAsync(ct);
                     logger.LogInformation("Added starter catalog data for tenant {TenantId}", t.Id);

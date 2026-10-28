@@ -1,0 +1,67 @@
+@page "/production/calendar"
+@model DentalLabOS.Web.Pages.Production.CalendarModel
+@{
+    ViewData["Title"] = L["Nav.Calendar"];
+    var d = Model.Data;
+    var first = Model.First;
+    var days = d.Days.ToDictionary(x => x.Date);
+    var culture = CultureInfo.CurrentCulture;
+    // Week starts on Saturday (common in the region).
+    var offset = ((int)first.DayOfWeek + 1) % 7;
+    var count = DateTime.DaysInMonth(first.Year, first.Month);
+    var prev = first.AddMonths(-1).ToString("yyyy-MM", CultureInfo.InvariantCulture);
+    var next = first.AddMonths(1).ToString("yyyy-MM", CultureInfo.InvariantCulture);
+    DayOfWeek[] order = [DayOfWeek.Saturday, DayOfWeek.Sunday, DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/production/board">@L["Nav.ProductionBoard"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Calendar"]</span></nav>
+        <h1>@L["Nav.Calendar"] <span class="screen-id">ORD-29</span></h1>
+        <p class="lead">@(d.Capacity > 0 ? L["Calendar.Lead", d.Capacity] : L["Calendar.LeadNoCapacity"])</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-icon" href="/production/calendar?month=@prev" aria-label="@L["Calendar.Previous"]"><icon name="chevron-right" class="icon-dir-back" /></a>
+        <strong class="cal-month">@first.ToString("MMMM yyyy", culture)</strong>
+        <a class="btn btn-icon" href="/production/calendar?month=@next" aria-label="@L["Calendar.Next"]"><icon name="chevron-left" class="icon-dir" /></a>
+        <a class="btn" href="/production/calendar">@L["Calendar.Today"]</a>
+    </div>
+</div>
+<section class="card">
+    <div class="calendar">
+        @foreach (var dow in order)
+        {
+            <div class="cal-dow">@culture.DateTimeFormat.GetAbbreviatedDayName(dow)</div>
+        }
+        @for (var k = 0; k < offset; k++)
+        {
+            <div class="cal-day is-empty"></div>
+        }
+        @for (var n = 1; n <= count; n++)
+        {
+            var date = new DateOnly(first.Year, first.Month, n);
+            days.TryGetValue(date, out var day);
+            var due = day?.Due ?? 0;
+            var load = d.Capacity > 0 ? (int)Math.Min(100, Math.Round(100.0 * due / d.Capacity)) : 0;
+            var tone = d.Capacity > 0 && due > d.Capacity ? "is-over" : load >= 80 ? "is-high" : null;
+            <div class="cal-day @tone @(date == Model.Today ? "is-today" : null)">
+                <div class="cal-num">@n</div>
+                @if (due > 0 || (day?.Done ?? 0) > 0)
+                {
+                    <div class="cal-stats">
+                        <span title="@L["Calendar.Due"]"><icon name="clipboard-list" class="icon-sm" /> @due</span>
+                        @if (day!.Done > 0) {<span class="text-success" title="@L["Calendar.Done"]"><icon name="check" class="icon-sm" /> @day.Done</span>}
+                        @if (day.Overdue > 0) {<span class="text-danger" title="@L["Calendar.Overdue"]"><icon name="clock" class="icon-sm" /> @day.Overdue</span>}
+                        @if (day.Urgent > 0) {<span class="text-warning" title="@L["Priority.Urgent"]"><icon name="alarm-clock" class="icon-sm" /> @day.Urgent</span>}
+                    </div>
+                    @if (d.Capacity > 0) {<div class="meter @(tone is not null ? "is-warning" : null)"><span style="width:@load%"></span></div>}
+                }
+            </div>
+        }
+    </div>
+    <div class="card-footer chip-row text-sm muted">
+        <span><icon name="clipboard-list" class="icon-sm" /> @L["Calendar.Due"]</span>
+        <span><icon name="check" class="icon-sm" /> @L["Calendar.Done"]</span>
+        <span><icon name="clock" class="icon-sm" /> @L["Calendar.Overdue"]</span>
+        <span><icon name="alarm-clock" class="icon-sm" /> @L["Priority.Urgent"]</span>
+    </div>
+</section>

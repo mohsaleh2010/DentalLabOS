@@ -51,7 +51,7 @@ builder.Services.Configure<RequestLocalizationOptions>(o =>
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
-builder.Services.AddApiRateLimiting();
+builder.Services.AddApiRateLimiting(builder.Configuration);
 builder.Services.AddOpenApi("v1", o => o.AddDocumentTransformer((doc, _, _) =>
 {
     doc.Info.Title = "DentalLab OS API";
@@ -95,6 +95,7 @@ v1.MapAuthEndpoints();
 v1.MapOrganizationEndpoints();
 v1.MapPartiesEndpoints();
 v1.MapCatalogEndpoints();
+v1.MapProductionEndpoints();
 v1.MapPlatformEndpoints();
 
 await app.RunAsync();

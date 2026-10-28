@@ -40,6 +40,9 @@ public static class Permissions
         public const string CurrenciesManage = "admin.currencies.manage";
         public const string UnitsManage = "admin.units.manage";
         public const string ImportManage = "admin.import.manage";
+        public const string WorkflowsManage = "admin.workflows.manage";
+        public const string ReasonsManage = "admin.reasons.manage";
+        public const string CostingManage = "admin.costing.manage";
     }
 
     public static class Customers
@@ -75,6 +78,32 @@ public static class Permissions
         public const string Read = "pricelists.read";
         public const string Manage = "pricelists.manage";
         public const string Bulk = "pricelists.bulk";
+    }
+
+    public static class Orders
+    {
+        public const string Read = "orders.read";
+        public const string Create = "orders.create";
+    }
+
+    public static class WorkOrders
+    {
+        public const string Read = "workorders.read";
+        public const string Create = "workorders.create";
+        public const string Update = "workorders.update";
+        public const string Hold = "workorders.hold";
+        public const string Transition = "workorders.transition";
+        public const string Cancel = "workorders.cancel";
+        public const string Print = "workorders.print";
+    }
+
+    public static class Production
+    {
+        public const string Read = "production.read";
+
+        /// <summary>Assign work, and act on any stage (skip, move back, work outside one's own department).</summary>
+        public const string Assign = "production.assign";
+        public const string OwnTasks = "tasks.own.read";
     }
 
     /// <summary>Every tenant-level permission key (platform keys are in <see cref="PlatformKeys"/>).</summary>

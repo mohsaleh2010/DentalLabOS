@@ -1,0 +1,25 @@
+@page "/workorders/incomplete"
+@model DentalLabOS.Web.Pages.WorkOrders.IncompleteModel
+@{
+    ViewData["Title"] = L["Nav.Incomplete"];
+    var r = Model.Result;
+    var pageUrl = "/workorders/incomplete?page={page}";
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Incomplete"]</span></nav>
+        <h1>@L["Nav.Incomplete"] <span class="screen-id">ORD-09</span></h1>
+        <p class="lead">@L["WorkOrders.IncompleteLead"]</p>
+    </div>
+</div>
+<section class="card">
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["WorkOrders.NoIncomplete"].Value" param-Description="@L["WorkOrders.NoIncompleteText"].Value" param-IconName="@("circle-check")" />
+    }
+    else
+    {
+        <partial name="_WorkOrderTable" model="r.Items" />
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, pageUrl)" />
+    }
+</section>

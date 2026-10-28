@@ -1,0 +1,53 @@
+@page "/orders"
+@model DentalLabOS.Web.Pages.Orders.IndexModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.Orders"];
+    var r = Model.Result;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Orders"] <span class="screen-id">ORD-01</span></h1>
+        <p class="lead">@L["Orders.Lead"]</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.Orders.Create))
+        {
+            <a class="btn btn-primary" href="/orders/new"><icon name="plus" /> @L["Orders.New"]</a>
+        }
+    </div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Orders.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
+        <label class="check"><input type="checkbox" name="open" value="true" checked="@Model.Open" data-autosubmit /> @L["Orders.OpenOnly"]</label>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Orders.Empty"].Value" param-Description="@L["Orders.EmptyText"].Value" param-IconName="@("shopping-bag")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Number"]</th><th>@L["Fields.Date"]</th><th>@L["Fields.Customer"]</th><th>@L["Fields.Dentist"]</th><th>@L["Fields.Priority"]</th><th>@L["Fields.RequestedDelivery"]</th><th class="num">@L["Orders.WorkOrders"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var o in r.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><a href="/orders/@o.Id"><strong class="ltr">@o.Number</strong></a></td>
+                        <td data-label="@L["Fields.Date"]">@Fmt.Date(o.DocumentDate)</td>
+                        <td data-label="@L["Fields.Customer"]">@o.CustomerName</td>
+                        <td data-label="@L["Fields.Dentist"]">@(o.DentistName ?? "—")</td>
+                        <td data-label="@L["Fields.Priority"]"><partial name="_StatusBadge" model="StatusUi.Priority(o.Priority)" /></td>
+                        <td data-label="@L["Fields.RequestedDelivery"]">@Fmt.Date(o.RequestedDeliveryDate)</td>
+                        <td data-label="@L["Orders.WorkOrders"]" class="num">@o.OpenWorkOrders / @o.WorkOrderCount</td>
+                        <td class="actions"><a class="btn btn-sm" href="/orders/@o.Id"><icon name="eye" class="icon-sm" /> @L["Common.Details"]</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

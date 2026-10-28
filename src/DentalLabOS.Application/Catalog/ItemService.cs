@@ -89,7 +89,8 @@ public sealed class ItemService(IApplicationDbContext db, IPermissionService per
             .Select(i => new ItemDto(i.Id, i.Sku, i.Name, i.NameEn, i.Type.ToString(), i.CategoryId, i.Category.Name, i.BaseUnitId, i.BaseUnit.Code,
                 i.IsStockTracked, i.TracksBatches, i.TracksExpiry, i.ReorderLevel, i.ReorderQty, showCost ? i.StandardCost : null,
                 i.DefaultSalesPrice, i.TaxCodeId, db.TaxCodes.Where(t => t.Id == i.TaxCodeId).Select(t => t.Name).FirstOrDefault(),
-                i.StandardLeadHours, i.DifficultyFactor, i.Barcode, i.IsActive, i.CreatedAtUtc, Convert.ToBase64String(i.RowVersion)))
+                i.StandardLeadHours, i.DifficultyFactor, i.Barcode, i.IsActive, i.CreatedAtUtc, Convert.ToBase64String(i.RowVersion),
+                i.DefaultWorkflowId, db.Workflows.Where(w => w.Id == i.DefaultWorkflowId).Select(w => w.Name).FirstOrDefault()))
             .FirstOrDefaultAsync(ct) ?? throw new NotFoundException(nameof(Item));
     }
 
@@ -161,6 +162,7 @@ public sealed class ItemService(IApplicationDbContext db, IPermissionService per
         i.StandardLeadHours = Item.IsServiceType(type) ? r.StandardLeadHours : 0;
         i.DifficultyFactor = r.DifficultyFactor;
         i.Barcode = MasterData.Clean(r.Barcode);
+        i.DefaultWorkflowId = Item.IsServiceType(type) ? r.DefaultWorkflowId : null;
     }
 
     private async Task<ItemType> ValidateAsync(ItemUpsertRequest r, Guid? id, CancellationToken ct)
@@ -183,6 +185,11 @@ public sealed class ItemService(IApplicationDbContext db, IPermissionService per
         if (r.TaxCodeId is { } tax)
         {
             v.When(!await db.TaxCodes.AnyAsync(t => t.Id == tax && t.IsActive, ct), nameof(r.TaxCodeId), "Validation.Required");
+        }
+
+        if (r.DefaultWorkflowId is { } wf)
+        {
+            v.When(!await db.Workflows.AnyAsync(w => w.Id == wf && w.IsActive, ct), nameof(r.DefaultWorkflowId), "Validation.Required");
         }
 
         if (sku is not null && await db.Items.AnyAsync(i => i.Sku == sku && i.Id != id, ct))

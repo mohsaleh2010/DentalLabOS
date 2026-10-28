@@ -1,0 +1,23 @@
+@using DentalLabOS.Contracts.Production
+@model IReadOnlyList<TimelineEntryDto>
+@if (Model.Count == 0)
+{
+    <p class="muted">—</p>
+}
+else
+{
+    <ul class="activity">
+        @foreach (var t in Model)
+        {
+            <li>
+                <span class="dot tone-@t.Action.ToLowerInvariant()"><icon name="@StatusUi.TransitionIcon(t.Action)" class="icon-sm" /></span>
+                <div>
+                    <div class="what"><strong>@L[$"Transition.{t.Action}"]</strong>@if (t.StageName is not null) {<text> · @t.StageName</text>}
+                        @if (t.FromStatus != t.ToStatus) {<span class="text-xs muted"> (@L[StatusUi.WorkOrder(t.ToStatus).LabelKey])</span>}</div>
+                    @if (t.Reason is not null) {<div class="text-sm">@t.Reason</div>}
+                    <div class="when">@(t.UserName ?? "—") · @t.AtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div>
+                </div>
+            </li>
+        }
+    </ul>
+}

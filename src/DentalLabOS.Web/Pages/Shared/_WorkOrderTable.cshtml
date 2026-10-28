@@ -1,0 +1,28 @@
+@using DentalLabOS.Contracts.Production
+@model IReadOnlyList<WorkOrderListItemDto>
+<div class="table-wrap">
+    <table class="table table-responsive">
+        <thead><tr><th>@L["Fields.Number"]</th><th>@L["Fields.Customer"]</th><th>@L["Fields.Service"]</th><th>@L["Fields.Status"]</th><th>@L["WorkOrders.CurrentStage"]</th><th>@L["Fields.Priority"]</th><th>@L["Fields.DueDate"]</th><th class="actions"></th></tr></thead>
+        <tbody>
+        @foreach (var w in Model)
+        {
+            <tr class="@(w.IsOverdue ? "row-late" : null)">
+                <td class="cell-primary">
+                    <div class="cell-main"><span><a href="/workorders/@w.Id"><strong class="ltr">@w.Number</strong></a>
+                        @if (w.PatientReference is not null) {<span>@L["Fields.PatientReference"]: @w.PatientReference</span>}</span></div>
+                </td>
+                <td data-label="@L["Fields.Customer"]">@w.CustomerName@if (w.DentistName is not null) {<div class="text-xs muted">@w.DentistName</div>}</td>
+                <td data-label="@L["Fields.Service"]">@w.ServiceName <span class="muted text-xs">× @w.Quantity</span></td>
+                <td data-label="@L["Fields.Status"]">
+                    <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" />
+                    @if (!w.DataComplete && w.Status != "Incomplete") {<span class="badge badge-warning" title="@L["WorkOrders.DataMissing"]"><icon name="circle-alert" /></span>}
+                </td>
+                <td data-label="@L["WorkOrders.CurrentStage"]">@(w.CurrentStageName ?? "—")@if (w.AssigneeName is not null) {<div class="text-xs muted"><icon name="user" class="icon-sm" /> @w.AssigneeName</div>}</td>
+                <td data-label="@L["Fields.Priority"]"><partial name="_StatusBadge" model="StatusUi.Priority(w.Priority)" /></td>
+                <td data-label="@L["Fields.DueDate"]" class="nowrap">@Fmt.Date(w.DueDate)@if (w.IsOverdue) {<div><span class="badge badge-danger"><icon name="clock" /> @L["WorkOrders.Late"]</span></div>}</td>
+                <td class="actions"><a class="btn btn-sm" href="/workorders/@w.Id"><icon name="eye" class="icon-sm" /> @L["Common.Open"]</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,49 @@
+@page "/production/queue/{dept:guid?}"
+@model DentalLabOS.Web.Pages.Production.QueueModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Queue.Title", Model.Department!.Name];
+    IReadOnlyList<DentalLabOS.Contracts.Production.TaskDto> ready = Model.Tasks.Where(t => t.IsAvailable).ToList();
+    IReadOnlyList<DentalLabOS.Contracts.Production.TaskDto> waiting = Model.Tasks.Where(t => !t.IsAvailable).ToList();
+    var canWork = Model.Can(Permissions.WorkOrders.Transition);
+    string? back = $"/production/queue/{Model.Dept}";
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/production/board">@L["Nav.ProductionBoard"]</a><icon name="chevron-left" class="icon-dir" /><span>@Model.Department.Name</span></nav>
+        <h1>@L["Queue.Title", Model.Department.Name] <span class="screen-id">ORD-11</span></h1>
+        <p class="lead">@L["Queue.Lead", ready.Count, waiting.Count]</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.Production.Assign))
+        {
+            <a class="btn btn-primary" href="/production/assign?dept=@Model.Dept"><icon name="user-check" /> @L["Nav.Assign"]</a>
+        }
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Fields.Department"]">
+    @foreach (var d in Model.Departments)
+    {
+        <a class="tab" href="/production/queue/@d.Id" aria-current="@(d.Id == Model.Dept ? "page" : null)">@d.Name</a>
+    }
+</nav>
+<div class="tab-panel stack">
+    <section class="card">
+        <div class="card-header"><h2>@L["Queue.Workable"]</h2><span class="badge badge-brand">@ready.Count</span></div>
+        @if (ready.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Queue.Empty"].Value" param-IconName="@("inbox")" />
+        }
+        else
+        {
+            <partial name="_TaskTable" model="(ready, canWork, back)" />
+        }
+    </section>
+    @if (waiting.Count > 0)
+    {
+        <section class="card">
+            <div class="card-header"><h2>@L["Queue.Upcoming"]</h2><span class="sub">@L["Queue.UpcomingHint"]</span></div>
+            <partial name="_TaskTable" model="(waiting, false, back)" />
+        </section>
+    }
+</div>

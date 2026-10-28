@@ -1,0 +1,27 @@
+@* Customer search + select and the dentist select that follows it (dlos.js refreshes both; without JS the first 100 customers are listed). *@
+@using DentalLabOS.Contracts.Catalog
+@model (IReadOnlyList<OptionDto> Customers, Guid CustomerId, IReadOnlyList<OptionDto> Dentists, Guid? DentistId)
+<div class="field" data-customer-picker data-customers-url="/workorders/intake?handler=Customers" data-dentists-url="/workorders/intake?handler=Dentists">
+    <label class="label" for="Input_CustomerId">@L["Fields.Customer"]<span class="req">*</span></label>
+    <input class="input mb-2" type="search" data-customer-search placeholder="@L["Intake.CustomerSearch"]" aria-label="@L["Intake.CustomerSearch"]" autocomplete="off" />
+    <select class="select" id="Input_CustomerId" name="Input.CustomerId" required data-customer-select>
+        <option value="">@L["Intake.ChooseCustomer"]</option>
+        @foreach (var c in Model.Customers)
+        {
+            <option value="@c.Id" selected="@(c.Id == Model.CustomerId)">@c.Name (@c.Code)</option>
+        }
+    </select>
+    <span class="field-error" data-valmsg-for="Input.CustomerId">@Html.ValidationMessage("Input.CustomerId")</span>
+</div>
+<div class="field">
+    <label class="label" for="Input_DentistId">@L["Fields.Dentist"]</label>
+    <select class="select" id="Input_DentistId" name="Input.DentistId" data-dentist-select data-empty-text="@L["Intake.NoDentist"]">
+        <option value="">@L["Intake.NoDentist"]</option>
+        @foreach (var d in Model.Dentists)
+        {
+            <option value="@d.Id" selected="@(d.Id == Model.DentistId)">@d.Name</option>
+        }
+    </select>
+    <span class="hint">@L["Intake.DentistHint"]</span>
+    <span class="field-error">@Html.ValidationMessage("Input.DentistId")</span>
+</div>

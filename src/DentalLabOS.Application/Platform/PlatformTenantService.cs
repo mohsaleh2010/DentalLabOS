@@ -253,6 +253,7 @@ public sealed class PlatformTenantService(
                 }
 
                 TenantCatalogDefaults.Add(db, request.DefaultCulture, request.BaseCurrencyCode, today.Year);
+                ProductionDefaults.Add(db, request.DefaultCulture);
 
                 var invitation = new UserInvitation
                 {

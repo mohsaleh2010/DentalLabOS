@@ -1,0 +1,57 @@
+@page "/production/board"
+@model DentalLabOS.Web.Pages.Production.BoardModel
+@{
+    ViewData["Title"] = L["Nav.ProductionBoard"];
+    var b = Model.Board;
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.ProductionBoard"] <span class="screen-id">ORD-10</span></h1>
+        <p class="lead">@L["Board.Lead", b.Total, b.Overdue]</p>
+    </div>
+    <div class="actions">
+        <form method="get" class="flex gap-2 items-center">
+            <select class="select" name="dept" aria-label="@L["Fields.Department"]" data-autosubmit>
+                <option value="">@L["Board.AllDepartments"]</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d.Id" selected="@(Model.Dept == d.Id)">@d.Name</option>
+                }
+            </select>
+            <noscript><button class="btn" type="submit">@L["Common.Apply"]</button></noscript>
+        </form>
+        <a class="btn" href="/production/overdue"><icon name="alarm-clock" /> @L["Nav.Overdue"]</a>
+        <a class="btn" href="/production/calendar"><icon name="calendar-days" /> @L["Nav.Calendar"]</a>
+    </div>
+</div>
+@if (b.Total == 0)
+{
+    <section class="card"><component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Board.Empty"].Value" param-Description="@L["Board.EmptyText"].Value" param-IconName="@("square-kanban")" /></section>
+}
+else
+{
+    <div class="kanban" role="list">
+        @foreach (var col in b.Columns.Where(c => c.Kind == "stage" || c.Cards.Count > 0))
+        {
+            <section class="kanban-col kind-@col.Kind" role="listitem" aria-label="@(col.Kind == "stage" ? col.Title : L[col.Title].Value)">
+                <header><h2>@(col.Kind == "stage" ? col.Title : L[col.Title].Value)</h2><span class="badge">@col.Cards.Count</span></header>
+                <div class="kanban-cards">
+                    @foreach (var c in col.Cards)
+                    {
+                        <a class="kcard prio-@c.Priority.ToLowerInvariant() @(c.IsOverdue ? "is-late" : null)" href="/workorders/@c.Id">
+                            <div class="kcard-top"><strong class="ltr">@c.Number</strong>@if (c.Priority != "Normal") {<partial name="_StatusBadge" model="StatusUi.Priority(c.Priority)" />}</div>
+                            <div class="kcard-title">@c.CustomerName</div>
+                            <div class="kcard-sub">@c.ServiceName@if (c.TeethCount > 0) {<text> · @L["Board.Teeth", c.TeethCount]</text>}</div>
+                            <div class="kcard-foot">
+                                <span class="@(c.IsOverdue ? "text-danger" : "muted")"><icon name="clock" class="icon-sm" /> @Fmt.Date(c.DueDate)</span>
+                                @if (c.StageStatus is "InProgress" or "Paused") {<partial name="_StatusBadge" model="StatusUi.Stage(c.StageStatus)" />}
+                                @if (c.MissingCount > 0) {<span class="badge badge-warning"><icon name="circle-alert" /> @c.MissingCount</span>}
+                                @if (c.AssigneeName is not null) {<span class="avatar avatar-sm" title="@c.AssigneeName">@string.Concat(c.AssigneeName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => p[0]))</span>}
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}

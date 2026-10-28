@@ -1,7 +1,9 @@
 using DentalLabOS.Application.Admin;
 using DentalLabOS.Application.Catalog;
+using DentalLabOS.Application.Common;
 using DentalLabOS.Application.Organization;
 using DentalLabOS.Application.Parties;
+using DentalLabOS.Application.Production;
 using DentalLabOS.Application.Platform;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +28,12 @@ public static class DependencyInjection
         services.AddScoped<PriceListService>();
         services.AddScoped<ReferenceDataService>();
         services.AddScoped<ImportService>();
+        services.AddScoped<LabCalendar>();
+        services.AddScoped<WorkflowService>();
+        services.AddScoped<ProductionSetupService>();
+        services.AddScoped<WorkOrderService>();
+        services.AddScoped<OrderService>();
+        services.AddScoped<ProductionService>();
         return services;
     }
 }

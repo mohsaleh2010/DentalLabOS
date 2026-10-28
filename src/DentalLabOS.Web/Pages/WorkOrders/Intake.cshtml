@@ -1,0 +1,193 @@
+@page "/workorders/intake"
+@model DentalLabOS.Web.Pages.WorkOrders.IntakeModel
+@using DentalLabOS.Domain.Security
+@using DentalLabOS.Application.Common
+@{
+    ViewData["Title"] = L["Nav.Intake"];
+    var i = Model.Input;
+    var o = Model.Order;
+    var canPrice = Model.Can(Permissions.PriceLists.Read);
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" />@if (o is not null) {<a href="/orders/@o.Id" class="ltr">@o.Number</a><icon name="chevron-left" class="icon-dir" />}<span>@L["Nav.Intake"]</span></nav>
+        <h1>@L["Nav.Intake"] <span class="screen-id">ORD-05</span></h1>
+        <p class="lead">@L["Intake.Lead"]</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="/scan"><icon name="qr-code" /> @L["Nav.Scan"]</a>
+    </div>
+</div>
+@if (o is not null)
+{
+    <div class="alert alert-info mb-4"><icon name="shopping-bag" /><div><strong>@L["Intake.ForOrder", o.Number]</strong><p>@o.CustomerName · @L["Intake.OrderCount", o.WorkOrders.Count]</p></div></div>
+}
+<form method="post" enctype="multipart/form-data" novalidate data-guard data-intake
+      data-quote-url="@(canPrice ? "/workorders/intake?handler=Quote" : null)" data-today="@Fmt.Input(Model.Today)">
+    <input type="hidden" asp-for="Input.ClientOperationId" />
+    <input type="hidden" asp-for="Input.CustomerOrderId" />
+    <div class="split">
+        <div class="stack">
+            <section class="card">
+                <div class="card-body">
+                    <partial name="_ValidationSummary" />
+                    <h2 class="form-section-title"><span class="step-no">1</span> @L["Intake.Section.Customer"]</h2>
+                    <div class="form-grid cols-2">
+                        @if (o is not null)
+                        {
+                            <input type="hidden" name="Input.CustomerId" value="@o.CustomerId" data-customer-fixed />
+                            <div class="field"><span class="label">@L["Fields.Customer"]</span><div class="input" aria-readonly="true">@o.CustomerName</div></div>
+                            <div class="field">
+                                <label class="label" asp-for="Input.DentistId">@L["Fields.Dentist"]</label>
+                                <select class="select" asp-for="Input.DentistId">
+                                    <option value="">@L["Intake.NoDentist"]</option>
+                                    @foreach (var d in Model.Dentists)
+                                    {
+                                        <option value="@d.Id">@d.Name</option>
+                                    }
+                                </select>
+                                <span class="field-error" asp-validation-for="Input.DentistId"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <partial name="_CustomerPicker" model="(Model.Customers, i.CustomerId, Model.Dentists, i.DentistId)" />
+                        }
+                        <div class="field">
+                            <label class="label" asp-for="Input.PatientReference">@L["Fields.PatientReference"]</label>
+                            <input class="input" asp-for="Input.PatientReference" maxlength="100" autocomplete="off" />
+                            <span class="hint">@L["Intake.PatientHint"]</span>
+                            <span class="field-error" asp-validation-for="Input.PatientReference"></span>
+                        </div>
+                        @if (Model.Branches.Count > 1)
+                        {
+                            <div class="field">
+                                <label class="label" asp-for="Input.BranchId">@L["Fields.Branch"]</label>
+                                <select class="select" asp-for="Input.BranchId">
+                                    <option value="">@L["Context.Current"]</option>
+                                    @foreach (var b in Model.Branches)
+                                    {
+                                        <option value="@b.Id">@b.Name</option>
+                                    }
+                                </select>
+                                <span class="field-error" asp-validation-for="Input.BranchId"></span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </section>
+            <section class="card">
+                <div class="card-body">
+                    <h2 class="form-section-title"><span class="step-no">2</span> @L["Intake.Section.Prescription"]</h2>
+                    <div class="form-grid cols-2">
+                        <div class="field span-all">
+                            <label class="label" asp-for="Input.ServiceItemId">@L["Fields.Service"]<span class="req">*</span></label>
+                            <select class="select" asp-for="Input.ServiceItemId" required data-service-select>
+                                <option value="">@L["Intake.ChooseService"]</option>
+                                @foreach (var s in Model.Services)
+                                {
+                                    <option value="@s.Id" data-lead-hours="@Fmt.Input(s.LeadHours)" data-due="@Fmt.Input(LabCalendar.SuggestDueDate(Model.Today, s.LeadHours))"
+                                            data-required="@string.Join(",", s.Required)" data-workflow="@s.WorkflowName">@s.Name (@s.Sku)</option>
+                                }
+                            </select>
+                            <span class="field-error" asp-validation-for="Input.ServiceItemId"></span>
+                        </div>
+                        <div class="field">
+                            <label class="label" asp-for="Input.MaterialName">@L["Fields.Material"]<span class="req" data-req-for="Material" hidden>*</span></label>
+                            <input class="input" asp-for="Input.MaterialName" maxlength="100" list="materials" />
+                            <datalist id="materials"><option value="Zirconia"></option><option value="E.max"></option><option value="PFM"></option><option value="PMMA"></option><option value="Co-Cr"></option></datalist>
+                            <span class="field-error" asp-validation-for="Input.MaterialName"></span>
+                        </div>
+                        <div class="field">
+                            <label class="label" asp-for="Input.Shade">@L["Fields.Shade"]<span class="req" data-req-for="Shade" hidden>*</span></label>
+                            <input class="input input-ltr" asp-for="Input.Shade" maxlength="30" dir="ltr" list="shades" placeholder="A2" />
+                            <datalist id="shades">@foreach (var sh in new[] { "BL1", "BL2", "A1", "A2", "A3", "A3.5", "A4", "B1", "B2", "B3", "C1", "C2", "D2", "D3" }) {<option value="@sh"></option>}</datalist>
+                            <span class="field-error" asp-validation-for="Input.Shade"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <span class="label">@L["Fields.Teeth"]<span class="req" data-req-for="Teeth" hidden>*</span></span>
+                        <partial name="_ToothChart" model='("Input.Teeth", (IReadOnlyCollection<string>)i.Teeth)' />
+                        <span class="field-error">@Html.ValidationMessage("Input.Teeth")</span>
+                    </div>
+                    <div class="form-grid cols-2">
+                        <div class="field">
+                            <label class="label" asp-for="Input.Quantity">@L["Fields.Quantity"]</label>
+                            <input class="input input-ltr" asp-for="Input.Quantity" type="number" min="1" max="100" dir="ltr" placeholder="@L["Intake.QuantityAuto"]" data-quantity />
+                            <span class="hint">@L["Intake.QuantityHint"]</span>
+                            <span class="field-error" asp-validation-for="Input.Quantity"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="card">
+                <div class="card-body">
+                    <h2 class="form-section-title"><span class="step-no">3</span> @L["Intake.Section.Schedule"]</h2>
+                    <div class="form-grid cols-2">
+                        <div class="field">
+                            <label class="label" asp-for="Input.DueDate">@L["Fields.DueDate"]</label>
+                            <input class="input" asp-for="Input.DueDate" type="date" min="@Fmt.Input(Model.Today)" data-due-date />
+                            <span class="hint" data-due-hint>@L["Intake.DueHint"]</span>
+                            <span class="field-error" asp-validation-for="Input.DueDate"></span>
+                        </div>
+                        <div class="field">
+                            <span class="label">@L["Fields.Priority"]</span>
+                            <div class="segmented" role="radiogroup" aria-label="@L["Fields.Priority"]">
+                                @foreach (var p in DentalLabOS.Web.Pages.WorkOrders.IntakeModel.Priorities)
+                                {
+                                    <label class="seg seg-@p.ToLowerInvariant()"><input type="radio" name="Input.Priority" value="@p" checked="@(i.Priority == p)" data-priority /><span>@L[$"Priority.{p}"]</span></label>
+                                }
+                            </div>
+                        </div>
+                        <div class="field span-all" data-priority-reason hidden="@(i.Priority == "Normal")">
+                            <label class="label" asp-for="Input.PriorityReason">@L["Fields.PriorityReason"]<span class="req">*</span></label>
+                            <input class="input" asp-for="Input.PriorityReason" maxlength="200" />
+                            <span class="field-error" asp-validation-for="Input.PriorityReason"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="card">
+                <div class="card-body">
+                    <h2 class="form-section-title"><span class="step-no">4</span> @L["Intake.Section.Files"]</h2>
+                    <div class="field">
+                        <label class="label" asp-for="Input.Instructions">@L["Fields.Instructions"]</label>
+                        <textarea class="textarea" asp-for="Input.Instructions" rows="3" maxlength="2000"></textarea>
+                        <span class="field-error" asp-validation-for="Input.Instructions"></span>
+                    </div>
+                    <label class="dropzone" data-dropzone>
+                        <icon name="upload" class="icon-xl" />
+                        <strong>@L["Intake.DropFiles"]</strong>
+                        <span class="muted text-sm">@L["Intake.FileTypes", FileInspector.MaxBytes / 1024 / 1024]</span>
+                        <input type="file" name="Files" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.stl,.ply,.zip" />
+                        <span class="file-name" data-file-name></span>
+                    </label>
+                </div>
+            </section>
+        </div>
+        <aside class="stack sticky-side">
+            <section class="card">
+                <div class="card-header"><h2>@L["Intake.Summary"]</h2></div>
+                <div class="card-body">
+                    <dl class="dl">
+                        <div><dt>@L["Intake.Workflow"]</dt><dd data-summary-workflow>—</dd></div>
+                        <div><dt>@L["Intake.Required"]</dt><dd data-summary-required data-labels="@string.Join("|", new[] { "Dentist", "Teeth", "Shade", "Material", "PatientReference", "Attachment" }.Select(f => f + "=" + L[$"IntakeField.{f}"].Value))">—</dd></div>
+                        @if (canPrice)
+                        {
+                            <div><dt>@L["Fields.Price"]</dt><dd><strong class="money" data-summary-price>—</strong> <span class="text-xs muted" data-summary-source></span></dd></div>
+                        }
+                    </dl>
+                    <div class="alert alert-warning mt-4 text-sm"><icon name="info" /><div><p>@L["Intake.IncompleteRule"]</p></div></div>
+                </div>
+                <div class="card-footer stack">
+                    <button class="btn btn-primary btn-block" type="submit" name="next" value="open"><icon name="check" /> @L["Intake.Save"]</button>
+                    <button class="btn btn-block" type="submit" name="next" value="another"><icon name="plus" /> @L["Intake.SaveAndAnother"]</button>
+                    @if (Model.Can(Permissions.WorkOrders.Print))
+                    {
+                        <button class="btn btn-ghost btn-block" type="submit" name="next" value="ticket"><icon name="printer" /> @L["Intake.SaveAndPrint"]</button>
+                    }
+                </div>
+            </section>
+        </aside>
+    </div>
+</form>

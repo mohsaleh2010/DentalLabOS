@@ -215,6 +215,24 @@ public sealed class PriceListService(IApplicationDbContext db, IPermissionServic
                        ?? throw new NotFoundException(nameof(Customer));
         var item = await db.Items.AsNoTracking().FirstOrDefaultAsync(i => i.Id == itemId, ct) ?? throw new NotFoundException(nameof(Item));
 
+        var (resolved, customerList, defaultList) = await ResolveCoreAsync(customer, item, quantity, on, ct);
+        var listName = resolved.PriceListId == customerList?.Id ? customerList?.Name : resolved.PriceListId == defaultList?.Id ? defaultList?.Name : null;
+        return new PriceQuoteDto(itemId, customerId, quantity, resolved.Price, resolved.Source.ToString(), resolved.PriceListId, listName);
+    }
+
+    /// <summary>The price an order line gets (no permission check: callers already hold the document's permission).</summary>
+    public async Task<ResolvedPrice> ResolveAsync(Guid customerId, Item item, decimal quantity, DateOnly on, CancellationToken ct = default)
+    {
+        var customer = await db.Customers.AsNoTracking().Include(c => c.Group).FirstOrDefaultAsync(c => c.Id == customerId, ct)
+                       ?? throw new NotFoundException(nameof(Customer));
+        return (await ResolveCoreAsync(customer, item, quantity, on, ct)).Resolved;
+    }
+
+    private async Task<(ResolvedPrice Resolved, PriceList? CustomerList, PriceList? DefaultList)> ResolveCoreAsync(
+        Customer customer, Item item, decimal quantity, DateOnly on, CancellationToken ct)
+    {
+        var customerId = customer.Id;
+        var itemId = item.Id;
         var specials = await db.CustomerItemPrices.AsNoTracking().Where(p => p.CustomerId == customerId && p.ItemId == itemId).ToListAsync(ct);
         var customerListId = customer.PriceListId ?? customer.Group?.DefaultPriceListId;
         var customerList = customerListId is { } cl ? await LoadListAsync(cl, itemId, ct) : null;
@@ -222,9 +240,7 @@ public sealed class PriceListService(IApplicationDbContext db, IPermissionServic
             ? await LoadListAsync(dl, itemId, ct)
             : null;
 
-        var resolved = PriceResolver.Resolve(item, quantity, on, specials, customerList, defaultList);
-        var listName = resolved.PriceListId == customerList?.Id ? customerList?.Name : resolved.PriceListId == defaultList?.Id ? defaultList?.Name : null;
-        return new PriceQuoteDto(itemId, customerId, quantity, resolved.Price, resolved.Source.ToString(), resolved.PriceListId, listName);
+        return (PriceResolver.Resolve(item, quantity, on, specials, customerList, defaultList), customerList, defaultList);
     }
 
     private Task<PriceList?> LoadListAsync(Guid id, Guid itemId, CancellationToken ct) =>

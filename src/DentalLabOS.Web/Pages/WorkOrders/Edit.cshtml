@@ -1,0 +1,98 @@
+@page "/workorders/{id:guid}/edit"
+@model DentalLabOS.Web.Pages.WorkOrders.EditModel
+@{
+    var w = Model.Wo;
+    var i = Model.Input;
+    ViewData["Title"] = L["WorkOrders.Edit", w.Number];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["Common.Edit"]</span></nav>
+        <h1>@L["WorkOrders.EditTitle"] <span class="ltr">@w.Number</span> <span class="screen-id">ORD-06</span></h1>
+        <p class="lead">@w.CustomerName · @w.ServiceName</p>
+    </div>
+</div>
+@if (Model.ProductionStarted)
+{
+    <div class="alert alert-warning mb-4"><icon name="history" /><div><strong>@L["WorkOrders.EditStartedTitle"]</strong><p>@L["WorkOrders.EditStartedText"]</p></div></div>
+}
+<form method="post" class="card" style="max-width: 980px" data-guard novalidate data-intake data-today="">
+    <div class="card-body">
+        <partial name="_ValidationSummary" />
+        <input type="hidden" asp-for="Input.RowVersion" />
+        <div class="form-grid cols-2">
+            <div class="field">
+                <label class="label" asp-for="Input.DentistId">@L["Fields.Dentist"]</label>
+                <select class="select" asp-for="Input.DentistId">
+                    <option value="">@L["Intake.NoDentist"]</option>
+                    @foreach (var d in Model.Dentists)
+                    {
+                        <option value="@d.Id">@d.Name</option>
+                    }
+                </select>
+                <span class="field-error" asp-validation-for="Input.DentistId"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.PatientReference">@L["Fields.PatientReference"]</label>
+                <input class="input" asp-for="Input.PatientReference" maxlength="100" />
+                <span class="field-error" asp-validation-for="Input.PatientReference"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.MaterialName">@L["Fields.Material"]</label>
+                <input class="input" asp-for="Input.MaterialName" maxlength="100" />
+                <span class="field-error" asp-validation-for="Input.MaterialName"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Shade">@L["Fields.Shade"]</label>
+                <input class="input input-ltr" asp-for="Input.Shade" maxlength="30" dir="ltr" />
+                <span class="field-error" asp-validation-for="Input.Shade"></span>
+            </div>
+        </div>
+        <div class="field">
+            <span class="label">@L["Fields.Teeth"]</span>
+            <partial name="_ToothChart" model='("Input.Teeth", (IReadOnlyCollection<string>)i.Teeth)' />
+            <span class="field-error">@Html.ValidationMessage("Input.Teeth")</span>
+        </div>
+        <div class="form-grid cols-2">
+            <div class="field">
+                <label class="label" asp-for="Input.Quantity">@L["Fields.Quantity"]<span class="req">*</span></label>
+                <input class="input input-ltr" asp-for="Input.Quantity" type="number" min="1" max="100" dir="ltr" />
+                <span class="field-error" asp-validation-for="Input.Quantity"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.DueDate">@L["Fields.DueDate"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.DueDate" type="date" />
+                <span class="field-error" asp-validation-for="Input.DueDate"></span>
+            </div>
+            <div class="field">
+                <span class="label">@L["Fields.Priority"]</span>
+                <div class="segmented" role="radiogroup" aria-label="@L["Fields.Priority"]">
+                    @foreach (var p in DentalLabOS.Web.Pages.WorkOrders.IntakeModel.Priorities)
+                    {
+                        <label class="seg seg-@p.ToLowerInvariant()"><input type="radio" name="Input.Priority" value="@p" checked="@(i.Priority == p)" data-priority /><span>@L[$"Priority.{p}"]</span></label>
+                    }
+                </div>
+            </div>
+            <div class="field" data-priority-reason hidden="@(i.Priority == "Normal")">
+                <label class="label" asp-for="Input.PriorityReason">@L["Fields.PriorityReason"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.PriorityReason" maxlength="200" />
+                <span class="field-error" asp-validation-for="Input.PriorityReason"></span>
+            </div>
+            <div class="field span-all">
+                <label class="label" asp-for="Input.Instructions">@L["Fields.Instructions"]</label>
+                <textarea class="textarea" asp-for="Input.Instructions" rows="3" maxlength="2000"></textarea>
+                <span class="field-error" asp-validation-for="Input.Instructions"></span>
+            </div>
+            <div class="field span-all">
+                <label class="label" asp-for="Input.ChangeSummary">@L["Fields.ChangeSummary"]@if (Model.ProductionStarted) {<span class="req">*</span>}</label>
+                <input class="input" asp-for="Input.ChangeSummary" maxlength="500" required="@Model.ProductionStarted" />
+                <span class="hint">@L["WorkOrders.ChangeSummaryHint"]</span>
+                <span class="field-error" asp-validation-for="Input.ChangeSummary"></span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Cancel"]</a>
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button>
+        </div>
+    </div>
+</form>

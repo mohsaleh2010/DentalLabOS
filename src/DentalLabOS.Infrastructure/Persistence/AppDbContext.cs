@@ -7,6 +7,7 @@ using DentalLabOS.Domain.Operations;
 using DentalLabOS.Domain.Organization;
 using DentalLabOS.Domain.Parties;
 using DentalLabOS.Domain.Platform;
+using DentalLabOS.Domain.Production;
 using DentalLabOS.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+    public DbSet<CustomerOrder> CustomerOrders => Set<CustomerOrder>();
+    public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
+    public DbSet<WorkOrderTooth> WorkOrderTeeth => Set<WorkOrderTooth>();
+    public DbSet<WorkOrderRevision> WorkOrderRevisions => Set<WorkOrderRevision>();
+    public DbSet<WorkOrderAttachment> WorkOrderAttachments => Set<WorkOrderAttachment>();
+    public DbSet<WorkOrderNote> WorkOrderNotes => Set<WorkOrderNote>();
+    public DbSet<FileMetadata> Files => Set<FileMetadata>();
+    public DbSet<WorkflowDefinition> Workflows => Set<WorkflowDefinition>();
+    public DbSet<WorkflowStageDefinition> WorkflowStages => Set<WorkflowStageDefinition>();
+    public DbSet<WorkOrderStage> WorkOrderStages => Set<WorkOrderStage>();
+    public DbSet<StageTransitionLog> StageTransitions => Set<StageTransitionLog>();
+    public DbSet<TaskTimeEntry> TimeEntries => Set<TaskTimeEntry>();
+    public DbSet<HoldRecord> Holds => Set<HoldRecord>();
+    public DbSet<ReasonCode> ReasonCodes => Set<ReasonCode>();
 
     /// <summary>
     /// Value used by every tenant query filter. With no tenant in context it is <see cref="Guid.Empty"/>, which matches
