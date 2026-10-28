@@ -1,0 +1,76 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-14",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Hold",
+  "route": "/workorders/{id}/hold",
+  "pattern": "ActionDialog",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.hold",
+    "access": "permission"
+  },
+  "entities": [
+    "HoldRecord",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/hold",
+      "purpose": "Hold with reason"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/release",
+      "purpose": "Release"
+    }
+  ],
+  "rules": [
+    "A reason from the Hold scope is required",
+    "Running stages are paused and their time entries closed",
+    "Release returns to the previous status"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "StatusChange"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-14.happy",
+    "ORD-14.permissionDenied",
+    "ORD-14.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "reasonCodeId",
+      "type": "lookup",
+      "required": true,
+      "source": "reasonCodes:Hold"
+    },
+    {
+      "name": "notes",
+      "type": "textarea",
+      "maxLength": 500
+    }
+  ]
+}

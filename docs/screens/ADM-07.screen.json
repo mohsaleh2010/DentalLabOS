@@ -1,0 +1,96 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-07",
+  "module": "admin",
+  "titleKey": "Technician.Title",
+  "route": "/admin/users/{id}/technician",
+  "pattern": "FormPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.technicians.manage",
+    "access": "permission",
+    "actions": {
+      "rate": "admin.costing.manage"
+    }
+  },
+  "entities": [
+    "TechnicianProfile"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/technicians/{userProfileId}",
+      "purpose": "Profile"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/technicians/{userProfileId}",
+      "purpose": "Save"
+    }
+  ],
+  "rules": [
+    "The labour rate is shown and changed only with admin.costing.manage",
+    "The department scopes which unassigned tasks the technician sees"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ],
+    "hidesCostFor": [
+      "laborRatePerHour"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-07.happy",
+    "ADM-07.permissionDenied",
+    "ADM-07.crossTenant",
+    "ADM-07.rateHidden"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "departmentId",
+      "type": "lookup",
+      "required": true,
+      "source": "departments"
+    },
+    {
+      "name": "laborRatePerHour",
+      "type": "decimal",
+      "min": 0,
+      "scale": 2
+    },
+    {
+      "name": "skills",
+      "type": "textarea",
+      "maxLength": 1000
+    },
+    {
+      "name": "difficultyCapacityPerDay",
+      "type": "decimal",
+      "min": 0
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}

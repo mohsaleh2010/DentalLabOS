@@ -142,7 +142,10 @@
   document.querySelectorAll("[data-dropzone]").forEach((zone) => {
     const input = zone.querySelector("input[type=file]");
     const name = zone.querySelector("[data-file-name]");
-    input.addEventListener("change", () => { name.textContent = input.files[0]?.name || ""; });
+    input.addEventListener("change", () => {
+      const files = [...input.files];
+      name.textContent = files.length > 1 ? files.map((f) => f.name).join("، ") : files[0]?.name || "";
+    });
     ["dragenter", "dragover"].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.add("is-over"); }));
     ["dragleave", "drop"].forEach((ev) => zone.addEventListener(ev, (e) => { e.preventDefault(); zone.classList.remove("is-over"); }));
     zone.addEventListener("drop", (e) => {
@@ -168,6 +171,201 @@
       });
     }
     sync();
+  });
+
+
+  // ---- Auto-submit filters: <select data-autosubmit> / <input type=checkbox data-autosubmit> ----
+  document.addEventListener("change", (e) => {
+    const el = e.target.closest("[data-autosubmit]");
+    if (el && el.form) el.form.requestSubmit ? el.form.requestSubmit() : el.form.submit();
+  });
+
+  // ---- Print: <button data-print> ----
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-print]")) window.print(); });
+
+  const fetchJson = async (url) => {
+    const res = await fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin" });
+    if (!res.ok) throw new Error(String(res.status));
+    return res.json();
+  };
+  const fill = (select, items, emptyText, keep) => {
+    const current = keep ?? select.value;
+    select.replaceChildren();
+    if (emptyText !== null) select.append(new Option(emptyText, ""));
+    items.forEach((i) => select.append(new Option(i.label, i.value, false, String(i.value) === current)));
+  };
+  const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+  // ---- Tooth chart: live count and quick selection ----
+  document.querySelectorAll("[data-tooth-chart]").forEach((chart) => {
+    const count = chart.querySelector("[data-tooth-count]");
+    const boxes = () => [...chart.querySelectorAll("input[type=checkbox]")];
+    const sync = () => {
+      const n = boxes().filter((b) => b.checked).length;
+      if (count) count.textContent = count.dataset.template.replace("{0}", n);
+      chart.dispatchEvent(new CustomEvent("teeth-changed", { bubbles: true }));
+    };
+    chart.querySelectorAll("[data-teeth-select]").forEach((btn) => {
+      btn.hidden = false;
+      btn.addEventListener("click", () => {
+        const which = btn.dataset.teethSelect;
+        chart.querySelectorAll("[data-tooth]").forEach((b) => {
+          const q = b.value[0];
+          if (which === "none") b.checked = false;
+          else if (which === "upper" && (q === "1" || q === "2")) b.checked = true;
+          else if (which === "lower" && (q === "3" || q === "4")) b.checked = true;
+        });
+        if (which === "none") boxes().forEach((b) => { b.checked = false; });
+        chart.closest("form")?.dispatchEvent(new Event("input", { bubbles: true }));
+        sync();
+      });
+    });
+    chart.addEventListener("change", sync);
+  });
+
+  // ---- Customer picker: search the lab's customers and load the chosen customer's dentists ----
+  document.querySelectorAll("[data-customer-picker]").forEach((picker) => {
+    const form = picker.closest("form");
+    const search = picker.querySelector("[data-customer-search]");
+    const select = picker.querySelector("[data-customer-select]");
+    const dentist = form.querySelector("[data-dentist-select]");
+    const empty = select.options[0]?.textContent ?? "";
+    search?.addEventListener("input", debounce(async () => {
+      try {
+        const items = await fetchJson(`${picker.dataset.customersUrl}&q=${encodeURIComponent(search.value.trim())}`);
+        fill(select, items, empty);
+        if (items.length === 1 && !select.value) { select.value = items[0].value; select.dispatchEvent(new Event("change", { bubbles: true })); }
+      } catch { /* keep the current list */ }
+    }, 250));
+    select.addEventListener("change", async () => {
+      if (!dentist) return;
+      if (!select.value) { fill(dentist, [], dentist.dataset.emptyText); return; }
+      try {
+        const items = await fetchJson(`${picker.dataset.dentistsUrl}&customerId=${select.value}`);
+        fill(dentist, items, dentist.dataset.emptyText, "");
+        if (items.length === 1) dentist.value = items[0].value;
+      } catch { /* the server validates the dentist anyway */ }
+    });
+  });
+
+  // ---- Priority: the reason is asked for only when the priority is raised ----
+  document.querySelectorAll("form").forEach((form) => {
+    const reason = form.querySelector("[data-priority-reason]");
+    if (!reason) return;
+    form.addEventListener("change", (e) => {
+      if (e.target.matches("[data-priority]")) reason.hidden = e.target.value === "Normal";
+    });
+  });
+
+  // ---- Intake: service → suggested due date, required fields, route; live price for permitted users ----
+  document.querySelectorAll("form[data-intake]").forEach((form) => {
+    const service = form.querySelector("[data-service-select]");
+    if (!service) return;
+    const due = form.querySelector("[data-due-date]");
+    const summaryWf = form.querySelector("[data-summary-workflow]");
+    const summaryReq = form.querySelector("[data-summary-required]");
+    const price = form.querySelector("[data-summary-price]");
+    const source = form.querySelector("[data-summary-source]");
+    const labels = Object.fromEntries((summaryReq?.dataset.labels || "").split("|").filter(Boolean).map((p) => p.split("=")));
+    let dueTouched = !!due?.value;
+    due?.addEventListener("input", () => { dueTouched = true; });
+    const customerId = () => form.querySelector("[data-customer-select]")?.value || form.querySelector("[data-customer-fixed]")?.value || "";
+    const quantity = () => {
+      const q = form.querySelector("[data-quantity]")?.value;
+      if (q) return q;
+      const n = [...form.querySelectorAll("[data-tooth]:checked")].length;
+      return Math.max(1, n);
+    };
+    const quote = debounce(async () => {
+      if (!form.dataset.quoteUrl || !price) return;
+      if (!service.value || !customerId()) { price.textContent = "—"; if (source) source.textContent = ""; return; }
+      try {
+        const q = await fetchJson(`${form.dataset.quoteUrl}&customerId=${customerId()}&serviceId=${service.value}&quantity=${quantity()}`);
+        price.textContent = q.total ?? "—";
+        if (source) source.textContent = q.source ? `(${q.price} · ${q.source})` : "";
+      } catch { price.textContent = "—"; }
+    }, 300);
+    const sync = () => {
+      const opt = service.selectedOptions[0];
+      const required = (opt?.dataset.required || "").split(",").filter(Boolean);
+      form.querySelectorAll("[data-req-for]").forEach((m) => { m.hidden = !required.includes(m.dataset.reqFor); });
+      if (summaryWf) summaryWf.textContent = opt?.dataset.workflow || "—";
+      if (summaryReq) summaryReq.textContent = required.length ? required.map((r) => labels[r] || r).join("، ") : "—";
+      if (due && opt?.dataset.due && !dueTouched) due.value = opt.dataset.due;
+      quote();
+    };
+    service.addEventListener("change", sync);
+    form.addEventListener("change", (e) => { if (e.target.matches("[data-customer-select], [data-quantity]")) quote(); });
+    form.addEventListener("teeth-changed", quote);
+    sync();
+  });
+
+  // ---- Select all rows: <input data-check-all="name"> + optional [data-selected-count] ----
+  document.querySelectorAll("[data-check-all]").forEach((all) => {
+    const form = all.closest("form");
+    const boxes = () => [...form.querySelectorAll(`input[type=checkbox][name="${all.dataset.checkAll}"]`)];
+    const counter = form.querySelector("[data-selected-count]");
+    const sync = () => {
+      const n = boxes().filter((b) => b.checked).length;
+      if (counter) counter.textContent = counter.dataset.template.replace("{0}", n);
+      all.checked = n > 0 && n === boxes().length;
+      all.indeterminate = n > 0 && n < boxes().length;
+    };
+    all.addEventListener("change", () => { boxes().forEach((b) => { b.checked = all.checked; }); sync(); });
+    form.addEventListener("change", (e) => { if (e.target !== all && e.target.name === all.dataset.checkAll) sync(); });
+    sync();
+  });
+
+  // ---- Workflow designer: add, remove and reorder stage rows; same step = parallel ----
+  document.querySelectorAll("form[data-workflow-designer]").forEach((form) => {
+    const body = form.querySelector("[data-stage-rows] tbody");
+    const preview = form.querySelector("[data-flow-preview]");
+    const rows = () => [...body.querySelectorAll("[data-stage-row]")];
+    const reindex = () => {
+      rows().forEach((row, i) => row.querySelectorAll("[data-f]").forEach((el) => { el.name = `Input.Stages[${i}].${el.dataset.f}`; }));
+      if (!preview) return;
+      const groups = new Map();
+      rows().forEach((row) => {
+        const name = row.querySelector('[data-f="Name"]').value.trim();
+        const step = parseInt(row.querySelector('[data-f="Step"]').value, 10) || 1;
+        if (!name) return;
+        if (!groups.has(step)) groups.set(step, []);
+        groups.get(step).push(name);
+      });
+      preview.replaceChildren(...[...groups.keys()].sort((a, b) => a - b).map((k) => {
+        const li = document.createElement("li");
+        groups.get(k).forEach((n) => { const s = document.createElement("span"); s.textContent = n; li.append(s); });
+        if (groups.get(k).length > 1) li.dataset.parallel = preview.dataset.parallelText;
+        return li;
+      }));
+    };
+    const blank = (step) => {
+      const row = rows()[rows().length - 1].cloneNode(true);
+      row.querySelectorAll("input, select").forEach((el) => {
+        if (el.type === "checkbox") el.checked = false;
+        else if (el.dataset.f === "Step") el.value = step;
+        else if (el.dataset.f === "TargetHours") el.value = "0";
+        else el.value = "";
+      });
+      return row;
+    };
+    const maxStep = () => Math.max(0, ...rows().map((r) => parseInt(r.querySelector('[data-f="Step"]').value, 10) || 0));
+    form.querySelectorAll("[data-row-add], [data-row-add-parallel], [data-row-up], [data-row-down], [data-row-remove]").forEach((b) => { b.hidden = false; });
+    form.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const row = btn.closest("[data-stage-row]");
+      if (btn.matches("[data-row-add]")) { body.append(blank(maxStep() + 1)); }
+      else if (btn.matches("[data-row-add-parallel]")) { body.append(blank(Math.max(1, maxStep()))); }
+      else if (btn.matches("[data-row-remove]") && row) { if (rows().length > 1) row.remove(); }
+      else if (btn.matches("[data-row-up]") && row?.previousElementSibling) { row.previousElementSibling.before(row); }
+      else if (btn.matches("[data-row-down]") && row?.nextElementSibling) { row.nextElementSibling.after(row); }
+      else return;
+      reindex();
+      form.dataset.dirty = "1";
+    });
+    form.addEventListener("input", reindex);
+    reindex();
   });
 
   // ---- Online / offline indicator ----

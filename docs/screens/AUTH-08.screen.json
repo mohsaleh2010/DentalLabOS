@@ -1,0 +1,52 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "AUTH-08",
+  "module": "auth",
+  "titleKey": "Context.Title",
+  "route": "/context",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": null,
+    "access": "authenticated"
+  },
+  "entities": [
+    "Branch",
+    "UserBranchScope"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/me/branches",
+      "purpose": "My branches"
+    }
+  ],
+  "rules": [
+    "Lists only branches within the user's scope",
+    "The choice is a cookie preference (X-Branch-Id header on the API); every service re-validates it"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "AUTH-08.happy",
+    "AUTH-08.outOfScope"
+  ],
+  "relatedScreens": []
+}

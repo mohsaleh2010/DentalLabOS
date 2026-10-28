@@ -1,0 +1,66 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-11",
+  "module": "production",
+  "titleKey": "Nav.Queues",
+  "route": "/production/queue/{dept}",
+  "pattern": "ListPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "production.read",
+    "access": "permission",
+    "actions": {
+      "assign": "production.assign",
+      "work": "workorders.transition"
+    }
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/production/queue/{departmentId}",
+      "purpose": "Queue"
+    }
+  ],
+  "rules": [
+    "Workable stages first, then upcoming ones"
+  ],
+  "states": [
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-11.happy",
+    "ORD-11.permissionDenied",
+    "ORD-11.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "number",
+    "stage",
+    "customer",
+    "status",
+    "assignee",
+    "dueDate",
+    "elapsed"
+  ]
+}

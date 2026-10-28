@@ -1,0 +1,40 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-23",
+  "module": "delivery",
+  "titleKey": "Nav.Delivery",
+  "route": "/delivery/runs",
+  "pattern": "Custom",
+  "phase": 4,
+  "status": "planned",
+  "permissions": {
+    "view": "delivery.manage",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-23.happy",
+    "ORD-23.permissionDenied"
+  ],
+  "relatedScreens": []
+}

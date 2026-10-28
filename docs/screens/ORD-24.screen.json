@@ -1,0 +1,40 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-24",
+  "module": "delivery",
+  "titleKey": "Nav.Delivery",
+  "route": "/delivery/notes/{id}/confirm",
+  "pattern": "Custom",
+  "phase": 4,
+  "status": "planned",
+  "permissions": {
+    "view": "delivery.confirm",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-24.happy",
+    "ORD-24.permissionDenied"
+  ],
+  "relatedScreens": []
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-13",
+  "module": "production",
+  "titleKey": "Nav.Assign",
+  "route": "/production/assign",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "production.assign",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrderStage"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/production/assignable",
+      "purpose": "Assignable stages"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/production/assign",
+      "purpose": "Assign or unassign in bulk"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/production/technicians",
+      "purpose": "Technicians"
+    }
+  ],
+  "rules": [
+    "Bulk assign or unassign",
+    "Finished stages are skipped and counted"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-13.happy",
+    "ORD-13.permissionDenied",
+    "ORD-13.crossTenant"
+  ],
+  "relatedScreens": []
+}

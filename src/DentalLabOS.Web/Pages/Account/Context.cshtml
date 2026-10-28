@@ -1,0 +1,35 @@
+@page "/context"
+@model DentalLabOS.Web.Pages.Account.ContextModel
+@{
+    ViewData["Title"] = L["Context.Title"];
+    var main = Model.Branches.FirstOrDefault(b => b.IsMain);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Context.Title"] <span class="screen-id">AUTH-08</span></h1>
+        <p class="lead">@L["Context.Lead"]</p>
+    </div>
+</div>
+<form method="post" class="card" style="max-width: 720px">
+    <input type="hidden" name="returnUrl" value="@Request.Query["returnUrl"]" />
+    <div class="card-body">
+        @if (Model.Branches.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Context.NoBranches"].Value" param-IconName="@("building-2")" />
+        }
+        else
+        {
+            <fieldset class="option-list">
+                <legend class="label">@L["Fields.Branch"]</legend>
+                <label class="option"><input type="radio" name="branchId" value="" checked="@(Model.Current is null)" />
+                    <span><strong>@L["Context.Automatic"]</strong><small>@L["Context.AutomaticHint", main?.Name ?? "—"]</small></span></label>
+                @foreach (var b in Model.Branches)
+                {
+                    <label class="option"><input type="radio" name="branchId" value="@b.Id" checked="@(Model.Current == b.Id)" />
+                        <span><strong>@b.Name @if (b.IsMain) {<span class="badge badge-brand">@L["Branches.Main"]</span>}</strong><small class="ltr">@b.Code</small></span></label>
+                }
+            </fieldset>
+            <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="check" /> @L["Context.Apply"]</button></div>
+        }
+    </div>
+</form>

@@ -1,0 +1,132 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-16",
+  "module": "admin",
+  "titleKey": "Workflows.New",
+  "route": "/admin/workflows/{id}",
+  "pattern": "FormPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.workflows.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkflowDefinition",
+    "WorkflowStageDefinition"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workflows/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workflows",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/workflows/{id}",
+      "purpose": "Save new version"
+    }
+  ],
+  "rules": [
+    "Stages with the same step run in parallel; steps are renumbered 1..n",
+    "Exactly one active default route per lab",
+    "Saving bumps the version; running work orders keep the stages they copied",
+    "Live preview of the flow before saving"
+  ],
+  "states": [
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-16.happy",
+    "ADM-16.permissionDenied",
+    "ADM-16.crossTenant",
+    "ADM-16.versioning",
+    "ADM-16.parallel"
+  ],
+  "relatedScreens": [],
+  "routes": [
+    "/admin/workflows/new",
+    "/admin/workflows/{id}"
+  ],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "maxLength": 500
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "isDefault",
+      "type": "boolean"
+    },
+    {
+      "name": "stages",
+      "type": "list",
+      "required": true,
+      "maxItems": 40
+    },
+    {
+      "name": "requireDentist",
+      "type": "boolean"
+    },
+    {
+      "name": "requireTeeth",
+      "type": "boolean"
+    },
+    {
+      "name": "requireShade",
+      "type": "boolean"
+    },
+    {
+      "name": "requireMaterial",
+      "type": "boolean"
+    },
+    {
+      "name": "requirePatientReference",
+      "type": "boolean"
+    },
+    {
+      "name": "requireAttachment",
+      "type": "boolean"
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}

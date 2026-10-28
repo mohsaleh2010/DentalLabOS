@@ -1,0 +1,60 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-12",
+  "module": "production",
+  "titleKey": "Nav.MyTasks",
+  "route": "/my/tasks",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "tasks.own.read",
+    "access": "permission",
+    "actions": {
+      "work": "workorders.transition"
+    }
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog",
+    "TaskTimeEntry"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/production/my-tasks",
+      "purpose": "My tasks and available ones"
+    }
+  ],
+  "rules": [
+    "Shows my stages and unassigned workable stages of my departments",
+    "Starting an unassigned stage assigns it to me",
+    "Time entries are recorded on start/pause/complete with a labour-rate snapshot"
+  ],
+  "states": [
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-12.happy",
+    "ORD-12.permissionDenied",
+    "ORD-12.crossTenant",
+    "ORD-12.technicianScope"
+  ],
+  "relatedScreens": []
+}

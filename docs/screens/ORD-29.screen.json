@@ -1,0 +1,56 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-29",
+  "module": "production",
+  "titleKey": "Nav.Calendar",
+  "route": "/production/calendar",
+  "pattern": "ReportPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "production.read",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "TechnicianProfile"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/production/calendar",
+      "purpose": "Month view"
+    }
+  ],
+  "rules": [
+    "Due, done, overdue and urgent per day against the technicians' daily capacity",
+    "Week starts on Saturday"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-29.happy",
+    "ORD-29.permissionDenied",
+    "ORD-29.crossTenant"
+  ],
+  "relatedScreens": [],
+  "filters": [
+    "month"
+  ]
+}

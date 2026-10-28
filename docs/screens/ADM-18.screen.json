@@ -1,0 +1,96 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-18",
+  "module": "admin",
+  "titleKey": "Nav.ReasonCodes",
+  "route": "/admin/reason-codes",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.reasons.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "ReasonCode"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/reason-codes",
+      "purpose": "List"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/reason-codes",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/reason-codes/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/reason-codes/options/{scope}",
+      "purpose": "Active reasons of a scope"
+    }
+  ],
+  "rules": [
+    "Name unique per scope",
+    "Reasons are deactivated, never deleted (history keeps them)"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-18.happy",
+    "ADM-18.permissionDenied",
+    "ADM-18.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "scope",
+      "type": "enum",
+      "required": true,
+      "source": "ReasonScope"
+    },
+    {
+      "name": "category",
+      "type": "enum",
+      "required": true,
+      "source": "ReasonCategory"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    }
+  ]
+}

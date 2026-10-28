@@ -1,0 +1,183 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-05",
+  "module": "workorders",
+  "titleKey": "Nav.Intake",
+  "route": "/workorders/intake",
+  "pattern": "FormPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.create",
+    "access": "permission",
+    "actions": {
+      "price": "pricelists.read",
+      "print": "workorders.print",
+      "orderContext": "orders.read"
+    }
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog",
+    "WorkOrderTooth",
+    "WorkOrderAttachment",
+    "FileMetadata"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/intake",
+      "purpose": "Intake (idempotent on clientOperationId)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/intake/customers",
+      "purpose": "Customer search"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/intake/customers/{customerId}/dentists",
+      "purpose": "Dentists of the customer"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/intake/services",
+      "purpose": "Services with lead time and required fields"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/attachments",
+      "purpose": "Upload each file"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/pricelists/quote",
+      "purpose": "Live price (permitted users)"
+    }
+  ],
+  "rules": [
+    "Required fields come from the service's route; missing data saves the order as Incomplete and no stage can start",
+    "Due date is suggested from the service's lead time (8 working hours per day, at least one day)",
+    "Possible duplicate warning: same customer, patient and a shared tooth within 14 days (warning, not a block)",
+    "Files are checked by content signature, size and count; a failed file never loses the work order or other files",
+    "Price comes from the price list and is shown only with pricelists.read",
+    "Save and add another keeps the customer or order"
+  ],
+  "states": [
+    "loading",
+    "validationError",
+    "uploadFailed",
+    "offlineBlocked"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "numbering and duplicate checks need the server"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ],
+    "hidesCostFor": [
+      "unitPrice",
+      "quotedPrice"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": [
+      "service",
+      "missingData"
+    ]
+  },
+  "tests": [
+    "ORD-05.happy",
+    "ORD-05.permissionDenied",
+    "ORD-05.crossTenant",
+    "ORD-05.incompleteSaved",
+    "ORD-05.duplicateWarning",
+    "ORD-05.idempotent",
+    "ORD-05.fakeStlRejected"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "customerId",
+      "type": "lookup",
+      "required": true,
+      "source": "customers"
+    },
+    {
+      "name": "serviceItemId",
+      "type": "lookup",
+      "required": true,
+      "source": "services"
+    },
+    {
+      "name": "dentistId",
+      "type": "lookup",
+      "source": "dentistsOfCustomer"
+    },
+    {
+      "name": "patientReference",
+      "type": "text",
+      "maxLength": 100
+    },
+    {
+      "name": "materialName",
+      "type": "text",
+      "maxLength": 100
+    },
+    {
+      "name": "shade",
+      "type": "text",
+      "maxLength": 30
+    },
+    {
+      "name": "teeth",
+      "type": "toothChart",
+      "source": "FDI 11-48, 51-85, UPPER, LOWER"
+    },
+    {
+      "name": "quantity",
+      "type": "integer",
+      "min": 1,
+      "max": 100
+    },
+    {
+      "name": "dueDate",
+      "type": "date"
+    },
+    {
+      "name": "priority",
+      "type": "enum",
+      "source": "PriorityLevel"
+    },
+    {
+      "name": "priorityReason",
+      "type": "text",
+      "maxLength": 200
+    },
+    {
+      "name": "instructions",
+      "type": "textarea",
+      "maxLength": 2000
+    },
+    {
+      "name": "files",
+      "type": "file",
+      "accept": ".jpg,.png,.webp,.pdf,.stl,.ply,.zip",
+      "maxSizeMb": 50
+    },
+    {
+      "name": "clientOperationId",
+      "type": "hidden"
+    }
+  ]
+}

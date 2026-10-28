@@ -2,7 +2,7 @@
 
 > ملف مولَّد آليًا من `docs/screens/*.screen.json` بواسطة `python3 tools/screens/generate.py`. لا تعدّله يدويًا.
 
-عدد الشاشات الموثقة: **57**. اختبارات المعمارية تفشل إذا وُجدت صفحة تحمل `[Screen]` بلا ملف مواصفات، أو ملف يخالف المخطط، أو صلاحية غير معرّفة في الكتالوج.
+عدد الشاشات الموثقة: **91**. اختبارات المعمارية تفشل إذا وُجدت صفحة تحمل `[Screen]` بلا ملف مواصفات، أو ملف يخالف المخطط، أو صلاحية غير معرّفة في الكتالوج.
 
 | ID | الوحدة | المسار | النمط | صلاحية العرض | الحالة |
 |---|---|---|---|---|---|
@@ -11,12 +11,16 @@
 | [ADM-04](../screens/ADM-04.screen.json) | admin | `/admin/departments` | ListPage | `admin.departments.manage` | implemented |
 | [ADM-05](../screens/ADM-05.screen.json) | admin | `/admin/users` | ListPage | `admin.users.read` | implemented |
 | [ADM-06](../screens/ADM-06.screen.json) | admin | `/admin/users/{id}` | DetailsTabs | `admin.users.read` | implemented |
+| [ADM-07](../screens/ADM-07.screen.json) | admin | `/admin/users/{id}/technician` | FormPage | `admin.technicians.manage` | implemented |
 | [ADM-08](../screens/ADM-08.screen.json) | admin | `/admin/roles` | ListPage | `admin.roles.manage` | implemented |
 | [ADM-09](../screens/ADM-09.screen.json) | admin | `/admin/roles/{id}/permissions` | Custom | `admin.roles.manage` | implemented |
 | [ADM-11](../screens/ADM-11.screen.json) | admin | `/admin/numbering` | Custom | `admin.numbering.manage` | implemented |
 | [ADM-12](../screens/ADM-12.screen.json) | admin | `/admin/taxes` | Custom | `admin.taxes.manage` | implemented |
 | [ADM-13](../screens/ADM-13.screen.json) | admin | `/admin/currencies` | Custom | `admin.currencies.manage` | implemented |
 | [ADM-14](../screens/ADM-14.screen.json) | admin | `/admin/units` | Custom | `admin.units.manage` | implemented |
+| [ADM-15](../screens/ADM-15.screen.json) | admin | `/admin/workflows` | ListPage | `admin.workflows.manage` | implemented |
+| [ADM-16](../screens/ADM-16.screen.json) | admin | `/admin/workflows/{id}` | FormPage | `admin.workflows.manage` | implemented |
+| [ADM-18](../screens/ADM-18.screen.json) | admin | `/admin/reason-codes` | Custom | `admin.reasons.manage` | implemented |
 | [ADM-23](../screens/ADM-23.screen.json) | admin | `/admin/import` | Custom | `admin.import.manage` | implemented |
 | [ADM-25](../screens/ADM-25.screen.json) | admin | `/admin/audit` | ListPage | `admin.audit.read` | implemented |
 | [ADM-26](../screens/ADM-26.screen.json) | admin | `/admin/subscription` | DashboardPage | `admin.subscription.read` | implemented |
@@ -24,6 +28,7 @@
 | [AUTH-05](../screens/AUTH-05.screen.json) | auth | `/invite/accept` | AuthPage | `anonymous` | implemented |
 | [AUTH-06](../screens/AUTH-06.screen.json) | auth | `/setup` | AuthPage | `anonymous` | implemented |
 | [AUTH-07](../screens/AUTH-07.screen.json) | auth | `/account/password` | FormPage | `authenticated` | implemented |
+| [AUTH-08](../screens/AUTH-08.screen.json) | auth | `/context` | Custom | `authenticated` | implemented |
 | [AUTH-09](../screens/AUTH-09.screen.json) | auth | `/session-expired` | StatusPage | `anonymous` | implemented |
 | [CUS-01](../screens/CUS-01.screen.json) | customers | `/customers` | ListPage | `customers.read` | implemented |
 | [CUS-02](../screens/CUS-02.screen.json) | customers | `/customers/{id}/edit` | FormPage | `customers.manage` | implemented |
@@ -46,6 +51,35 @@
 | [ITM-10](../screens/ITM-10.screen.json) | items | `/items/labels` | Custom | `items.labels.print` | planned |
 | [ITM-11](../screens/ITM-11.screen.json) | items | `/items/import` | Custom | `items.import` | implemented |
 | [NTF-01](../screens/NTF-01.screen.json) | notifications | `/notifications` | ListPage | `authenticated` | implemented |
+| [ORD-01](../screens/ORD-01.screen.json) | orders | `/orders` | ListPage | `orders.read` | implemented |
+| [ORD-02](../screens/ORD-02.screen.json) | orders | `/orders/new` | FormPage | `orders.create` | implemented |
+| [ORD-03](../screens/ORD-03.screen.json) | orders | `/orders/{id}` | DetailsTabs | `orders.read` | implemented |
+| [ORD-04](../screens/ORD-04.screen.json) | workorders | `/workorders` | ListPage | `workorders.read` | implemented |
+| [ORD-05](../screens/ORD-05.screen.json) | workorders | `/workorders/intake` | FormPage | `workorders.create` | implemented |
+| [ORD-06](../screens/ORD-06.screen.json) | workorders | `/workorders/{id}/edit` | FormPage | `workorders.update` | implemented |
+| [ORD-07](../screens/ORD-07.screen.json) | workorders | `/workorders/{id}` | DetailsTabs | `workorders.read` | implemented |
+| [ORD-08](../screens/ORD-08.screen.json) | workorders | `/workorders/{id}/revisions` | Custom | `workorders.read` | implemented |
+| [ORD-09](../screens/ORD-09.screen.json) | workorders | `/workorders/incomplete` | ListPage | `workorders.read` | implemented |
+| [ORD-10](../screens/ORD-10.screen.json) | production | `/production/board` | Custom | `production.read` | implemented |
+| [ORD-11](../screens/ORD-11.screen.json) | production | `/production/queue/{dept}` | ListPage | `production.read` | implemented |
+| [ORD-12](../screens/ORD-12.screen.json) | production | `/my/tasks` | Custom | `tasks.own.read` | implemented |
+| [ORD-13](../screens/ORD-13.screen.json) | production | `/production/assign` | Custom | `production.assign` | implemented |
+| [ORD-14](../screens/ORD-14.screen.json) | workorders | `/workorders/{id}/hold` | ActionDialog | `workorders.hold` | implemented |
+| [ORD-15](../screens/ORD-15.screen.json) | workorders | `/workorders/{id}/transition` | ActionDialog | `workorders.transition` | implemented |
+| [ORD-16](../screens/ORD-16.screen.json) | production | `/production/overdue` | ReportPage | `production.read` | implemented |
+| [ORD-17](../screens/ORD-17.screen.json) | quality | `/quality/queue` | Custom | `quality.read` | planned |
+| [ORD-18](../screens/ORD-18.screen.json) | quality | `/quality/inspect/{woId}` | Custom | `quality.inspect` | planned |
+| [ORD-19](../screens/ORD-19.screen.json) | quality | `/quality/adjustments` | Custom | `quality.read` | planned |
+| [ORD-20](../screens/ORD-20.screen.json) | quality | `/quality/remakes` | Custom | `quality.remake.manage` | planned |
+| [ORD-21](../screens/ORD-21.screen.json) | delivery | `/delivery/ready` | Custom | `delivery.read` | planned |
+| [ORD-22](../screens/ORD-22.screen.json) | delivery | `/delivery/notes/{id}` | Custom | `delivery.manage` | planned |
+| [ORD-23](../screens/ORD-23.screen.json) | delivery | `/delivery/runs` | Custom | `delivery.manage` | planned |
+| [ORD-24](../screens/ORD-24.screen.json) | delivery | `/delivery/notes/{id}/confirm` | Custom | `delivery.confirm` | planned |
+| [ORD-25](../screens/ORD-25.screen.json) | workorders | `/workorders/{id}/cost` | Custom | `workorders.cost.read` | planned |
+| [ORD-26](../screens/ORD-26.screen.json) | workorders | `/workorders/{id}/ticket` | Custom | `workorders.print` | implemented |
+| [ORD-27](../screens/ORD-27.screen.json) | workorders | `/scan` | Custom | `workorders.read` | implemented |
+| [ORD-28](../screens/ORD-28.screen.json) | workorders | `/workorders/{id}/cancel` | ActionDialog | `workorders.cancel` | implemented |
+| [ORD-29](../screens/ORD-29.screen.json) | production | `/production/calendar` | ReportPage | `production.read` | implemented |
 | [PLT-01](../screens/PLT-01.screen.json) | platform | `/platform` | DashboardPage | `platform.dashboard.read` | implemented |
 | [PLT-02](../screens/PLT-02.screen.json) | platform | `/platform/tenants` | ListPage | `platform.tenants.read` | implemented |
 | [PLT-03](../screens/PLT-03.screen.json) | platform | `/platform/tenants/new` | FormPage | `platform.tenants.create` | implemented |

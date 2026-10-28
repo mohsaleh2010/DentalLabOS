@@ -1,0 +1,57 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-03",
+  "module": "orders",
+  "titleKey": "Orders.Info",
+  "route": "/orders/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "orders.read",
+    "access": "permission",
+    "actions": {
+      "addWorkOrder": "workorders.create",
+      "prices": "pricelists.read"
+    }
+  },
+  "entities": [
+    "CustomerOrder",
+    "WorkOrder"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/{id}",
+      "purpose": "Details with work orders"
+    }
+  ],
+  "rules": [
+    "Total shown only with pricelists.read",
+    "Add work order opens intake bound to this order"
+  ],
+  "states": [
+    "notFound"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-03.happy",
+    "ORD-03.permissionDenied",
+    "ORD-03.crossTenant"
+  ],
+  "relatedScreens": []
+}

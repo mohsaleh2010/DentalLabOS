@@ -1,0 +1,60 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-09",
+  "module": "workorders",
+  "titleKey": "Nav.Incomplete",
+  "route": "/workorders/incomplete",
+  "pattern": "ListPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.read",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders?incomplete=true&open=true",
+      "purpose": "Incomplete"
+    }
+  ],
+  "rules": [
+    "Open work orders whose route-required data is missing"
+  ],
+  "states": [
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-09.happy",
+    "ORD-09.permissionDenied",
+    "ORD-09.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "number",
+    "customer",
+    "service",
+    "status",
+    "dueDate"
+  ]
+}

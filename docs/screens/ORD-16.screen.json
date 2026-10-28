@@ -1,0 +1,54 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-16",
+  "module": "production",
+  "titleKey": "Nav.Overdue",
+  "route": "/production/overdue",
+  "pattern": "ReportPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "production.read",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/production/overdue",
+      "purpose": "Past due and over target"
+    }
+  ],
+  "rules": [
+    "Past due date (open orders)",
+    "Running stages above their target hours"
+  ],
+  "states": [
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-16.happy",
+    "ORD-16.permissionDenied",
+    "ORD-16.crossTenant"
+  ],
+  "relatedScreens": []
+}

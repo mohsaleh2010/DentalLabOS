@@ -1,0 +1,91 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-15",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Transition",
+  "route": "/workorders/{id}/transition",
+  "pattern": "ActionDialog",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.transition",
+    "access": "permission",
+    "actions": {
+      "skipOrMoveBack": "production.assign"
+    }
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/start",
+      "purpose": "Start"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/complete",
+      "purpose": "Complete"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/skip",
+      "purpose": "Skip with reason"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/move-back",
+      "purpose": "Move back with reason"
+    }
+  ],
+  "rules": [
+    "Shows the mandatory checks first (data complete, not on hold, stages available)",
+    "Skip and move back need a reason and production.assign",
+    "Move back only to an earlier step; later stages restart, history stays"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "StatusChange"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-15.happy",
+    "ORD-15.permissionDenied",
+    "ORD-15.crossTenant",
+    "ORD-15.stageOrder"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "pick",
+      "type": "enum",
+      "required": true,
+      "source": "available actions"
+    },
+    {
+      "name": "reason",
+      "type": "textarea",
+      "maxLength": 500
+    }
+  ]
+}

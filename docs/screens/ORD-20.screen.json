@@ -1,0 +1,40 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-20",
+  "module": "quality",
+  "titleKey": "WoKind.Remake",
+  "route": "/quality/remakes",
+  "pattern": "Custom",
+  "phase": 4,
+  "status": "planned",
+  "permissions": {
+    "view": "quality.remake.manage",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-20.happy",
+    "ORD-20.permissionDenied"
+  ],
+  "relatedScreens": []
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-01",
+  "module": "orders",
+  "titleKey": "Nav.Orders",
+  "route": "/orders",
+  "pattern": "ListPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "orders.read",
+    "access": "permission",
+    "actions": {
+      "create": "orders.create"
+    }
+  },
+  "entities": [
+    "CustomerOrder",
+    "WorkOrder"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/orders",
+      "purpose": "List (search: number, customer)"
+    }
+  ],
+  "rules": [
+    "Server-side paging",
+    "Only the current lab's orders"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-01.happy",
+    "ORD-01.permissionDenied",
+    "ORD-01.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "number",
+    "date",
+    "customer",
+    "dentist",
+    "priority",
+    "requestedDelivery",
+    "openWorkOrders"
+  ],
+  "filters": [
+    "search",
+    "openOnly"
+  ]
+}

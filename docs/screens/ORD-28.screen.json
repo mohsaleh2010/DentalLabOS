@@ -1,0 +1,71 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-28",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Cancel",
+  "route": "/workorders/{id}/cancel",
+  "pattern": "ActionDialog",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.cancel",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/cancel",
+      "purpose": "Cancel with reason"
+    }
+  ],
+  "rules": [
+    "A reason from the Cancellation scope is required",
+    "Invoiced work orders cannot be cancelled",
+    "Cancelling is final and kept in the timeline"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "StatusChange"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-28.happy",
+    "ORD-28.permissionDenied",
+    "ORD-28.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "reasonCodeId",
+      "type": "lookup",
+      "required": true,
+      "source": "reasonCodes:Cancellation"
+    },
+    {
+      "name": "notes",
+      "type": "textarea",
+      "maxLength": 500
+    }
+  ]
+}

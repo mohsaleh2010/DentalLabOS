@@ -1,0 +1,105 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-02",
+  "module": "orders",
+  "titleKey": "Orders.New",
+  "route": "/orders/new",
+  "pattern": "FormPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "orders.create",
+    "access": "permission"
+  },
+  "entities": [
+    "CustomerOrder"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "purpose": "Create (idempotent on clientOperationId)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/intake/customers",
+      "purpose": "Customer picker"
+    }
+  ],
+  "rules": [
+    "Number from the CustomerOrder sequence (ORD-YY-000001)",
+    "The dentist must belong to the customer",
+    "A repeated submit returns the first order (ClientOperationId)",
+    "Branch must be within the user's scope"
+  ],
+  "states": [
+    "validationError"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-02.happy",
+    "ORD-02.permissionDenied",
+    "ORD-02.crossTenant",
+    "ORD-02.idempotent"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "customerId",
+      "type": "lookup",
+      "required": true,
+      "source": "customers"
+    },
+    {
+      "name": "dentistId",
+      "type": "lookup",
+      "source": "dentistsOfCustomer"
+    },
+    {
+      "name": "priority",
+      "type": "enum",
+      "source": "PriorityLevel"
+    },
+    {
+      "name": "requestedDeliveryDate",
+      "type": "date"
+    },
+    {
+      "name": "branchId",
+      "type": "lookup",
+      "source": "myBranches"
+    },
+    {
+      "name": "deliveryInstructions",
+      "type": "textarea",
+      "maxLength": 1000
+    },
+    {
+      "name": "notes",
+      "type": "textarea",
+      "maxLength": 2000
+    },
+    {
+      "name": "clientOperationId",
+      "type": "hidden"
+    }
+  ]
+}
