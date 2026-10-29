@@ -38,7 +38,7 @@ public sealed class ProductionService(
         var today = await calendar.TodayAsync(ct);
         var since = clock.UtcNow.AddDays(-7);
         var query = db.WorkOrders.AsNoTracking()
-            .Where(w => w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Delivered
+            .Where(w => w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected && w.Status != WorkOrderStatus.Delivered
                         && (w.Status != WorkOrderStatus.ReadyForDelivery || w.CompletedAtUtc >= since));
         if (workflowId is { } wf)
         {
@@ -142,7 +142,7 @@ public sealed class ProductionService(
         var first = new DateOnly(year, month, 1);
         var last = first.AddMonths(1).AddDays(-1);
         var today = await calendar.TodayAsync(ct);
-        var rows = await db.WorkOrders.AsNoTracking().Where(w => w.DueDate >= first && w.DueDate <= last && w.Status != WorkOrderStatus.Cancelled)
+        var rows = await db.WorkOrders.AsNoTracking().Where(w => w.DueDate >= first && w.DueDate <= last && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected)
             .GroupBy(w => w.DueDate)
             .Select(g => new
             {
@@ -165,8 +165,9 @@ public sealed class ProductionService(
 
     private IQueryable<WorkOrderStage> OpenStages() =>
         db.WorkOrderStages.AsNoTracking()
-            .Where(s => s.Status != StageStatus.Done && s.Status != StageStatus.Skipped
-                        && (s.WorkOrder.Status == WorkOrderStatus.Ready || s.WorkOrder.Status == WorkOrderStatus.InProduction));
+            .Where(s => s.Status != StageStatus.Done && s.Status != StageStatus.Skipped && s.Status != StageStatus.AwaitingQuality
+                        && (s.WorkOrder.Status == WorkOrderStatus.Ready || s.WorkOrder.Status == WorkOrderStatus.InProduction
+                            || s.WorkOrder.Status == WorkOrderStatus.InQuality));
 
     private IQueryable<TaskRow> TaskRows(IQueryable<WorkOrderStage> source) =>
         source.OrderBy(s => s.WorkOrder.DueDate).ThenByDescending(s => s.WorkOrder.Priority).ThenBy(s => s.WorkOrder.Number).ThenBy(s => s.Step).Take(MaxRows)

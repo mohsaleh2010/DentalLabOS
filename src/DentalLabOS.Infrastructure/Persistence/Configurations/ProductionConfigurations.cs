@@ -43,6 +43,8 @@ internal sealed class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrde
         b.HasIndex(x => new { x.TenantId, x.ClientOperationId }).IsUnique();
         b.HasIndex(x => new { x.TenantId, x.Status, x.DueDate });
         b.HasIndex(x => new { x.TenantId, x.CustomerId, x.ReceivedAtUtc });
+        b.HasIndex(x => new { x.TenantId, x.OriginalWorkOrderId });
+        b.HasOne<DeliveryNote>().WithMany().HasForeignKey(x => x.DeliveryNoteId).OnDelete(DeleteBehavior.NoAction);
         b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<Dentist>().WithMany().HasForeignKey(x => x.DentistId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<Item>().WithMany().HasForeignKey(x => x.ServiceItemId).OnDelete(DeleteBehavior.Restrict);
@@ -124,6 +126,7 @@ internal sealed class WorkflowStageDefinitionConfiguration : IEntityTypeConfigur
         b.Property(x => x.Name).HasMaxLength(100).IsRequired();
         b.Property(x => x.TargetHours).HasPrecision(9, 2);
         b.HasOne<Department>().WithMany().HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<QualityTemplate>().WithMany().HasForeignKey(x => x.QualityTemplateId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => new { x.TenantId, x.WorkflowDefinitionId, x.Step });
     }
 }
@@ -133,6 +136,8 @@ internal sealed class WorkOrderStageConfiguration : IEntityTypeConfiguration<Wor
     public void Configure(EntityTypeBuilder<WorkOrderStage> b)
     {
         b.Ignore(x => x.IsFinished);
+        b.Ignore(x => x.IsWorkable);
+        b.HasOne<QualityTemplate>().WithMany().HasForeignKey(x => x.QualityTemplateId).OnDelete(DeleteBehavior.NoAction);
         b.Property(x => x.Name).HasMaxLength(100).IsRequired();
         b.Property(x => x.SkipReason).HasMaxLength(500);
         b.Property(x => x.TargetHours).HasPrecision(9, 2);
@@ -183,5 +188,118 @@ internal sealed class ReasonCodeConfiguration : IEntityTypeConfiguration<ReasonC
     {
         b.Property(x => x.Name).HasMaxLength(150).IsRequired();
         b.HasIndex(x => new { x.TenantId, x.Scope, x.Name }).IsUnique();
+    }
+}
+
+internal sealed class QualityTemplateConfiguration : IEntityTypeConfiguration<QualityTemplate>
+{
+    public void Configure(EntityTypeBuilder<QualityTemplate> b)
+    {
+        b.Property(x => x.Name).HasMaxLength(150).IsRequired();
+        b.Property(x => x.Description).HasMaxLength(500);
+        b.HasIndex(x => new { x.TenantId, x.Name }).IsUnique();
+        b.HasIndex(x => x.TenantId).IsUnique().HasFilter("[IsDefault] = 1").HasDatabaseName("IX_QualityTemplates_OneDefaultPerTenant");
+        b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.QualityTemplateId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class QualityTemplateItemConfiguration : IEntityTypeConfiguration<QualityTemplateItem>
+{
+    public void Configure(EntityTypeBuilder<QualityTemplateItem> b) => b.Property(x => x.Text).HasMaxLength(300).IsRequired();
+}
+
+internal sealed class QualityCheckConfiguration : IEntityTypeConfiguration<QualityCheck>
+{
+    public void Configure(EntityTypeBuilder<QualityCheck> b)
+    {
+        b.Property(x => x.StageName).HasMaxLength(100);
+        b.Property(x => x.TemplateName).HasMaxLength(150);
+        b.Property(x => x.Notes).HasMaxLength(2000);
+        b.HasOne<WorkOrder>().WithMany().HasForeignKey(x => x.WorkOrderId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<ReasonCode>().WithMany().HasForeignKey(x => x.ReasonCodeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.QualityCheckId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.TenantId, x.WorkOrderId, x.CheckedAtUtc });
+        b.HasIndex(x => new { x.TenantId, x.Result, x.CheckedAtUtc });
+    }
+}
+
+internal sealed class QualityCheckItemConfiguration : IEntityTypeConfiguration<QualityCheckItem>
+{
+    public void Configure(EntityTypeBuilder<QualityCheckItem> b)
+    {
+        b.Property(x => x.Text).HasMaxLength(300).IsRequired();
+        b.Property(x => x.Note).HasMaxLength(500);
+    }
+}
+
+internal sealed class CaseAdjustmentConfiguration : IEntityTypeConfiguration<CaseAdjustment>
+{
+    public void Configure(EntityTypeBuilder<CaseAdjustment> b)
+    {
+        b.Property(x => x.Notes).HasMaxLength(1000);
+        b.HasOne<WorkOrder>().WithMany().HasForeignKey(x => x.WorkOrderId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<WorkOrder>().WithMany().HasForeignKey(x => x.AdjustmentWorkOrderId).OnDelete(DeleteBehavior.NoAction);
+        b.HasOne<ReasonCode>().WithMany().HasForeignKey(x => x.ReasonCodeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.TenantId, x.Status, x.RequestedAtUtc });
+        b.HasIndex(x => new { x.TenantId, x.WorkOrderId });
+    }
+}
+
+internal sealed class RemakeRecordConfiguration : IEntityTypeConfiguration<RemakeRecord>
+{
+    public void Configure(EntityTypeBuilder<RemakeRecord> b)
+    {
+        b.Property(x => x.Decision).HasMaxLength(1000);
+        b.Property(x => x.CostCharged).HasPrecision(18, 4);
+        b.HasOne<WorkOrder>().WithMany().HasForeignKey(x => x.OriginalWorkOrderId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<WorkOrder>().WithMany().HasForeignKey(x => x.RemakeWorkOrderId).OnDelete(DeleteBehavior.NoAction);
+        b.HasOne<ReasonCode>().WithMany().HasForeignKey(x => x.ReasonCodeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.TenantId, x.RemakeWorkOrderId }).IsUnique();
+        b.HasIndex(x => new { x.TenantId, x.OriginalWorkOrderId });
+        b.HasIndex(x => new { x.TenantId, x.DecidedAtUtc });
+    }
+}
+
+internal sealed class DeliveryNoteConfiguration : IEntityTypeConfiguration<DeliveryNote>
+{
+    public void Configure(EntityTypeBuilder<DeliveryNote> b)
+    {
+        b.Ignore(x => x.IsActive);
+        b.Property(x => x.Number).HasMaxLength(30).IsRequired();
+        b.Property(x => x.Address).HasMaxLength(500);
+        b.Property(x => x.ContactPhone).HasMaxLength(50);
+        b.Property(x => x.Notes).HasMaxLength(1000);
+        b.Property(x => x.ReceivedByName).HasMaxLength(150);
+        b.Property(x => x.FailureNotes).HasMaxLength(500);
+        b.HasIndex(x => new { x.TenantId, x.Number }).IsUnique();
+        b.HasIndex(x => new { x.TenantId, x.ClientOperationId }).IsUnique();
+        b.HasIndex(x => new { x.TenantId, x.Status, x.DocumentDate });
+        b.HasIndex(x => new { x.TenantId, x.RunId, x.RunSequence });
+        b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Branch>().WithMany().HasForeignKey(x => x.BranchId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<DeliveryRun>().WithMany().HasForeignKey(x => x.RunId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<ReasonCode>().WithMany().HasForeignKey(x => x.FailureReasonCodeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<FileMetadata>().WithMany().HasForeignKey(x => x.ProofFileId).OnDelete(DeleteBehavior.Restrict);
+        b.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.DeliveryNoteId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class DeliveryNoteLineConfiguration : IEntityTypeConfiguration<DeliveryNoteLine>
+{
+    public void Configure(EntityTypeBuilder<DeliveryNoteLine> b)
+    {
+        b.HasOne<WorkOrder>().WithMany().HasForeignKey(x => x.WorkOrderId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.TenantId, x.DeliveryNoteId, x.WorkOrderId }).IsUnique();
+        b.HasIndex(x => new { x.TenantId, x.WorkOrderId });
+    }
+}
+
+internal sealed class DeliveryRunConfiguration : IEntityTypeConfiguration<DeliveryRun>
+{
+    public void Configure(EntityTypeBuilder<DeliveryRun> b)
+    {
+        b.Property(x => x.CourierName).HasMaxLength(150);
+        b.Property(x => x.Notes).HasMaxLength(500);
+        b.HasIndex(x => new { x.TenantId, x.RunDate });
     }
 }

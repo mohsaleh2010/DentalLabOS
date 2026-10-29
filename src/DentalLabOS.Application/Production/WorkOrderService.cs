@@ -73,12 +73,12 @@ public sealed class WorkOrderService(
 
         if (filter.OpenOnly)
         {
-            query = query.Where(w => w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled);
+            query = query.Where(w => w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected);
         }
 
         if (filter.Incomplete == true)
         {
-            query = query.Where(w => !w.DataComplete && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Delivered);
+            query = query.Where(w => !w.DataComplete && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected && w.Status != WorkOrderStatus.Delivered);
         }
 
         if (filter.Overdue == true)
@@ -97,7 +97,7 @@ public sealed class WorkOrderService(
 
     internal static System.Linq.Expressions.Expression<Func<WorkOrder, bool>> OverdueAt(DateOnly today) =>
         w => w.DueDate < today && w.Status != WorkOrderStatus.ReadyForDelivery && w.Status != WorkOrderStatus.Delivered
-             && w.Status != WorkOrderStatus.Cancelled;
+             && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected;
 
     internal IQueryable<WorkOrderListItemDto> Project(IQueryable<WorkOrder> source, DateOnly today) =>
         source.Select(w => new WorkOrderListItemDto(
@@ -106,7 +106,7 @@ public sealed class WorkOrderService(
             db.Dentists.Where(d => d.Id == w.DentistId).Select(d => d.FullName).FirstOrDefault(),
             db.Items.Where(i => i.Id == w.ServiceItemId).Select(i => i.Name).First(),
             w.Status.ToString(), w.Priority.ToString(), w.DueDate,
-            w.DueDate < today && w.Status != WorkOrderStatus.ReadyForDelivery && w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled,
+            w.DueDate < today && w.Status != WorkOrderStatus.ReadyForDelivery && w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected,
             w.Stages.Where(st => st.Id == w.CurrentStageId).Select(st => st.Name).FirstOrDefault(),
             db.UserProfiles.Where(p => p.UserId == w.CurrentAssigneeUserId).Select(p => p.FullName).FirstOrDefault(),
             w.DataComplete, w.Kind.ToString(), w.Quantity, w.ReceivedAtUtc, w.PatientReference));
@@ -301,6 +301,11 @@ public sealed class WorkOrderService(
 
         var currentStage = wo.Stages.FirstOrDefault(s => s.Id == wo.CurrentStageId);
         var overdue = wo.IsOverdue(today);
+        var originalNumber = wo.OriginalWorkOrderId is { } orig ? await db.WorkOrders.AsNoTracking().Where(w => w.Id == orig).Select(w => w.Number).FirstOrDefaultAsync(ct) : null;
+        var noteNumber = wo.DeliveryNoteId is { } nid ? await db.DeliveryNotes.AsNoTracking().Where(n => n.Id == nid).Select(n => n.Number).FirstOrDefaultAsync(ct) : null;
+        var checks = await db.QualityChecks.CountAsync(c => c.WorkOrderId == id, ct);
+        var openAdjustments = await db.Adjustments.CountAsync(a => (a.WorkOrderId == id || a.AdjustmentWorkOrderId == id) && a.Status == AdjustmentStatus.Open, ct);
+        var remakes = await db.Remakes.CountAsync(r => r.OriginalWorkOrderId == id || r.RemakeWorkOrderId == id, ct);
         return new WorkOrderDto(
             wo.Id, wo.Number, wo.BranchId, branch ?? string.Empty, wo.CustomerOrderId, orderNumber, wo.CustomerId, customer, wo.DentistId, dentist,
             wo.ServiceItemId, service.Sku, service.Name, wo.Kind.ToString(), wo.Status.ToString(), wo.Priority.ToString(), wo.PriorityReason,
@@ -314,7 +319,7 @@ public sealed class WorkOrderService(
                 a.File.SizeBytes, a.VisibleToDentist, a.CreatedAtUtc, Name(names, a.CreatedByUserId))).ToList(),
             wo.Notes.OrderByDescending(n => n.CreatedAtUtc).Select(n => new NoteDto(n.Id, n.Text, n.IsInternal, n.CreatedAtUtc, Name(names, n.CreatedByUserId))).ToList(),
             hold is null ? null : new HoldDto(hold.Id, holdReason ?? string.Empty, hold.Notes, hold.HeldAtUtc, Name(names, hold.HeldByUserId)),
-            RowVersions.Encode(wo.RowVersion));
+            RowVersions.Encode(wo.RowVersion), wo.OriginalWorkOrderId, originalNumber, wo.DeliveryNoteId, noteNumber, wo.DeliveredAtUtc, checks, openAdjustments, remakes);
     }
 
     public async Task<IReadOnlyList<TimelineEntryDto>> TimelineAsync(Guid id, CancellationToken ct = default)
@@ -434,9 +439,10 @@ public sealed class WorkOrderService(
 
     // ---- Files ----
 
+    /// <summary>Reception and inspectors (photos of a finding, ORD-18) may attach files.</summary>
     public async Task<AttachmentDto> UploadAsync(Guid id, Stream content, string fileName, CancellationToken ct = default)
     {
-        if (!await permissions.HasAsync(Permissions.WorkOrders.Update, ct))
+        if (!await permissions.HasAsync(Permissions.WorkOrders.Update, ct) && !await permissions.HasAsync(Permissions.Quality.Inspect, ct))
         {
             await permissions.DemandAsync(Permissions.WorkOrders.Create, ct);
         }
@@ -452,24 +458,8 @@ public sealed class WorkOrderService(
             throw ValidationException.For("File", "Validation.TooManyFiles");
         }
 
-        using var buffer = new MemoryStream();
-        await CopyLimitedAsync(content, buffer, FileInspector.MaxBytes, ct);
-        var bytes = buffer.GetBuffer().AsMemory(0, (int)buffer.Length);
-        var inspected = FileInspector.Inspect(bytes.Span, fileName) ?? throw ValidationException.For("File", "Validation.FileType");
-
-        var key = $"{tenant.TenantId:N}/{clock.UtcNow:yyyy/MM}/{Guid.CreateVersion7():N}{inspected.Extension}";
-        var file = new FileMetadata
-        {
-            OriginalName = FileInspector.SafeName(fileName), StorageKey = key, ContentType = inspected.ContentType, SizeBytes = bytes.Length,
-            Sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes.Span)),
-
-            // The signature check above is the content scan available today; an antivirus hook can flip this later.
-            ScanStatus = "Clean",
-        };
-        var attachment = new WorkOrderAttachment { WorkOrderId = id, FileId = file.Id, File = file, Kind = inspected.Kind };
-
-        buffer.Position = 0;
-        await storage.SaveAsync(key, buffer, ct);
+        var (file, kind) = await StoreFileAsync(content, fileName, ct);
+        var attachment = new WorkOrderAttachment { WorkOrderId = id, FileId = file.Id, File = file, Kind = kind };
         try
         {
             db.Files.Add(file);
@@ -480,11 +470,48 @@ public sealed class WorkOrderService(
         }
         catch
         {
-            await storage.DeleteAsync(key, CancellationToken.None);
+            await storage.DeleteAsync(file.StorageKey, CancellationToken.None);
             throw;
         }
 
         return new AttachmentDto(attachment.Id, file.OriginalName, attachment.Kind, file.ContentType, file.SizeBytes, false, attachment.CreatedAtUtc, null);
+    }
+
+    /// <summary>
+    /// Checks the content by signature, writes it to private storage and returns the (unsaved) metadata. The caller adds it and
+    /// deletes the stored bytes if its save fails.
+    /// </summary>
+    internal async Task<(FileMetadata File, string Kind)> StoreFileAsync(Stream content, string fileName, CancellationToken ct, params string[] allowedKinds)
+    {
+        using var buffer = new MemoryStream();
+        await CopyLimitedAsync(content, buffer, FileInspector.MaxBytes, ct);
+        var bytes = buffer.GetBuffer().AsMemory(0, (int)buffer.Length);
+        var inspected = FileInspector.Inspect(bytes.Span, fileName);
+        if (inspected is null || (allowedKinds.Length > 0 && !allowedKinds.Contains(inspected.Kind)))
+        {
+            throw ValidationException.For("File", "Validation.FileType");
+        }
+
+        var key = $"{tenant.TenantId:N}/{clock.UtcNow:yyyy/MM}/{Guid.CreateVersion7():N}{inspected.Extension}";
+        var file = new FileMetadata
+        {
+            OriginalName = FileInspector.SafeName(fileName), StorageKey = key, ContentType = inspected.ContentType, SizeBytes = bytes.Length,
+            Sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes.Span)),
+
+            // The signature check above is the content scan available today; an antivirus hook can flip this later.
+            ScanStatus = "Clean",
+        };
+        buffer.Position = 0;
+        await storage.SaveAsync(key, buffer, ct);
+        return (file, inspected.Kind);
+    }
+
+    internal Task DeleteStoredAsync(string key) => storage.DeleteAsync(key, CancellationToken.None);
+
+    internal async Task<FileDownload> OpenFileAsync(Guid fileId, CancellationToken ct)
+    {
+        var f = await db.Files.AsNoTracking().FirstOrDefaultAsync(x => x.Id == fileId, ct) ?? throw new NotFoundException(nameof(FileMetadata));
+        return new FileDownload(await storage.OpenReadAsync(f.StorageKey, ct), f.OriginalName, f.ContentType);
     }
 
     public async Task<FileDownload> DownloadAsync(Guid id, Guid attachmentId, CancellationToken ct = default)
@@ -703,7 +730,7 @@ public sealed class WorkOrderService(
         return stage.DepartmentId is null || (await MyDepartmentsAsync(ct)).Contains(stage.DepartmentId.Value);
     }
 
-    private static void CloseEntries(WorkOrderStage stage, DateTime now)
+    internal static void CloseEntries(WorkOrderStage stage, DateTime now)
     {
         foreach (var e in stage.TimeEntries.Where(e => e.EndedAtUtc is null))
         {
@@ -711,7 +738,7 @@ public sealed class WorkOrderService(
         }
     }
 
-    private async Task<WorkOrder> LoadAsync(Guid id, CancellationToken ct) =>
+    internal async Task<WorkOrder> LoadAsync(Guid id, CancellationToken ct) =>
         await db.WorkOrders.Include(w => w.Teeth).Include(w => w.Attachments)
             .Include(w => w.Stages).ThenInclude(s => s.TimeEntries)
             .FirstOrDefaultAsync(w => w.Id == id, ct) ?? throw new NotFoundException(nameof(WorkOrder));
@@ -724,7 +751,7 @@ public sealed class WorkOrderService(
         }
     }
 
-    private async Task RecheckDataAsync(WorkOrder wo, DateTime now, CancellationToken ct)
+    internal async Task RecheckDataAsync(WorkOrder wo, DateTime now, CancellationToken ct)
     {
         var workflow = wo.WorkflowDefinitionId is { } wid ? await db.Workflows.AsNoTracking().FirstOrDefaultAsync(w => w.Id == wid, ct) : null;
         var missing = WorkflowEngine.MissingData(workflow, wo, wo.Attachments.Count(a => !a.IsDeleted));
@@ -732,6 +759,72 @@ public sealed class WorkOrderService(
         {
             db.StageTransitions.Add(log);
         }
+    }
+
+    /// <summary>
+    /// A remake or post-delivery adjustment (ORD-19/20): a new order with the original's prescription and files, linked to it.
+    /// The caller saves it, inside its own transaction.
+    /// </summary>
+    internal async Task<WorkOrder> CreateLinkedAsync(
+        WorkOrder original, WorkOrderKind kind, Guid clientOperationId, DateOnly? dueDate, PriorityLevel priority, string? priorityReason, bool keepPrice,
+        string reason, CancellationToken ct)
+    {
+        var service = await db.Items.AsNoTracking().FirstAsync(i => i.Id == original.ServiceItemId, ct);
+        var workflow = (original.WorkflowDefinitionId is { } wid
+                           ? await db.Workflows.AsNoTracking().Include(w => w.Stages).FirstOrDefaultAsync(w => w.Id == wid && w.IsActive, ct)
+                           : null)
+                       ?? await LoadWorkflowForAsync(service, ct)
+                       ?? throw new DomainException("Errors.Workflow.NoStages");
+        var today = await calendar.TodayAsync(ct);
+        var now = clock.UtcNow;
+        var wo = new WorkOrder
+        {
+            Number = await numbering.NextAsync(DocumentType, original.BranchId, today, ct),
+            BranchId = original.BranchId,
+            CustomerOrderId = original.CustomerOrderId,
+            CustomerId = original.CustomerId,
+            DentistId = original.DentistId,
+            ServiceItemId = original.ServiceItemId,
+            Kind = kind,
+            OriginalWorkOrderId = original.Id,
+            Priority = priority,
+            PriorityReason = priority == PriorityLevel.Normal ? null : MasterData.Clean(priorityReason) ?? reason,
+            PatientReference = original.PatientReference,
+            MaterialName = original.MaterialName,
+            Shade = original.Shade,
+            Instructions = original.Instructions,
+            Quantity = original.Quantity,
+            ReceivedAtUtc = now,
+            DueDate = dueDate ?? LabCalendar.SuggestDueDate(today, service.StandardLeadHours),
+            UnitPrice = keepPrice ? original.UnitPrice : 0,
+            QuotedPrice = keepPrice ? original.QuotedPrice : 0,
+            ClientOperationId = clientOperationId,
+            Status = WorkOrderStatus.Incomplete,
+        };
+        foreach (var t in original.Teeth)
+        {
+            wo.Teeth.Add(new WorkOrderTooth { WorkOrderId = wo.Id, ToothCode = t.ToothCode, Treatment = t.Treatment, Notes = t.Notes });
+        }
+
+        // The files stay where they are; the new order links the same stored files.
+        foreach (var a in original.Attachments.Where(a => !a.IsDeleted))
+        {
+            wo.Attachments.Add(new WorkOrderAttachment { WorkOrderId = wo.Id, FileId = a.FileId, Kind = a.Kind, VisibleToDentist = a.VisibleToDentist });
+        }
+
+        WorkflowEngine.CopyStages(wo, workflow);
+        db.WorkOrders.Add(wo);
+        db.StageTransitions.Add(new StageTransitionLog
+        {
+            WorkOrderId = wo.Id, Action = TransitionAction.RemakeOf, FromStatus = WorkOrderStatus.Draft, ToStatus = WorkOrderStatus.Incomplete, UserId = Me,
+            AtUtc = now, Reason = $"{original.Number} — {reason}",
+        });
+        if (WorkflowEngine.ApplyDataCheck(wo, WorkflowEngine.MissingData(workflow, wo, wo.Attachments.Count), Me, now) is { } log)
+        {
+            db.StageTransitions.Add(log);
+        }
+
+        return wo;
     }
 
     private async Task<WorkflowDefinition?> LoadWorkflowForAsync(Item service, CancellationToken ct)

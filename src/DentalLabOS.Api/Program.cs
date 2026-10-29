@@ -96,6 +96,7 @@ v1.MapOrganizationEndpoints();
 v1.MapPartiesEndpoints();
 v1.MapCatalogEndpoints();
 v1.MapProductionEndpoints();
+v1.MapQualityDeliveryEndpoints();
 v1.MapPlatformEndpoints();
 
 await app.RunAsync();

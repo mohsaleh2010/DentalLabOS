@@ -1,0 +1,71 @@
+@page "/admin/quality-templates/{id}"
+@model DentalLabOS.Web.Pages.Admin.QualityTemplates.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? L["Checklists.New"] : Model.Current!.Name;
+    var i = Model.Input;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/admin/quality-templates">@L["Nav.QualityTemplates"]</a><icon name="chevron-left" class="icon-dir" /><span>@ViewData["Title"]</span></nav>
+        <h1>@ViewData["Title"] <span class="screen-id">ADM-17</span></h1>
+        <p class="lead">@L["Checklists.EditorLead"]</p>
+    </div>
+</div>
+<form method="post" novalidate data-guard data-row-list="Input.Items">
+    <input type="hidden" asp-for="Input.RowVersion" />
+    <partial name="_ValidationSummary" />
+    <div class="split">
+        <section class="card">
+            <div class="card-header"><h2>@L["Checklists.ItemsTitle"]</h2><span class="sub">@L["Checklists.ItemsHint"]</span></div>
+            <div class="table-wrap">
+                <table class="table stage-editor">
+                    <thead><tr><th class="num">#</th><th>@L["Checklists.ItemText"]</th><th>@L["Checklists.CriticalLabel"]</th><th class="actions"></th></tr></thead>
+                    <tbody data-rows>
+                    @for (var k = 0; k < i.Items.Count; k++)
+                    {
+                        var item = i.Items[k];
+                        <tr data-row>
+                            <td class="num"><span class="step-no" data-row-no>@(k + 1)</span><input type="hidden" name="Input.Items[@k].Id" value="@item.Id" data-f="Id" /></td>
+                            <td><input class="input" name="Input.Items[@k].Text" value="@item.Text" maxlength="300" aria-label="@L["Checklists.ItemText"]" placeholder="@L["Checklists.ItemPlaceholder"]" data-f="Text" /></td>
+                            <td><label class="check"><input type="checkbox" name="Input.Items[@k].IsCritical" value="true" checked="@item.IsCritical" data-f="IsCritical" /> @L["Checklists.CriticalShort"]</label></td>
+                            <td class="actions nowrap">
+                                <button class="btn btn-sm btn-ghost" type="button" data-row-up aria-label="@L["Workflows.MoveUp"]" hidden><icon name="arrow-up" class="icon-sm" /></button>
+                                <button class="btn btn-sm btn-ghost" type="button" data-row-down aria-label="@L["Workflows.MoveDown"]" hidden><icon name="arrow-down" class="icon-sm" /></button>
+                                <button class="btn btn-sm btn-ghost" type="button" data-row-remove aria-label="@L["Common.Delete"]" hidden><icon name="trash-2" class="icon-sm" /></button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer flex gap-2 wrap">
+                <button class="btn btn-sm" type="button" data-row-add hidden><icon name="plus" class="icon-sm" /> @L["Checklists.AddItem"]</button>
+                <span class="hint">@L["Workflows.EmptyRowsHint"]</span>
+            </div>
+            <span class="field-error">@Html.ValidationMessage("Input.Items")</span>
+        </section>
+        <aside class="stack sticky-side">
+            <section class="card">
+                <div class="card-body">
+                    <div class="field">
+                        <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                        <input class="input" asp-for="Input.Name" maxlength="150" required />
+                        <span class="field-error" asp-validation-for="Input.Name"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="Input.Description">@L["Fields.Description"]</label>
+                        <textarea class="textarea" asp-for="Input.Description" rows="2" maxlength="500"></textarea>
+                    </div>
+                    <div class="stack">
+                        <label class="switch"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"]</label>
+                        <span class="field-error" asp-validation-for="Input.IsActive"></span>
+                        <label class="switch"><input type="checkbox" asp-for="Input.IsDefault" /> @L["Checklists.MakeDefault"]</label>
+                        <span class="field-error" asp-validation-for="Input.IsDefault"></span>
+                    </div>
+                    <div class="alert alert-warning mt-4 text-sm"><icon name="info" /><div><p>@L["Checklists.SnapshotNote"]</p></div></div>
+                </div>
+                <div class="card-footer"><button class="btn btn-primary btn-block" type="submit"><icon name="check" /> @L["Common.Save"]</button></div>
+            </section>
+        </aside>
+    </div>
+</form>

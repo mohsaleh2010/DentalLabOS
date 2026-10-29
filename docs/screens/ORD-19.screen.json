@@ -2,26 +2,55 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-19",
   "module": "quality",
-  "titleKey": "WoKind.Adjustment",
+  "titleKey": "Nav.Adjustments",
   "route": "/quality/adjustments",
-  "pattern": "Custom",
+  "pattern": "ListPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
     "view": "quality.read",
-    "access": "permission"
+    "access": "permission",
+    "actions": {
+      "customerAdjustment": "quality.remake.manage"
+    }
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "CaseAdjustment",
+    "WorkOrder",
+    "ReasonCode"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/adjustments",
+      "purpose": "Open or all"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/adjustments",
+      "purpose": "Clinic returned a delivered case: linked adjustment order"
+    }
+  ],
+  "rules": [
+    "Quality adjustments close when the corrected work passes inspection",
+    "A clinic adjustment needs a delivered order; it opens a linked order of kind Adjustment with the same prescription, teeth and files, priced at zero",
+    "The clinic adjustment closes when its order is delivered",
+    "Idempotent on clientOperationId"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "empty",
+    "validationError"
   ],
   "offline": {
     "mode": "blocked",
     "why": "requires live server-side checks"
   },
-  "sensitive": {},
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ]
+  },
   "aiAssist": {
     "allowed": [
       "explainScreen"
@@ -34,7 +63,58 @@
   },
   "tests": [
     "ORD-19.happy",
-    "ORD-19.permissionDenied"
+    "ORD-19.permissionDenied",
+    "ORD-19.crossTenant",
+    "ORD-19.idempotent",
+    "ORD-19.notDelivered"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-18",
+    "ORD-07"
+  ],
+  "routes": [
+    "/workorders/{id}/adjustment"
+  ],
+  "fields": [
+    {
+      "name": "reasonCodeId",
+      "type": "lookup",
+      "required": true,
+      "source": "ReasonCode (Adjustment)"
+    },
+    {
+      "name": "notes",
+      "type": "textarea",
+      "maxLength": 1000
+    },
+    {
+      "name": "dueDate",
+      "type": "date"
+    },
+    {
+      "name": "priority",
+      "type": "enum",
+      "source": "PriorityLevel"
+    },
+    {
+      "name": "priorityReason",
+      "type": "text",
+      "maxLength": 200
+    },
+    {
+      "name": "clientOperationId",
+      "type": "hidden"
+    }
+  ],
+  "columns": [
+    "number",
+    "customer",
+    "source",
+    "reason",
+    "status",
+    "requestedAt"
+  ],
+  "filters": [
+    "open|all"
+  ]
 }

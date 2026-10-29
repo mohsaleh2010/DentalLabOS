@@ -2,20 +2,70 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-23",
   "module": "delivery",
-  "titleKey": "Nav.Delivery",
+  "titleKey": "Nav.DeliveryRuns",
   "route": "/delivery/runs",
-  "pattern": "Custom",
+  "pattern": "ListPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
-    "view": "delivery.manage",
-    "access": "permission"
+    "view": "delivery.read",
+    "access": "permission",
+    "actions": {
+      "manage": "delivery.manage",
+      "confirm": "delivery.confirm"
+    }
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "DeliveryRun",
+    "DeliveryNote"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/delivery/runs",
+      "purpose": "Runs from a date"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/delivery/runs/{id}",
+      "purpose": "Run with stops"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/runs",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/delivery/runs/{id}",
+      "purpose": "Update"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/delivery/runs/{id}/stops",
+      "purpose": "Stops in visiting order"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/runs/{id}/start",
+      "purpose": "Start (dispatches draft notes)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/runs/{id}/complete",
+      "purpose": "Complete"
+    }
+  ],
+  "rules": [
+    "A courier is a lab user or a free-text outside driver",
+    "Stops are set while the run is planned; only draft notes can be added",
+    "Starting dispatches every stop (packaging must be checked)",
+    "A run completes only when every stop is delivered or failed"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "empty",
+    "validationError"
   ],
   "offline": {
     "mode": "blocked",
@@ -34,7 +84,45 @@
   },
   "tests": [
     "ORD-23.happy",
-    "ORD-23.permissionDenied"
+    "ORD-23.permissionDenied",
+    "ORD-23.crossTenant",
+    "ORD-23.startNeedsStops",
+    "ORD-23.completeNeedsOutcomes"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-22",
+    "ORD-24"
+  ],
+  "routes": [
+    "/delivery/runs/{id}"
+  ],
+  "fields": [
+    {
+      "name": "runDate",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "courierUserId",
+      "type": "lookup",
+      "source": "lab users"
+    },
+    {
+      "name": "courierName",
+      "type": "text",
+      "maxLength": 150
+    },
+    {
+      "name": "notes",
+      "type": "textarea",
+      "maxLength": 500
+    }
+  ],
+  "columns": [
+    "date",
+    "courier",
+    "status",
+    "stops",
+    "progress"
+  ]
 }

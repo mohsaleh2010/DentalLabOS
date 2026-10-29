@@ -58,18 +58,60 @@ public static class ProductionDefaults
         (ReasonScope.Remake, ReasonCategory.Manufacturing, "كسر أثناء التصنيع", "Broken during production"),
         (ReasonScope.Adjustment, ReasonCategory.Design, "تعديل إطباق أو نقاط تماس", "Occlusion / contact adjustment"),
         (ReasonScope.Waste, ReasonCategory.Material, "تلف خامة", "Material damaged"),
+        (ReasonScope.Rejection, ReasonCategory.Material, "عيب في الخامة أو اللون", "Material or shade defect"),
+        (ReasonScope.Adjustment, ReasonCategory.Manufacturing, "تعديل تشطيب أو لون", "Finish or shade touch-up"),
+        (ReasonScope.Adjustment, ReasonCategory.DentistData, "طلب الطبيب تعديلًا", "Dentist asked for a change"),
+        (ReasonScope.DeliveryFailure, ReasonCategory.Transport, "العيادة مغلقة", "Clinic closed"),
+        (ReasonScope.DeliveryFailure, ReasonCategory.Transport, "لا يوجد مستلم", "No one to receive it"),
+        (ReasonScope.DeliveryFailure, ReasonCategory.Transport, "عنوان غير صحيح", "Wrong address"),
     ];
 
-    public static void Add(IApplicationDbContext db, string culture) => AddMissing(db, culture, [], false, false);
+    /// <summary>A starter final-inspection checklist (plan 5.6); critical items block acceptance.</summary>
+    private static readonly (string Ar, string En, bool Critical)[] Checklist =
+    [
+        ("مطابقة الحالة للوصفة والأسنان المطلوبة", "Matches the prescription and teeth", true),
+        ("اللون مطابق للمطلوب", "Shade matches", true),
+        ("الانطباق والحواف سليمة على النموذج", "Fit and margins on the model", true),
+        ("نقاط التماس والإطباق", "Contacts and occlusion", false),
+        ("الشكل والتشطيب واللمعان", "Anatomy, finish and glaze", false),
+        ("لا كسور أو فقاعات أو تشققات", "No cracks, bubbles or chips", true),
+        ("التنظيف والتعقيم قبل التغليف", "Cleaned and disinfected before packing", false),
+    ];
+
+    public static void Add(IApplicationDbContext db, string culture)
+    {
+        AddMissing(db, culture, [], false, false);
+        AddChecklist(db, culture);
+    }
 
     /// <summary>Adds what an existing lab is missing (idempotent; call inside the tenant's scope).</summary>
     public static async Task<bool> BackfillAsync(IApplicationDbContext db, string culture, CancellationToken ct)
     {
         var hasWorkflows = await db.Workflows.AnyAsync(ct);
         var hasReasons = await db.ReasonCodes.AnyAsync(ct);
+        var changed = false;
+
+        // Phase 4 additions for labs created earlier: the starter checklist and the delivery-failure reasons.
+        if (!await db.QualityTemplates.AnyAsync(ct))
+        {
+            AddChecklist(db, culture);
+            changed = true;
+        }
+
+        if (hasReasons && !await db.ReasonCodes.AnyAsync(r => r.Scope == ReasonScope.DeliveryFailure, ct))
+        {
+            var ar = culture.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+            foreach (var r in Reasons.Where(r => r.Scope == ReasonScope.DeliveryFailure))
+            {
+                db.ReasonCodes.Add(new ReasonCode { Scope = r.Scope, Category = r.Category, Name = ar ? r.Ar : r.En });
+            }
+
+            changed = true;
+        }
+
         if (hasWorkflows && hasReasons)
         {
-            return false;
+            return changed;
         }
 
         var departments = (await db.Departments.Select(d => new { d.Code, d.Id, d.BranchId }).ToListAsync(ct))
@@ -77,6 +119,23 @@ public static class ProductionDefaults
             .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
         AddMissing(db, culture, departments, hasWorkflows, hasReasons);
         return true;
+    }
+
+    private static void AddChecklist(IApplicationDbContext db, string culture)
+    {
+        var ar = culture.StartsWith("ar", StringComparison.OrdinalIgnoreCase);
+        var template = new QualityTemplate
+        {
+            Name = ar ? "الفحص النهائي القياسي" : "Standard final inspection", IsDefault = true,
+            Description = ar ? "قائمة بداية؛ راجعها مع مسؤول الجودة." : "A starting list; review it with your quality lead.",
+        };
+        var order = 1;
+        foreach (var (a, e, critical) in Checklist)
+        {
+            template.Items.Add(new QualityTemplateItem { QualityTemplateId = template.Id, Order = order++, Text = ar ? a : e, IsCritical = critical });
+        }
+
+        db.QualityTemplates.Add(template);
     }
 
     private static void AddMissing(IApplicationDbContext db, string culture, Dictionary<string, Guid> departments, bool skipWorkflows, bool skipReasons)

@@ -2,26 +2,59 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-20",
   "module": "quality",
-  "titleKey": "WoKind.Remake",
+  "titleKey": "Nav.Remakes",
   "route": "/quality/remakes",
-  "pattern": "Custom",
+  "pattern": "ListPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
-    "view": "quality.remake.manage",
-    "access": "permission"
+    "view": "quality.read",
+    "access": "permission",
+    "actions": {
+      "create": "quality.remake.manage"
+    }
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "RemakeRecord",
+    "WorkOrder",
+    "ReasonCode"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/remakes",
+      "purpose": "List (or by work order)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quality/remakes",
+      "purpose": "Open a remake"
+    }
+  ],
+  "rules": [
+    "The remake copies prescription, teeth and file links and is linked to the original (OriginalWorkOrderId)",
+    "An original still in the lab is closed as Rejected; a delivered one keeps its status; both get a log entry",
+    "Who bears the cost is a recorded human decision: Customer keeps the original price, everything else is priced at zero",
+    "Not allowed while the original is on a delivery note",
+    "Idempotent on clientOperationId"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "empty",
+    "validationError"
   ],
   "offline": {
     "mode": "blocked",
     "why": "requires live server-side checks"
   },
-  "sensitive": {},
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ],
+    "hidesCostFor": [
+      "costCharged"
+    ]
+  },
   "aiAssist": {
     "allowed": [
       "explainScreen"
@@ -34,7 +67,61 @@
   },
   "tests": [
     "ORD-20.happy",
-    "ORD-20.permissionDenied"
+    "ORD-20.permissionDenied",
+    "ORD-20.crossTenant",
+    "ORD-20.idempotent",
+    "ORD-20.linked"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-07",
+    "ORD-18"
+  ],
+  "routes": [
+    "/quality/remakes/new"
+  ],
+  "fields": [
+    {
+      "name": "reasonCodeId",
+      "type": "lookup",
+      "required": true,
+      "source": "ReasonCode (Remake)"
+    },
+    {
+      "name": "chargeTo",
+      "type": "enum",
+      "required": true,
+      "source": "Lab, Customer, Supplier, Undecided"
+    },
+    {
+      "name": "decision",
+      "type": "textarea",
+      "maxLength": 1000
+    },
+    {
+      "name": "dueDate",
+      "type": "date"
+    },
+    {
+      "name": "priority",
+      "type": "enum",
+      "source": "PriorityLevel"
+    },
+    {
+      "name": "priorityReason",
+      "type": "text",
+      "maxLength": 200
+    },
+    {
+      "name": "clientOperationId",
+      "type": "hidden"
+    }
+  ],
+  "columns": [
+    "remake",
+    "original",
+    "customer",
+    "reason",
+    "chargeTo",
+    "decidedAt"
+  ]
 }

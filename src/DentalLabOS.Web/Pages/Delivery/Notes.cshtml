@@ -1,0 +1,36 @@
+@page "/delivery/notes"
+@model DentalLabOS.Web.Pages.Delivery.NotesModel
+@{
+    ViewData["Title"] = L["Nav.DeliveryNotes"];
+    var r = Model.Result;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/delivery/ready">@L["Nav.Delivery"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.DeliveryNotes"]</span></nav>
+        <h1>@L["Nav.DeliveryNotes"] <span class="screen-id">ORD-22</span></h1>
+        <p class="lead">@L["Delivery.NotesLead"]</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="/delivery/ready"><icon name="plus" /> @L["Delivery.NewFromReady"]</a></div>
+</div>
+<nav class="tabs" aria-label="@L["Fields.Status"]">
+    @foreach (var f in DentalLabOS.Web.Pages.Delivery.NotesModel.Filters)
+    {
+        <a class="tab" href="/delivery/notes?status=@f&q=@Model.Q" aria-current="@(Model.Status == f ? "page" : null)">@L[$"Delivery.Filter.{f}"]</a>
+    }
+</nav>
+<section class="card tab-panel">
+    <form method="get" class="toolbar card-body" role="search">
+        <input type="hidden" name="status" value="@Model.Status" />
+        <div class="search-input"><icon name="search" /><input class="input" type="search" name="q" value="@Model.Q" placeholder="@L["Delivery.SearchNotes"]" aria-label="@L["Common.Search"]" /></div>
+        <button class="btn" type="submit">@L["Common.Search"]</button>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Delivery.NotesEmpty"].Value" param-IconName="@("clipboard-check")" />
+    }
+    else
+    {
+        <partial name="_DeliveryNoteTable" model="r.Items" />
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

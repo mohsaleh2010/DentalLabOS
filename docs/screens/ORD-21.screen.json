@@ -2,20 +2,47 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-21",
   "module": "delivery",
-  "titleKey": "Nav.Delivery",
+  "titleKey": "Delivery.ReadyTitle",
   "route": "/delivery/ready",
-  "pattern": "Custom",
+  "pattern": "ListPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
     "view": "delivery.read",
-    "access": "permission"
+    "access": "permission",
+    "actions": {
+      "createNote": "delivery.manage"
+    }
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "DeliveryNote",
+    "DeliveryNoteLine",
+    "WorkOrder",
+    "StageTransitionLog",
+    "DeliveryRun"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/delivery/ready",
+      "purpose": "Ready orders grouped by clinic"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/notes",
+      "purpose": "Create a note"
+    }
+  ],
+  "rules": [
+    "Only ReadyForDelivery orders that are not on an active note",
+    "One clinic per note",
+    "A note may be put on a planned run",
+    "Idempotent on clientOperationId"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "empty",
+    "validationError"
   ],
   "offline": {
     "mode": "blocked",
@@ -34,7 +61,22 @@
   },
   "tests": [
     "ORD-21.happy",
-    "ORD-21.permissionDenied"
+    "ORD-21.permissionDenied",
+    "ORD-21.crossTenant",
+    "ORD-21.oneClinicPerNote",
+    "ORD-21.idempotent"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-22",
+    "ORD-23"
+  ],
+  "columns": [
+    "number",
+    "service",
+    "patientReference",
+    "dueDate"
+  ],
+  "filters": [
+    "search"
+  ]
 }

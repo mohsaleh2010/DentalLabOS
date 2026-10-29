@@ -2,20 +2,50 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-17",
   "module": "quality",
-  "titleKey": "Nav.Quality",
+  "titleKey": "Quality.QueueTitle",
   "route": "/quality/queue",
-  "pattern": "Custom",
+  "pattern": "DashboardPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
     "view": "quality.read",
-    "access": "permission"
+    "access": "permission",
+    "actions": {
+      "inspect": "quality.inspect"
+    }
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "QualityCheck",
+    "QualityCheckItem",
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/overview",
+      "purpose": "Counters"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/queue",
+      "purpose": "Stages awaiting inspection (department filter)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/checks",
+      "purpose": "Recent decisions"
+    }
+  ],
+  "rules": [
+    "A stage that needs a quality pass waits here after the technician finishes it (AwaitingQuality); the order is InQuality",
+    "Earliest due first, urgent first",
+    "Earlier checks of the same order are flagged"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "empty"
   ],
   "offline": {
     "mode": "blocked",
@@ -34,7 +64,23 @@
   },
   "tests": [
     "ORD-17.happy",
-    "ORD-17.permissionDenied"
+    "ORD-17.permissionDenied",
+    "ORD-17.crossTenant"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-18",
+    "ORD-19",
+    "ORD-20"
+  ],
+  "columns": [
+    "number",
+    "stage",
+    "customer",
+    "submittedBy",
+    "dueDate",
+    "priority"
+  ],
+  "filters": [
+    "department"
+  ]
 }

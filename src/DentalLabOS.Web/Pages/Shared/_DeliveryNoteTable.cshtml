@@ -1,0 +1,21 @@
+@using DentalLabOS.Contracts.Production
+@model IReadOnlyList<DeliveryNoteListItemDto>
+<div class="table-wrap">
+    <table class="table table-responsive">
+        <thead><tr><th>@L["Fields.Number"]</th><th>@L["Fields.Customer"]</th><th>@L["Fields.Status"]</th><th class="num">@L["Delivery.Lines"]</th><th>@L["Delivery.Run"]</th><th>@L["Delivery.Receipt"]</th><th class="actions"></th></tr></thead>
+        <tbody>
+        @foreach (var n in Model)
+        {
+            <tr>
+                <td class="cell-primary"><div class="cell-main"><span><a href="/delivery/notes/@n.Id"><strong class="ltr">@n.Number</strong></a><span>@Fmt.Date(n.DocumentDate)</span></span></div></td>
+                <td data-label="@L["Fields.Customer"]">@n.CustomerName</td>
+                <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Delivery(n.Status)" /></td>
+                <td data-label="@L["Delivery.Lines"]" class="num">@n.LineCount@if (n.Status == "Draft" && n.CheckedCount < n.LineCount) {<div class="text-xs text-danger">@L["Delivery.Unchecked", n.LineCount - n.CheckedCount]</div>}</td>
+                <td data-label="@L["Delivery.Run"]">@if (n.RunId is not null) {<a href="/delivery/runs/@n.RunId">@n.RunLabel</a><span class="muted text-xs"> #@n.RunSequence</span>} else {<span class="muted">—</span>}</td>
+                <td data-label="@L["Delivery.Receipt"]">@if (n.DeliveredAtUtc is { } at) {<span>@(n.ReceivedByName ?? "—")</span><div class="text-xs muted">@at.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div>} else {<span class="muted">—</span>}</td>
+                <td class="actions"><a class="btn btn-sm" href="/delivery/notes/@n.Id"><icon name="eye" class="icon-sm" /> @L["Common.Open"]</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

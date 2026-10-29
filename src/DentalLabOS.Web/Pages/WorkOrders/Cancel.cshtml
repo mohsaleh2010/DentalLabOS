@@ -15,9 +15,9 @@
     <div class="card-body">
         <div class="action-head"><span class="dialog-icon is-danger"><icon name="ban" /></span>
             <div><h2><span class="ltr">@w.Number</span> · @w.CustomerName</h2><p class="muted">@w.ServiceName · <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" /></p></div></div>
-        @if (w.Status is "Delivered" or "Cancelled")
+        @if (w.Status is "Delivered" or "Cancelled" or "Rejected" || w.DeliveryNoteId is not null)
         {
-            <div class="alert mt-4"><icon name="info" /><div><p>@L["Errors.WorkOrder.NotActive"]</p></div></div>
+            <div class="alert mt-4"><icon name="info" /><div><p>@L[w.DeliveryNoteId is not null ? "Errors.WorkOrder.InDelivery" : "Errors.WorkOrder.NotActive"]</p></div></div>
         }
         else
         {

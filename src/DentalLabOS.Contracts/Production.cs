@@ -1,7 +1,7 @@
 namespace DentalLabOS.Contracts.Production;
 
 // Enum values travel as their names. WorkOrder statuses: Incomplete, Ready, InProduction, OnHold, InQuality, Rejected,
-// Completed, ReadyForDelivery, Delivered, Cancelled. Stage statuses: Pending, InProgress, Paused, Done, Skipped.
+// Completed, ReadyForDelivery, Delivered, Cancelled. Stage statuses: Pending, InProgress, Paused, AwaitingQuality, Done, Skipped.
 // Priorities: Normal, High, Urgent.
 
 // ---- Workflows (ADM-15/16) ----
@@ -9,7 +9,9 @@ namespace DentalLabOS.Contracts.Production;
 public sealed record WorkflowListItemDto(
     Guid Id, string Name, string? Description, int Version, bool IsActive, bool IsDefault, int StageCount, int ServiceCount, int OpenWorkOrders);
 
-public sealed record WorkflowStageDto(Guid Id, int Step, string Name, Guid? DepartmentId, string? DepartmentName, decimal TargetHours, bool RequiresQualityPass);
+public sealed record WorkflowStageDto(
+    Guid Id, int Step, string Name, Guid? DepartmentId, string? DepartmentName, decimal TargetHours, bool RequiresQualityPass, Guid? QualityTemplateId = null,
+    string? QualityTemplateName = null);
 
 public sealed record WorkflowDto(
     Guid Id, string Name, string? Description, int Version, bool IsActive, bool IsDefault, bool RequireDentist, bool RequireTeeth,
@@ -17,7 +19,9 @@ public sealed record WorkflowDto(
     string RowVersion);
 
 /// <summary>Stages are replaced as a whole. Equal <see cref="Step"/> values run in parallel; steps are renumbered 1..n.</summary>
-public sealed record WorkflowStageRequest(int Step, string Name, Guid? DepartmentId = null, decimal TargetHours = 0, bool RequiresQualityPass = false, Guid? Id = null);
+/// <summary>A null <see cref="QualityTemplateId"/> on a quality stage uses the lab's default checklist.</summary>
+public sealed record WorkflowStageRequest(
+    int Step, string Name, Guid? DepartmentId = null, decimal TargetHours = 0, bool RequiresQualityPass = false, Guid? Id = null, Guid? QualityTemplateId = null);
 
 public sealed record WorkflowUpsertRequest(
     string Name, IReadOnlyList<WorkflowStageRequest> Stages, string? Description = null, bool IsActive = true, bool IsDefault = false,
@@ -26,7 +30,7 @@ public sealed record WorkflowUpsertRequest(
 
 // ---- Reason codes (ADM-18) ----
 
-/// <summary>Scopes: Rejection, Adjustment, Remake, Hold, Waste, Cancellation, StockAdjustment. Categories: DentistData, Design, Manufacturing, Material, Transport, Unspecified.</summary>
+/// <summary>Scopes: Rejection, Adjustment, Remake, Hold, Waste, Cancellation, StockAdjustment, DeliveryFailure. Categories: DentistData, Design, Manufacturing, Material, Transport, Unspecified.</summary>
 public sealed record ReasonCodeDto(Guid Id, string Scope, string Category, string Name, bool IsActive, int UseCount, string RowVersion);
 
 public sealed record ReasonCodeUpsertRequest(string Scope, string Category, string Name, bool IsActive = true, string? RowVersion = null);
@@ -111,7 +115,9 @@ public sealed record WorkOrderDto(
     DateOnly DueDate, bool IsOverdue, int DaysLate, bool DataComplete, IReadOnlyList<string> MissingData, decimal? UnitPrice, decimal? QuotedPrice,
     string? WorkflowName, int WorkflowVersion, Guid? CurrentStageId, string? CurrentStageName, string? CurrentAssigneeName, int RevisionNumber,
     string? CancelReason, DateTime? CompletedAtUtc, IReadOnlyList<ToothDto> Teeth, IReadOnlyList<WorkOrderStageDto> Stages,
-    IReadOnlyList<AttachmentDto> Attachments, IReadOnlyList<NoteDto> Notes, HoldDto? ActiveHold, string RowVersion);
+    IReadOnlyList<AttachmentDto> Attachments, IReadOnlyList<NoteDto> Notes, HoldDto? ActiveHold, string RowVersion,
+    Guid? OriginalWorkOrderId = null, string? OriginalNumber = null, Guid? DeliveryNoteId = null, string? DeliveryNoteNumber = null,
+    DateTime? DeliveredAtUtc = null, int QualityChecks = 0, int OpenAdjustments = 0, int Remakes = 0);
 
 public sealed record TimelineEntryDto(DateTime AtUtc, string Action, string FromStatus, string ToStatus, string? StageName, string? UserName, string? Reason);
 

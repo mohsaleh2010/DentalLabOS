@@ -1,0 +1,144 @@
+@page "/quality/inspect/{id:guid}"
+@model DentalLabOS.Web.Pages.Quality.InspectModel
+@{
+    var q = Model.Inspection;
+    var w = q.WorkOrder;
+    ViewData["Title"] = L["Quality.InspectTitle", w.Number];
+    var teeth = w.Teeth.Select(t => t.Code).ToList();
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/quality/queue">@L["Nav.Quality"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@q.StageName</span></nav>
+        <h1 class="flex items-center gap-3 wrap"><span>@L["Quality.Inspect"]</span> <span class="ltr">@w.Number</span>
+            @if (w.Kind != "Original") {<span class="badge badge-violet"><icon name="refresh-cw" /> @L[$"WoKind.{w.Kind}"]</span>}
+            @if (w.Priority != "Normal") {<partial name="_StatusBadge" model="StatusUi.Priority(w.Priority)" />}
+            <span class="screen-id">ORD-18</span></h1>
+        <p class="lead">@w.CustomerName@if (w.DentistName is not null) {<text> · @w.DentistName</text>} · @w.ServiceName × @w.Quantity · @L["Fields.DueDate"]: @Fmt.Date(w.DueDate)</p>
+    </div>
+</div>
+<form method="post" enctype="multipart/form-data" novalidate data-guard data-inspection>
+    <input type="hidden" name="StageId" value="@q.StageId" />
+    <partial name="_ValidationSummary" />
+    <div class="split">
+        <div class="stack">
+            <section class="card">
+                <div class="card-header"><div><h2>@L["Quality.Checklist"]</h2><span class="sub">@(q.TemplateName ?? L["Quality.NoChecklist"].Value)</span></div>
+                    @if (q.Items.Count > 0) {<button class="btn btn-sm ms-auto" type="button" data-pass-all hidden><icon name="check-check" class="icon-sm" /> @L["Quality.PassAll"]</button>}</div>
+                @if (q.Items.Count == 0)
+                {
+                    <div class="card-body"><p class="muted">@L["Quality.NoChecklistText"]</p></div>
+                }
+                else
+                {
+                    <ol class="inspect-list">
+                        @for (var k = 0; k < q.Items.Count; k++)
+                        {
+                            var item = q.Items[k];
+                            var answer = Model.Answer(item.Id);
+                            <li class="inspect-item@(answer == false ? " is-failed" : null)" data-item data-critical="@(item.IsCritical ? "true" : null)">
+                                <input type="hidden" name="Items[@k].TemplateItemId" value="@item.Id" />
+                                <div class="inspect-text"><span class="step-no">@(k + 1)</span><span>@item.Text</span>
+                                    @if (item.IsCritical) {<span class="badge badge-danger"><icon name="shield-check" /> @L["Checklists.CriticalShort"]</span>}</div>
+                                <div class="segmented" role="radiogroup" aria-label="@item.Text">
+                                    <label class="seg seg-pass"><input type="radio" name="Items[@k].Passed" value="true" checked="@(answer == true)" /><span><icon name="check" class="icon-sm" /> @L["Quality.Pass"]</span></label>
+                                    <label class="seg seg-fail"><input type="radio" name="Items[@k].Passed" value="false" checked="@(answer == false)" /><span><icon name="x" class="icon-sm" /> @L["Quality.Fail"]</span></label>
+                                </div>
+                                <input class="input input-sm inspect-note" name="Items[@k].Note" value="@Model.NoteFor(item.Id)" maxlength="500" placeholder="@L["Quality.ItemNote"]" aria-label="@L["Quality.ItemNote"]" />
+                            </li>
+                        }
+                    </ol>
+                    <div class="card-footer"><span class="hint" data-tally data-template="@L["Quality.Tally", "{0}", "{1}", "{2}"]"></span></div>
+                }
+            </section>
+            <section class="card">
+                <div class="card-header"><h2>@L["Quality.Decision"]</h2></div>
+                <div class="card-body">
+                    <fieldset class="option-list">
+                        <legend class="sr-only">@L["Quality.Decision"]</legend>
+                        <label class="option"><input type="radio" name="Result" value="Accepted" checked="@(Model.Result == "Accepted")" />
+                            <span><strong><icon name="circle-check" class="icon-sm" /> @L["QualityResult.Accepted"]</strong><small>@L["Quality.AcceptHint"]</small></span></label>
+                        <label class="option"><input type="radio" name="Result" value="AdjustmentRequested" checked="@(Model.Result == "AdjustmentRequested")" />
+                            <span><strong><icon name="wrench" class="icon-sm" /> @L["QualityResult.AdjustmentRequested"]</strong><small>@L["Quality.AdjustHint"]</small></span></label>
+                        <label class="option"><input type="radio" name="Result" value="Rejected" checked="@(Model.Result == "Rejected")" />
+                            <span><strong><icon name="circle-x" class="icon-sm" /> @L["QualityResult.Rejected"]</strong><small>@L["Quality.RejectHint"]</small></span></label>
+                    </fieldset>
+                    <div class="alert alert-danger mt-4" data-critical-blocked hidden><icon name="shield-check" /><div><p>@L["Errors.Quality.CriticalFailed"]</p></div></div>
+                    <span class="field-error">@Html.ValidationMessage("Result")</span>
+                    <div class="form-grid cols-2 mt-4" data-show-when="Result=Rejected,AdjustmentRequested">
+                        <div class="field" data-show-when="Result=Rejected">
+                            <label class="label" for="RejectReasonId">@L["Fields.Reason"]<span class="req">*</span></label>
+                            <select class="select" id="RejectReasonId" name="RejectReasonId">
+                                <option value="">@L["Common.Choose"]</option>
+                                @foreach (var r in Model.RejectReasons) {<option value="@r.Id" selected="@(r.Id == Model.RejectReasonId)">@r.Name · @L[$"ReasonCategory.{r.Category}"]</option>}
+                            </select>
+                        </div>
+                        <div class="field" data-show-when="Result=AdjustmentRequested">
+                            <label class="label" for="AdjustReasonId">@L["Fields.Reason"]<span class="req">*</span></label>
+                            <select class="select" id="AdjustReasonId" name="AdjustReasonId">
+                                <option value="">@L["Common.Choose"]</option>
+                                @foreach (var r in Model.AdjustReasons) {<option value="@r.Id" selected="@(r.Id == Model.AdjustReasonId)">@r.Name · @L[$"ReasonCategory.{r.Category}"]</option>}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="ReturnToStageId">@L["Quality.ReturnTo"]<span class="req">*</span></label>
+                            <select class="select" id="ReturnToStageId" name="ReturnToStageId">
+                                @foreach (var s in q.ReturnTargets) {<option value="@s.Id" selected="@(s.Id == Model.ReturnToStageId)">@s.Step. @s.Name@if (s.DepartmentName is not null) {<text> (@s.DepartmentName)</text>}</option>}
+                            </select>
+                            <span class="field-error">@Html.ValidationMessage("ReasonCodeId")@Html.ValidationMessage("ReturnToStageId")</span>
+                        </div>
+                    </div>
+                    <div class="field mt-4">
+                        <label class="label" for="Notes">@L["Fields.Notes"]</label>
+                        <textarea class="textarea" id="Notes" name="Notes" rows="3" maxlength="2000">@Model.Notes</textarea>
+                    </div>
+                    <label class="dropzone dropzone-sm" data-dropzone>
+                        <icon name="camera" class="icon-lg" />
+                        <strong>@L["Quality.Photos"]</strong>
+                        <span class="muted text-sm">@L["Quality.PhotosHint"]</span>
+                        <input type="file" name="photos" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" />
+                        <span class="file-name" data-file-name></span>
+                    </label>
+                </div>
+                <div class="card-footer form-actions">
+                    <a class="btn btn-ghost" href="/quality/queue">@L["Common.Cancel"]</a>
+                    <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Quality.Record"]</button>
+                </div>
+            </section>
+        </div>
+        <aside class="stack sticky-side">
+            <section class="card">
+                <div class="card-header"><h2>@L["WorkOrders.Prescription"]</h2></div>
+                <div class="card-body">
+                    <dl class="dl mb-4">
+                        <div><dt>@L["Fields.Stage"]</dt><dd><strong>@q.StageName</strong></dd></div>
+                        <div><dt>@L["Fields.Shade"]</dt><dd class="ltr">@(w.Shade ?? "—")</dd></div>
+                        <div><dt>@L["Fields.Material"]</dt><dd>@(w.MaterialName ?? "—")</dd></div>
+                        <div><dt>@L["Fields.PatientReference"]</dt><dd>@(w.PatientReference ?? "—")</dd></div>
+                    </dl>
+                    <partial name="_ToothMap" model="(IReadOnlyCollection<string>)teeth" />
+                    @if (w.Instructions is not null) {<h3 class="text-sm muted mt-4 mb-2">@L["Fields.Instructions"]</h3><p class="prewrap">@w.Instructions</p>}
+                    @if (w.Attachments.Count > 0) {<p class="mt-4"><a href="/workorders/@w.Id?tab=files"><icon name="paperclip" class="icon-sm" /> @L["WorkOrders.Tab.Files"] (@w.Attachments.Count)</a></p>}
+                </div>
+            </section>
+            @if (q.History.Count > 0)
+            {
+                <section class="card">
+                    <div class="card-header"><h2>@L["Quality.EarlierChecks"]</h2><span class="badge">@q.History.Count</span></div>
+                    <div class="card-body">
+                        <ul class="activity">
+                            @foreach (var c in q.History)
+                            {
+                                var look = StatusUi.Quality(c.Result);
+                                <li><span class="dot"><icon name="@look.Icon" class="icon-sm" /></span>
+                                    <div><div class="what"><partial name="_StatusBadge" model="look" />@if (c.StageName is not null) {<text> · @c.StageName</text>}</div>
+                                        @if (c.ReasonName is not null) {<div class="text-sm">@c.ReasonName</div>}
+                                        @foreach (var f in c.Items.Where(i => !i.Passed)) {<div class="text-xs text-danger"><icon name="x" class="icon-sm" /> @f.Text@if (f.Note is not null) {<text> — @f.Note</text>}</div>}
+                                        <div class="when">@(c.InspectorName ?? "—") · @c.CheckedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div></div></li>
+                            }
+                        </ul>
+                    </div>
+                </section>
+            }
+        </aside>
+    </div>
+</form>

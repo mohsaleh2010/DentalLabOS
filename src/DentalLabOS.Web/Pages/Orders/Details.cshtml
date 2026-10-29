@@ -4,7 +4,7 @@
 @{
     var o = Model.Order;
     ViewData["Title"] = o.Number;
-    var open = o.WorkOrders.Count(w => w.Status is not ("Delivered" or "Cancelled"));
+    var open = o.WorkOrders.Count(w => w.Status is not ("Delivered" or "Cancelled" or "Rejected"));
 }
 <div class="page-header">
     <div class="titles">

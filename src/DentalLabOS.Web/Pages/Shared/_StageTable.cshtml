@@ -1,15 +1,15 @@
 @* Stages of a work order with the actions the signed-in user may take (the server re-checks scope and order). *@
 @using DentalLabOS.Contracts.Production
 @using DentalLabOS.Domain.Security
-@model (WorkOrderDto Wo, bool CanTransition)
+@model (WorkOrderDto Wo, bool CanTransition, bool CanInspect)
 @{
     var wo = Model.Wo;
-    var canAct = Model.CanTransition && wo.Status is "Ready" or "InProduction";
+    var canAct = Model.CanTransition && wo.Status is "Ready" or "InProduction" or "InQuality";
     var back = $"/workorders/{wo.Id}?tab=stages";
 }
 <section class="card">
     <div class="card-header"><h2>@L["WorkOrders.Tab.Stages"]</h2>
-        @if (Model.CanTransition && wo.Status is "Ready" or "InProduction" or "ReadyForDelivery")
+        @if (Model.CanTransition && wo.Status is "Ready" or "InProduction" or "InQuality" or "ReadyForDelivery")
         {
             <a class="btn btn-sm ms-auto" href="/workorders/@wo.Id/transition"><icon name="route" class="icon-sm" /> @L["WorkOrders.Transition"]</a>
         }
@@ -22,14 +22,18 @@
             {
                 <tr class="@(s.IsAvailable ? "row-current" : null)">
                     <td data-label="#"><span class="step-no">@s.Step</span></td>
-                    <td class="cell-primary"><strong>@s.Name</strong>@if (s.SkipReason is not null) {<div class="text-xs muted">@s.SkipReason</div>}</td>
+                    <td class="cell-primary"><strong>@s.Name</strong>@if (s.RequiresQualityPass) {<span class="badge badge-violet" title="@L["Workflows.QualityGate"]"><icon name="microscope" /></span>}@if (s.SkipReason is not null) {<div class="text-xs muted">@s.SkipReason</div>}</td>
                     <td data-label="@L["Fields.Department"]">@(s.DepartmentName ?? "—")</td>
                     <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Stage(s.Status)" />@if (s.IsOverTarget) {<span class="badge badge-danger" title="@L["WorkOrders.OverTarget"]"><icon name="timer" /></span>}</td>
                     <td data-label="@L["Fields.AssignedTo"]">@(s.AssigneeName ?? "—")</td>
                     <td data-label="@L["WorkOrders.Worked"]" class="num">@L["Common.Minutes", Math.Round(s.WorkedMinutes)]</td>
                     <td data-label="@L["Fields.TargetHours"]" class="num">@Fmt.Qty(s.TargetHours)</td>
                     <td class="actions">
-                        @if (canAct && s.IsAvailable)
+                        @if (s.Status == "AwaitingQuality" && Model.CanInspect)
+                        {
+                            <a class="btn btn-sm btn-primary" href="/quality/inspect/@wo.Id?stageId=@s.Id"><icon name="microscope" class="icon-sm" /> @L["Quality.Inspect"]</a>
+                        }
+                        else if (canAct && s.IsAvailable)
                         {
                             <form method="post" class="inline-actions" action="/workorders/@wo.Id?tab=stages">
                                 <input type="hidden" name="stageId" value="@s.Id" /><input type="hidden" name="back" value="@back" />
@@ -43,7 +47,7 @@
                                 }
                                 @if (s.Status is "InProgress" or "Paused")
                                 {
-                                    <button class="btn btn-sm btn-primary" type="submit" formaction="/workorders/@wo.Id?handler=Complete"><icon name="check" class="icon-sm" /> @L["WorkOrders.Complete"]</button>
+                                    <button class="btn btn-sm btn-primary" type="submit" formaction="/workorders/@wo.Id?handler=Complete"><icon name="@(s.RequiresQualityPass ? "microscope" : "check")" class="icon-sm" /> @L[s.RequiresQualityPass ? "WorkOrders.SendToQuality" : "WorkOrders.Complete"]</button>
                                 }
                             </form>
                         }

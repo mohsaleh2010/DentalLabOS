@@ -10,15 +10,18 @@ namespace DentalLabOS.Web.Pages.WorkOrders;
 [HasPermission(Permissions.WorkOrders.Read)]
 [RequestSizeLimit(IntakeModel.MaxUploadBytes)]
 [RequestFormLimits(MultipartBodyLengthLimit = IntakeModel.MaxUploadBytes)]
-public sealed class DetailsModel(WorkOrderService workOrders) : AppPageModel
+public sealed class DetailsModel(WorkOrderService workOrders, QualityService quality) : AppPageModel
 {
-    public static readonly string[] Tabs = ["overview", "stages", "files", "notes", "timeline"];
+    public static readonly string[] Tabs = ["overview", "stages", "files", "notes", "quality", "timeline"];
 
     [BindProperty(SupportsGet = true)] public Guid Id { get; set; }
     [BindProperty(SupportsGet = true)] public string Tab { get; set; } = "overview";
 
     public WorkOrderDto Wo { get; private set; } = default!;
     public IReadOnlyList<TimelineEntryDto> Timeline { get; private set; } = [];
+    public IReadOnlyList<QualityCheckDto> Checks { get; private set; } = [];
+    public IReadOnlyList<AdjustmentDto> Adjustments { get; private set; } = [];
+    public IReadOnlyList<RemakeListItemDto> Remakes { get; private set; } = [];
 
     private string Here(string tab) => $"/workorders/{Id}" + (tab == "overview" ? string.Empty : $"?tab={tab}");
 
@@ -29,6 +32,12 @@ public sealed class DetailsModel(WorkOrderService workOrders) : AppPageModel
         if (Tab is "overview" or "timeline")
         {
             Timeline = await workOrders.TimelineAsync(Id);
+        }
+        else if (Tab == "quality")
+        {
+            Checks = await quality.HistoryAsync(Id);
+            Adjustments = await quality.AdjustmentsAsync(openOnly: false, Id);
+            Remakes = await quality.RemakesAsync(Id);
         }
     }
 

@@ -39,7 +39,44 @@ public static class StatusUi
         "Paused" => new("StageStatus.Paused", BadgeTone.Warning, "pause"),
         "Done" => new("StageStatus.Done", BadgeTone.Success, "check"),
         "Skipped" => new("StageStatus.Skipped", BadgeTone.Neutral, "skip-forward"),
+        "AwaitingQuality" => new("StageStatus.AwaitingQuality", BadgeTone.Violet, "microscope"),
         _ => new("StageStatus.Pending", BadgeTone.Neutral, "clock"),
+    };
+
+    public static Look Quality(string result) => result switch
+    {
+        "Accepted" => new("QualityResult.Accepted", BadgeTone.Success, "circle-check"),
+        "Rejected" => new("QualityResult.Rejected", BadgeTone.Danger, "circle-x"),
+        "AdjustmentRequested" => new("QualityResult.AdjustmentRequested", BadgeTone.Warning, "wrench"),
+        _ => new("QualityResult.Pending", BadgeTone.Neutral, "clock"),
+    };
+
+    public static Look Adjustment(string status) => status == "Open"
+        ? new("AdjustmentStatus.Open", BadgeTone.Warning, "wrench")
+        : new("AdjustmentStatus.Closed", BadgeTone.Success, "check");
+
+    public static Look ChargeTo(string chargeTo) => chargeTo switch
+    {
+        "Lab" => new("RemakeChargeTo.Lab", BadgeTone.Brand, "building-2"),
+        "Customer" => new("RemakeChargeTo.Customer", BadgeTone.Info, "stethoscope"),
+        "Supplier" => new("RemakeChargeTo.Supplier", BadgeTone.Violet, "package"),
+        _ => new("RemakeChargeTo.Undecided", BadgeTone.Warning, "circle-help"),
+    };
+
+    public static Look Delivery(string status) => status switch
+    {
+        "OutForDelivery" => new("DeliveryStatus.OutForDelivery", BadgeTone.Brand, "truck"),
+        "Delivered" => new("DeliveryStatus.Delivered", BadgeTone.Success, "circle-check"),
+        "Failed" => new("DeliveryStatus.Failed", BadgeTone.Danger, "circle-x"),
+        "Cancelled" => new("DeliveryStatus.Cancelled", BadgeTone.Neutral, "ban"),
+        _ => new("DeliveryStatus.Draft", BadgeTone.Neutral, "file-text"),
+    };
+
+    public static Look Run(string status) => status switch
+    {
+        "OnRoute" => new("RunStatus.OnRoute", BadgeTone.Brand, "truck"),
+        "Completed" => new("RunStatus.Completed", BadgeTone.Success, "circle-check"),
+        _ => new("RunStatus.Planned", BadgeTone.Info, "calendar"),
     };
 
     public static Look Priority(string priority) => priority switch
@@ -63,6 +100,16 @@ public static class StatusUi
         "Cancelled" => "ban",
         "Assigned" => "user-check",
         "Revised" => "history",
+        "SentToQuality" => "microscope",
+        "QualityAccepted" => "circle-check",
+        "QualityRejected" => "circle-x",
+        "AdjustmentRequested" => "wrench",
+        "ReplacedByRemake" or "RemakeOf" => "repeat",
+        "AddedToDelivery" => "clipboard-list",
+        "RemovedFromDelivery" => "clipboard-x",
+        "OutForDelivery" => "truck",
+        "Delivered" => "package-check",
+        "DeliveryFailed" => "triangle-alert",
         _ => "activity",
     };
 

@@ -4,12 +4,14 @@
 @{
     var w = Model.Wo;
     ViewData["Title"] = w.Number;
-    var open = w.Status is not ("Delivered" or "Cancelled");
-    var running = w.Status is "Ready" or "InProduction" or "ReadyForDelivery";
+    var open = w.Status is not ("Delivered" or "Cancelled" or "Rejected");
+    var running = w.Status is "Ready" or "InProduction" or "InQuality" or "ReadyForDelivery";
+    var awaiting = w.Stages.FirstOrDefault(s => s.Status == "AwaitingQuality");
+    var canRemake = Model.Can(Permissions.Quality.RemakeManage) && w.Status is not ("Cancelled" or "Rejected" or "Draft") && w.DeliveryNoteId is null;
     var teeth = w.Teeth.Select(t => t.Code).ToList();
     var done = w.Stages.Count(s => s.Status is "Done" or "Skipped");
     var progress = w.Stages.Count == 0 ? 0 : (int)Math.Round(100.0 * done / w.Stages.Count);
-    (string Key, int Phase)[] soon = [("WorkOrders.Tab.Quality", 4), ("WorkOrders.Tab.Materials", 5), ("WorkOrders.Tab.Cost", 10), ("WorkOrders.Tab.Invoice", 7)];
+    (string Key, int Phase)[] soon = [("WorkOrders.Tab.Materials", 5), ("WorkOrders.Tab.Cost", 10), ("WorkOrders.Tab.Invoice", 7)];
 }
 <div class="page-header">
     <div class="titles">
@@ -21,7 +23,8 @@
             @if (w.Kind != "Original") {<span class="badge badge-violet"><icon name="refresh-cw" /> @L[$"WoKind.{w.Kind}"]</span>}
             <span class="screen-id">ORD-07</span>
         </h1>
-        <p class="lead">@w.CustomerName@if (w.DentistName is not null) {<text> · @w.DentistName</text>} · @w.ServiceName × @w.Quantity</p>
+        <p class="lead">@w.CustomerName@if (w.DentistName is not null) {<text> · @w.DentistName</text>} · @w.ServiceName × @w.Quantity
+            @if (w.OriginalWorkOrderId is not null) {<text> · @L["WorkOrders.OriginalOf"] </text><a href="/workorders/@w.OriginalWorkOrderId" class="ltr">@w.OriginalNumber</a>}</p>
     </div>
     <div class="actions">
         @if (Model.Can(Permissions.WorkOrders.Print))
@@ -32,11 +35,15 @@
         {
             <a class="btn" href="/workorders/@w.Id/edit"><icon name="pencil" /> @L["Common.Edit"]</a>
         }
+        @if (awaiting is not null && Model.Can(Permissions.Quality.Inspect))
+        {
+            <a class="btn btn-primary" href="/quality/inspect/@w.Id?stageId=@awaiting.Id"><icon name="microscope" /> @L["Quality.Inspect"]</a>
+        }
         @if (w.Status == "OnHold" && Model.Can(Permissions.WorkOrders.Hold))
         {
             <form method="post" asp-page-handler="Release"><button class="btn btn-primary" type="submit"><icon name="play" /> @L["WorkOrders.Release"]</button></form>
         }
-        @if (open || running)
+        @if (open || running || canRemake)
         {
             <details class="menu">
                 <summary class="btn"><icon name="menu" /> @L["Common.More"]</summary>
@@ -48,6 +55,14 @@
                     @if (open && w.Status != "OnHold" && Model.Can(Permissions.WorkOrders.Hold))
                     {
                         <a class="menu-item" href="/workorders/@w.Id/hold"><icon name="hand" /> @L["WorkOrders.Hold"]</a>
+                    }
+                    @if (canRemake)
+                    {
+                        <a class="menu-item" href="/quality/remakes/new?workOrderId=@w.Id"><icon name="repeat" /> @L["Remakes.New"]</a>
+                    }
+                    @if (w.Status == "Delivered" && Model.Can(Permissions.Quality.RemakeManage))
+                    {
+                        <a class="menu-item" href="/workorders/@w.Id/adjustment"><icon name="wrench" /> @L["Adjustments.NewCustomer"]</a>
                     }
                     <a class="menu-item" href="/workorders/@w.Id/revisions"><icon name="history" /> @L["WorkOrders.Revisions"] <span class="badge">@w.RevisionNumber</span></a>
                     <button class="menu-item" type="button" data-copy="#wo-number" data-copied-text="@L["Common.Copied"]"><icon name="copy" /> @L["WorkOrders.CopyNumber"]</button>
@@ -72,6 +87,18 @@
         <p>@string.Join("، ", w.MissingData.Select(m => L[$"IntakeField.{m}"].Value))</p>
         @if (Model.Can(Permissions.WorkOrders.Update)) {<p><a href="/workorders/@w.Id/edit">@L["WorkOrders.CompleteData"]</a></p>}</div></div>
 }
+@if (awaiting is not null)
+{
+    <div class="alert alert-info mb-4"><icon name="microscope" /><div><strong>@L["Quality.AwaitingAlert", awaiting.Name]</strong><p>@L["Quality.AwaitingAlertText"]</p></div></div>
+}
+@if (w.Status == "Rejected")
+{
+    <div class="alert alert-danger mb-4"><icon name="circle-x" /><div><strong>@L["WoStatus.Rejected"]</strong><p>@L["WorkOrders.RejectedText"] <a href="/workorders/@w.Id?tab=quality">@L["WorkOrders.Tab.Quality"]</a></p></div></div>
+}
+@if (w.DeliveryNoteId is not null)
+{
+    <div class="alert alert-info mb-4"><icon name="truck" /><div><strong>@L["WorkOrders.OnDeliveryNote"]</strong><p>@if (Model.Can(Permissions.Delivery.Read)) {<a href="/delivery/notes/@w.DeliveryNoteId" class="ltr">@w.DeliveryNoteNumber</a>} else {<span class="ltr">@w.DeliveryNoteNumber</span>}</p></div></div>
+}
 @if (w.Status == "Cancelled")
 {
     <div class="alert mb-4"><icon name="ban" /><div><strong>@L["WoStatus.Cancelled"]</strong><p>@w.CancelReason</p></div></div>
@@ -81,6 +108,10 @@
     <div class="wo-meta">
         <div><span>@L["WorkOrders.CurrentStage"]</span><strong>@(w.CurrentStageName ?? (w.Status == "ReadyForDelivery" ? L["WoStatus.ReadyForDelivery"].Value : "—"))</strong>@if (w.CurrentAssigneeName is not null) {<small><icon name="user" class="icon-sm" /> @w.CurrentAssigneeName</small>}</div>
         <div class="@(w.IsOverdue ? "is-late" : null)"><span>@L["Fields.DueDate"]</span><strong>@Fmt.Date(w.DueDate)</strong>@if (w.IsOverdue) {<small><icon name="clock" class="icon-sm" /> @L["WorkOrders.DaysLate", w.DaysLate]</small>}</div>
+        @if (w.DeliveredAtUtc is { } deliveredAt)
+        {
+            <div><span>@L["WorkOrders.DeliveredAt"]</span><strong>@deliveredAt.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</strong></div>
+        }
         <div><span>@L["Fields.ReceivedAt"]</span><strong>@w.ReceivedAtUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</strong><small>@w.BranchName</small></div>
         <div><span>@L["WorkOrders.Progress"]</span><strong>@done / @w.Stages.Count</strong><div class="meter"><span style="width:@progress%"></span></div></div>
         @if (w.QuotedPrice is { } total)
@@ -103,6 +134,7 @@
     <a class="tab" href="/workorders/@w.Id?tab=stages" aria-current="@(Model.Tab == "stages" ? "page" : null)">@L["WorkOrders.Tab.Stages"] <span class="badge">@w.Stages.Count</span></a>
     <a class="tab" href="/workorders/@w.Id?tab=files" aria-current="@(Model.Tab == "files" ? "page" : null)">@L["WorkOrders.Tab.Files"] <span class="badge">@w.Attachments.Count</span></a>
     <a class="tab" href="/workorders/@w.Id?tab=notes" aria-current="@(Model.Tab == "notes" ? "page" : null)">@L["WorkOrders.Tab.Notes"] <span class="badge">@w.Notes.Count</span></a>
+    <a class="tab" href="/workorders/@w.Id?tab=quality" aria-current="@(Model.Tab == "quality" ? "page" : null)">@L["WorkOrders.Tab.Quality"] <span class="badge">@w.QualityChecks</span>@if (w.OpenAdjustments > 0) {<span class="badge badge-warning">@w.OpenAdjustments</span>}</a>
     <a class="tab" href="/workorders/@w.Id?tab=timeline" aria-current="@(Model.Tab == "timeline" ? "page" : null)">@L["WorkOrders.Tab.Timeline"]</a>
     @foreach (var (key, phase) in soon)
     {
@@ -113,7 +145,7 @@
 @switch (Model.Tab)
 {
     case "stages":
-        <partial name="_StageTable" model="(w, Model.Can(Permissions.WorkOrders.Transition))" />
+        <partial name="_StageTable" model="(w, Model.Can(Permissions.WorkOrders.Transition), Model.Can(Permissions.Quality.Inspect))" />
         break;
     case "files":
         <div class="@(open && Model.Can(Permissions.WorkOrders.Update) ? "split" : null)">
@@ -189,6 +221,9 @@
                 </div>
             </form>
         </div>
+        break;
+    case "quality":
+        <partial name="_QualityHistory" model="(Model.Checks, Model.Adjustments, Model.Remakes, w.Id)" />
         break;
     case "timeline":
         <section class="card"><div class="card-header"><h2>@L["WorkOrders.Tab.Timeline"]</h2></div><div class="card-body"><partial name="_Timeline" model="Model.Timeline" /></div></section>

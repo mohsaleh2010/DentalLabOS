@@ -1,0 +1,23 @@
+@using DentalLabOS.Contracts.Catalog
+@model (DateOnly RunDate, Guid? CourierUserId, string? CourierName, string? Notes, IReadOnlyList<OptionDto> Couriers)
+<div class="field">
+    <label class="label" for="RunDate">@L["Fields.Date"]<span class="req">*</span></label>
+    <input class="input" id="RunDate" name="RunDate" type="date" value="@Fmt.Input(Model.RunDate)" required />
+    <span class="field-error">@Html.ValidationMessage("RunDate")</span>
+</div>
+<div class="field">
+    <label class="label" for="CourierUserId">@L["Delivery.Courier"]</label>
+    <select class="select" id="CourierUserId" name="CourierUserId">
+        <option value="">@L["Delivery.OutsideCourier"]</option>
+        @foreach (var c in Model.Couriers) {<option value="@c.Id" selected="@(c.Id == Model.CourierUserId)">@c.Name</option>}
+    </select>
+    <span class="field-error">@Html.ValidationMessage("CourierUserId")</span>
+</div>
+<div class="field" data-show-when="CourierUserId=">
+    <label class="label" for="CourierName">@L["Delivery.CourierName"]</label>
+    <input class="input" id="CourierName" name="CourierName" value="@Model.CourierName" maxlength="150" />
+</div>
+<div class="field">
+    <label class="label" for="Notes">@L["Fields.Notes"]</label>
+    <textarea class="textarea" id="Notes" name="Notes" rows="2" maxlength="500">@Model.Notes</textarea>
+</div>

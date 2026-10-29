@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<ImportService>();
         services.AddScoped<LabCalendar>();
         services.AddScoped<WorkflowService>();
+        services.AddScoped<QualityService>();
+        services.AddScoped<DeliveryService>();
         services.AddScoped<ProductionSetupService>();
         services.AddScoped<WorkOrderService>();
         services.AddScoped<OrderService>();

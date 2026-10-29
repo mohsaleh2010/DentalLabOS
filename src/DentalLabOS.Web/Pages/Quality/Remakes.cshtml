@@ -1,0 +1,50 @@
+@page "/quality/remakes"
+@model DentalLabOS.Web.Pages.Quality.RemakesModel
+@{
+    ViewData["Title"] = L["Nav.Remakes"];
+    var byCharge = Model.Items.GroupBy(r => r.ChargeTo).ToDictionary(g => g.Key, g => g.Count());
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/quality/queue">@L["Nav.Quality"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Remakes"]</span></nav>
+        <h1>@L["Nav.Remakes"] <span class="screen-id">ORD-20</span></h1>
+        <p class="lead">@L["Remakes.Lead"]</p>
+    </div>
+</div>
+@if (Model.Items.Count > 0)
+{
+    <div class="chip-row mb-4">
+        @foreach (var c in new[] { "Lab", "Customer", "Supplier", "Undecided" })
+        {
+            <span class="chip"><partial name="_StatusBadge" model="StatusUi.ChargeTo(c)" /> <strong>@byCharge.GetValueOrDefault(c)</strong></span>
+        }
+    </div>
+}
+<section class="card">
+    @if (Model.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Remakes.Empty"].Value" param-Description="@L["Remakes.EmptyText"].Value" param-IconName="@("repeat")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Remakes.Remake"]</th><th>@L["Remakes.Original"]</th><th>@L["Fields.Customer"]</th><th>@L["Fields.Reason"]</th><th>@L["Remakes.ChargeTo"]</th><th>@L["Remakes.DecidedAt"]</th></tr></thead>
+                <tbody>
+                @foreach (var r in Model.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span><a href="/workorders/@r.RemakeWorkOrderId"><strong class="ltr">@r.RemakeNumber</strong></a><span>@r.ServiceName</span></span></div>
+                            <partial name="_StatusBadge" model="StatusUi.WorkOrder(r.RemakeStatus)" /></td>
+                        <td data-label="@L["Remakes.Original"]"><a href="/workorders/@r.OriginalWorkOrderId?tab=quality" class="ltr">@r.OriginalNumber</a></td>
+                        <td data-label="@L["Fields.Customer"]">@r.CustomerName</td>
+                        <td data-label="@L["Fields.Reason"]"><strong>@r.ReasonName</strong><div class="text-xs muted">@L[$"ReasonCategory.{r.Category}"]</div></td>
+                        <td data-label="@L["Remakes.ChargeTo"]"><partial name="_StatusBadge" model="StatusUi.ChargeTo(r.ChargeTo)" />@if (r.Decision is not null) {<div class="text-xs muted">@r.Decision</div>}</td>
+                        <td data-label="@L["Remakes.DecidedAt"]">@r.DecidedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)<div class="text-xs muted">@(r.DecidedBy ?? "—")</div></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

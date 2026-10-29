@@ -107,7 +107,7 @@ public sealed class SecurityRulesTests
     public void Admin_platform_and_master_data_pages_require_a_permission()
     {
         string[] guarded = [".Pages.Admin", ".Pages.Platform", ".Pages.Customers", ".Pages.Suppliers", ".Pages.Items", ".Pages.PriceLists",
-            ".Pages.Orders", ".Pages.WorkOrders", ".Pages.Production", ".Pages.My"];
+            ".Pages.Orders", ".Pages.WorkOrders", ".Pages.Production", ".Pages.My", ".Pages.Quality", ".Pages.Delivery"];
         var pages = typeof(Web.Infrastructure.AppPageModel).Assembly.GetTypes()
             .Where(t => t.Namespace is { } ns && guarded.Any(g => ns.Contains(g, StringComparison.Ordinal)))
             .Where(t => typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel).IsAssignableFrom(t))

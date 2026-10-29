@@ -10,7 +10,7 @@ namespace DentalLabOS.Web.Pages.Admin.ReasonCodes;
 [HasPermission(Permissions.Admin.ReasonsManage)]
 public sealed class IndexModel(ProductionSetupService setup) : AppPageModel
 {
-    public static readonly string[] Scopes = ["Hold", "Cancellation", "Rejection", "Adjustment", "Remake", "Waste", "StockAdjustment"];
+    public static readonly string[] Scopes = ["Hold", "Cancellation", "Rejection", "Adjustment", "Remake", "DeliveryFailure", "Waste", "StockAdjustment"];
     public static readonly string[] Categories = ["DentistData", "Design", "Manufacturing", "Material", "Transport", "Unspecified"];
 
     [BindProperty(SupportsGet = true)] public string? Scope { get; set; }

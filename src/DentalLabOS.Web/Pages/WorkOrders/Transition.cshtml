@@ -3,8 +3,9 @@
 @{
     var w = Model.Wo;
     ViewData["Title"] = L["WorkOrders.Transition"];
-    var canWork = w.Status is "Ready" or "InProduction";
-    var canBack = w.Status is "InProduction" or "ReadyForDelivery" && Model.Earlier.Count > 0;
+    var canWork = w.Status is "Ready" or "InProduction" or "InQuality";
+    var canBack = w.Status is "InProduction" or "InQuality" or "ReadyForDelivery" && w.DeliveryNoteId is null && Model.Earlier.Count > 0;
+    var awaiting = w.Stages.Where(s => s.Status == "AwaitingQuality").ToList();
 }
 <div class="page-header">
     <div class="titles">
@@ -23,6 +24,11 @@
             <li class="@(w.Status != "OnHold" ? "ok" : "bad")"><icon name="@(w.Status != "OnHold" ? "circle-check" : "circle-x")" /> @L[w.Status != "OnHold" ? "WorkOrders.Check.NotHeld" : "WorkOrders.Check.Held"]</li>
             <li class="@(Model.Available.Count > 0 ? "ok" : "bad")"><icon name="@(Model.Available.Count > 0 ? "circle-check" : "circle-x")" /> @L["WorkOrders.Check.Available", Model.Available.Count]</li>
         </ul>
+        @foreach (var a in awaiting)
+        {
+            <div class="alert alert-info mt-4"><icon name="microscope" /><div><strong>@L["Quality.AwaitingAlert", a.Name]</strong>
+                @if (Model.Can(DentalLabOS.Domain.Security.Permissions.Quality.Inspect)) {<p><a href="/quality/inspect/@w.Id?stageId=@a.Id">@L["Quality.Inspect"]</a></p>} else {<p>@L["Quality.AwaitingAlertText"]</p>}</div></div>
+        }
         @if (!canWork && !canBack)
         {
             <div class="alert mt-4"><icon name="info" /><div><p>@L["WorkOrders.NoTransition"]</p></div></div>
@@ -39,7 +45,7 @@
                         {
                             var act = s.Status is "Pending" ? "start" : "complete";
                             <label class="option"><input type="radio" name="pick" value="@act|@s.Id" checked="@(Model.StageId == s.Id && Model.Action == act || Model.StageId == Guid.Empty && s == Model.Available[0])" data-pick />
-                                <span><strong><icon name="@(act == "start" ? "play" : "check")" class="icon-sm" /> @L[act == "start" ? "WorkOrders.StartStage" : "WorkOrders.CompleteStage", s.Name]</strong><small>@(s.DepartmentName ?? "—") · <partial name="_StatusBadge" model="StatusUi.Stage(s.Status)" /></small></span></label>
+                                <span><strong><icon name="@(act == "start" ? "play" : s.RequiresQualityPass ? "microscope" : "check")" class="icon-sm" /> @L[act == "start" ? "WorkOrders.StartStage" : s.RequiresQualityPass ? "WorkOrders.SendStageToQuality" : "WorkOrders.CompleteStage", s.Name]</strong><small>@(s.DepartmentName ?? "—") · <partial name="_StatusBadge" model="StatusUi.Stage(s.Status)" /></small></span></label>
                         }
                         @foreach (var s in Model.Available.Where(s => s.Status == "Pending"))
                         {

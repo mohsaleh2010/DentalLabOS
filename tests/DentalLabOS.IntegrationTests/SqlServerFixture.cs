@@ -69,6 +69,7 @@ public sealed class SqlServerFixture : IAsyncLifetime
             b.UseSetting("Jwt:SigningKey", Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)));
             b.UseSetting("Bootstrap:SetupToken", SetupToken);
             b.UseSetting("RateLimits:UserBurst", "10000");
+            b.UseSetting("RateLimits:AuthPerMinute", "1000"); // every test user signs in from the same address
             b.UseSetting("Storage:RootPath", Path.Combine(Path.GetTempPath(), "dlos-test-files", Guid.NewGuid().ToString("N")));
         });
 

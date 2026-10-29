@@ -69,6 +69,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, ITenant
     public DbSet<TaskTimeEntry> TimeEntries => Set<TaskTimeEntry>();
     public DbSet<HoldRecord> Holds => Set<HoldRecord>();
     public DbSet<ReasonCode> ReasonCodes => Set<ReasonCode>();
+    public DbSet<QualityTemplate> QualityTemplates => Set<QualityTemplate>();
+    public DbSet<QualityTemplateItem> QualityTemplateItems => Set<QualityTemplateItem>();
+    public DbSet<QualityCheck> QualityChecks => Set<QualityCheck>();
+    public DbSet<QualityCheckItem> QualityCheckItems => Set<QualityCheckItem>();
+    public DbSet<CaseAdjustment> Adjustments => Set<CaseAdjustment>();
+    public DbSet<RemakeRecord> Remakes => Set<RemakeRecord>();
+    public DbSet<DeliveryNote> DeliveryNotes => Set<DeliveryNote>();
+    public DbSet<DeliveryNoteLine> DeliveryNoteLines => Set<DeliveryNoteLine>();
+    public DbSet<DeliveryRun> DeliveryRuns => Set<DeliveryRun>();
 
     /// <summary>
     /// Value used by every tenant query filter. With no tenant in context it is <see cref="Guid.Empty"/>, which matches

@@ -22,9 +22,9 @@
                 <button class="btn btn-primary" type="submit"><icon name="play" /> @L["WorkOrders.Release"]</button>
             </form>
         }
-        else if (w.Status is "Delivered" or "Cancelled")
+        else if (w.Status is "Delivered" or "Cancelled" or "Rejected" || w.DeliveryNoteId is not null)
         {
-            <div class="alert mt-4"><icon name="info" /><div><p>@L["Errors.WorkOrder.NotActive"]</p></div></div>
+            <div class="alert mt-4"><icon name="info" /><div><p>@L[w.DeliveryNoteId is not null ? "Errors.WorkOrder.InDelivery" : "Errors.WorkOrder.NotActive"]</p></div></div>
         }
         else
         {

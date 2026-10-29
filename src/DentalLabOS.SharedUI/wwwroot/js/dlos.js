@@ -323,6 +323,12 @@
     const rows = () => [...body.querySelectorAll("[data-stage-row]")];
     const reindex = () => {
       rows().forEach((row, i) => row.querySelectorAll("[data-f]").forEach((el) => { el.name = `Input.Stages[${i}].${el.dataset.f}`; }));
+      // A checklist only applies to a stage that needs a quality pass.
+      rows().forEach((row) => {
+        const qc = row.querySelector('[data-f="RequiresQualityPass"]');
+        const tpl = row.querySelector('[data-f="QualityTemplateId"]');
+        if (qc && tpl) tpl.hidden = !qc.checked;
+      });
       if (!preview) return;
       const groups = new Map();
       rows().forEach((row) => {
@@ -365,7 +371,84 @@
       form.dataset.dirty = "1";
     });
     form.addEventListener("input", reindex);
+    form.addEventListener("change", reindex);
     reindex();
+  });
+
+  // ---- Simple row lists: <form data-row-list="Input.Items"> with [data-rows] > [data-row] holding [data-f] fields ----
+  document.querySelectorAll("form[data-row-list]").forEach((form) => {
+    const prefix = form.dataset.rowList;
+    const body = form.querySelector("[data-rows]");
+    const rows = () => [...body.querySelectorAll("[data-row]")];
+    const reindex = () => rows().forEach((row, i) => {
+      row.querySelectorAll("[data-f]").forEach((el) => { el.name = `${prefix}[${i}].${el.dataset.f}`; });
+      const no = row.querySelector("[data-row-no]");
+      if (no) no.textContent = i + 1;
+    });
+    form.querySelectorAll("[data-row-add], [data-row-up], [data-row-down], [data-row-remove]").forEach((b) => { b.hidden = false; });
+    form.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const row = btn.closest("[data-row]");
+      if (btn.matches("[data-row-add]")) {
+        const copy = rows()[rows().length - 1].cloneNode(true);
+        copy.querySelectorAll("input, select, textarea").forEach((el) => { if (el.type === "checkbox") el.checked = false; else el.value = ""; });
+        body.append(copy);
+        copy.querySelector('input:not([type="hidden"])')?.focus();
+      }
+      else if (btn.matches("[data-row-remove]") && row) { if (rows().length > 1) row.remove(); }
+      else if (btn.matches("[data-row-up]") && row?.previousElementSibling) { row.previousElementSibling.before(row); }
+      else if (btn.matches("[data-row-down]") && row?.nextElementSibling) { row.nextElementSibling.after(row); }
+      else return;
+      reindex();
+      form.dataset.dirty = "1";
+    });
+  });
+
+  // ---- Conditional fields: <div data-show-when="Result=Rejected,AdjustmentRequested"> follows the checked radio or select ----
+  const showWhen = [...document.querySelectorAll("[data-show-when]")];
+  if (showWhen.length) {
+    const current = (form, name) => {
+      const el = form.querySelector(`[name="${name}"]:checked`) || form.querySelector(`select[name="${name}"]`);
+      return el ? el.value : "";
+    };
+    const apply = () => showWhen.forEach((el) => {
+      const [name, values] = el.dataset.showWhen.split("=");
+      const form = el.closest("form") || document;
+      const on = values.split(",").includes(current(form, name));
+      el.hidden = !on;
+      el.querySelectorAll("input, select, textarea").forEach((f) => { f.disabled = !on; });
+    });
+    document.addEventListener("change", apply);
+    apply();
+  }
+
+  // ---- Inspection checklist: pass-all shortcut, live tally, and acceptance blocked by a failed critical item ----
+  document.querySelectorAll("form[data-inspection]").forEach((form) => {
+    const tally = form.querySelector("[data-tally]");
+    const accept = form.querySelector('input[name="Result"][value="Accepted"]');
+    const blocked = form.querySelector("[data-critical-blocked]");
+    const update = () => {
+      const items = [...form.querySelectorAll("[data-item]")];
+      const answered = items.filter((i) => i.querySelector("input[type=radio]:checked")).length;
+      const failed = items.filter((i) => i.querySelector('input[type=radio][value="false"]:checked'));
+      const critical = failed.some((i) => i.hasAttribute("data-critical"));
+      items.forEach((i) => i.classList.toggle("is-failed", !!i.querySelector('input[type=radio][value="false"]:checked')));
+      if (tally) tally.textContent = tally.dataset.template.replace("{0}", answered).replace("{1}", items.length).replace("{2}", failed.length);
+      if (accept) {
+        accept.disabled = critical;
+        if (critical && accept.checked) { accept.checked = false; }
+      }
+      if (blocked) blocked.hidden = !critical;
+    };
+    form.querySelector("[data-pass-all]")?.addEventListener("click", () => {
+      form.querySelectorAll('[data-item] input[type=radio][value="true"]').forEach((r) => { r.checked = true; });
+      update();
+      form.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    form.querySelector("[data-pass-all]")?.removeAttribute("hidden");
+    form.addEventListener("change", update);
+    update();
   });
 
   // ---- Online / offline indicator ----

@@ -19,7 +19,7 @@ public sealed class TransitionModel(WorkOrderService workOrders) : AppPageModel
     public string Action { get; private set; } = string.Empty;
     public Guid StageId { get; private set; }
     public WorkOrderDto Wo { get; private set; } = default!;
-    public IReadOnlyList<WorkOrderStageDto> Available => Wo.Stages.Where(s => s.IsAvailable).ToList();
+    public IReadOnlyList<WorkOrderStageDto> Available => Wo.Stages.Where(s => s.IsAvailable && s.Status != "AwaitingQuality").ToList();
     public IReadOnlyList<WorkOrderStageDto> Earlier { get; private set; } = [];
 
     public async Task OnGetAsync() => await LoadAsync();

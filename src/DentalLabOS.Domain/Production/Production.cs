@@ -59,16 +59,20 @@ public class WorkOrder : TenantEntity
     public DateTime? CancelledAtUtc { get; set; }
     public int RevisionNumber { get; set; } = 1;
     public Guid ClientOperationId { get; set; }
+
+    /// <summary>The delivery note currently carrying this order (draft or out for delivery); cleared when it fails or is cancelled.</summary>
+    public Guid? DeliveryNoteId { get; set; }
     public ICollection<WorkOrderTooth> Teeth { get; set; } = new List<WorkOrderTooth>();
     public ICollection<WorkOrderStage> Stages { get; set; } = new List<WorkOrderStage>();
     public ICollection<WorkOrderAttachment> Attachments { get; set; } = new List<WorkOrderAttachment>();
     public ICollection<WorkOrderNote> Notes { get; set; } = new List<WorkOrderNote>();
     public ICollection<WorkOrderRevision> Revisions { get; set; } = new List<WorkOrderRevision>();
 
-    public bool IsOpen => Status is not (WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled);
+    /// <summary>Rejected is final: the order was scrapped and replaced by a remake.</summary>
+    public bool IsOpen => Status is not (WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled or WorkOrderStatus.Rejected);
 
     public bool IsOverdue(DateOnly today) =>
-        DueDate < today && Status is not (WorkOrderStatus.ReadyForDelivery or WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled);
+        DueDate < today && Status is not (WorkOrderStatus.ReadyForDelivery or WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled or WorkOrderStatus.Rejected);
 
     /// <summary>Production has begun once any stage left the pending state.</summary>
     public bool ProductionStarted => Stages.Any(s => s.Status != StageStatus.Pending);
@@ -162,6 +166,9 @@ public class WorkflowStageDefinition : TenantEntity
     public Guid? DepartmentId { get; set; }
     public decimal TargetHours { get; set; }
     public bool RequiresQualityPass { get; set; }
+
+    /// <summary>Checklist for the quality pass; null uses the lab's default template.</summary>
+    public Guid? QualityTemplateId { get; set; }
 }
 
 /// <summary>
@@ -178,6 +185,7 @@ public class WorkOrderStage : TenantEntity
     public Guid? DepartmentId { get; set; }
     public decimal TargetHours { get; set; }
     public bool RequiresQualityPass { get; set; }
+    public Guid? QualityTemplateId { get; set; }
     public StageStatus Status { get; set; } = StageStatus.Pending;
     public Guid? AssignedUserId { get; set; }
 
@@ -189,9 +197,16 @@ public class WorkOrderStage : TenantEntity
     public ICollection<TaskTimeEntry> TimeEntries { get; set; } = new List<TaskTimeEntry>();
 
     public bool IsFinished => Status is StageStatus.Done or StageStatus.Skipped;
+
+    public bool IsWorkable => Status is StageStatus.Pending or StageStatus.InProgress or StageStatus.Paused;
 }
 
-public enum TransitionAction { Created, DataCompleted, Started, Paused, Resumed, Completed, Skipped, MovedBack, Held, Released, Cancelled, Assigned, Revised }
+public enum TransitionAction
+{
+    Created, DataCompleted, Started, Paused, Resumed, Completed, Skipped, MovedBack, Held, Released, Cancelled, Assigned, Revised,
+    SentToQuality, QualityAccepted, QualityRejected, AdjustmentRequested, ReplacedByRemake, RemakeOf, AddedToDelivery, RemovedFromDelivery,
+    OutForDelivery, Delivered, DeliveryFailed,
+}
 
 /// <summary>Every workflow movement, with who, when and the before/after state. Never edited or deleted.</summary>
 public class StageTransitionLog : TenantEntity

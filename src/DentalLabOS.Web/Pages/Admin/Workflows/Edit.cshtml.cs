@@ -10,7 +10,7 @@ namespace DentalLabOS.Web.Pages.Admin.Workflows;
 /// <summary>ADM-16 route designer. Stages sharing a step run in parallel; saving bumps the version and only new work orders use it.</summary>
 [Screen("ADM-16")]
 [HasPermission(Permissions.Admin.WorkflowsManage)]
-public sealed class EditModel(WorkflowService workflows, ProductionService production) : AppPageModel
+public sealed class EditModel(WorkflowService workflows, ProductionService production, QualityService quality) : AppPageModel
 {
     private const int BlankRows = 2;
 
@@ -20,6 +20,7 @@ public sealed class EditModel(WorkflowService workflows, ProductionService produ
     public bool IsNew => !Guid.TryParse(Id, out _);
     public WorkflowDto? Current { get; private set; }
     public IReadOnlyList<OptionDto> Departments { get; private set; } = [];
+    public IReadOnlyList<OptionDto> Templates { get; private set; } = [];
 
     public sealed class StageInput
     {
@@ -29,6 +30,7 @@ public sealed class EditModel(WorkflowService workflows, ProductionService produ
         public Guid? DepartmentId { get; set; }
         public decimal TargetHours { get; set; }
         public bool RequiresQualityPass { get; set; }
+        public Guid? QualityTemplateId { get; set; }
     }
 
     public sealed class InputModel
@@ -60,6 +62,7 @@ public sealed class EditModel(WorkflowService workflows, ProductionService produ
                 Stages = w.Stages.Select(s => new StageInput
                 {
                     Id = s.Id, Step = s.Step, Name = s.Name, DepartmentId = s.DepartmentId, TargetHours = s.TargetHours, RequiresQualityPass = s.RequiresQualityPass,
+                    QualityTemplateId = s.QualityTemplateId,
                 }).ToList(),
             };
         }
@@ -71,7 +74,7 @@ public sealed class EditModel(WorkflowService workflows, ProductionService produ
     {
         var i = Input;
         var stages = i.Stages.Where(s => !string.IsNullOrWhiteSpace(s.Name))
-            .Select(s => new WorkflowStageRequest(s.Step <= 0 ? 1 : s.Step, s.Name!, s.DepartmentId, s.TargetHours, s.RequiresQualityPass, s.Id)).ToList();
+            .Select(s => new WorkflowStageRequest(s.Step <= 0 ? 1 : s.Step, s.Name!, s.DepartmentId, s.TargetHours, s.RequiresQualityPass, s.Id, s.QualityTemplateId)).ToList();
         var request = new WorkflowUpsertRequest(i.Name, stages, i.Description, i.IsActive, i.IsDefault, i.RequireDentist, i.RequireTeeth, i.RequireShade,
             i.RequireMaterial, i.RequirePatientReference, i.RequireAttachment, i.RowVersion);
         WorkflowDto? saved = null;
@@ -98,6 +101,7 @@ public sealed class EditModel(WorkflowService workflows, ProductionService produ
     private async Task LoadAsync()
     {
         Departments = await production.DepartmentOptionsAsync();
+        Templates = await quality.TemplateOptionsAsync();
         if (!IsNew)
         {
             Current = await workflows.GetAsync(Guid.Parse(Id));

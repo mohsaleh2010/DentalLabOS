@@ -1,0 +1,98 @@
+@page "/quality/queue"
+@model DentalLabOS.Web.Pages.Quality.QueueModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.Quality"];
+    var o = Model.Overview;
+    var canInspect = Model.Can(Permissions.Quality.Inspect);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Quality.QueueTitle"] <span class="screen-id">ORD-17</span></h1>
+        <p class="lead">@L["Quality.QueueLead"]</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="/quality/adjustments"><icon name="wrench" /> @L["Nav.Adjustments"]</a>
+        <a class="btn" href="/quality/remakes"><icon name="repeat" /> @L["Nav.Remakes"]</a>
+    </div>
+</div>
+<div class="stats mb-6">
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Quality.Stat.Awaiting"].Value" param-Value="@o.AwaitingInspection.ToString()" param-IconName="@("microscope")" param-Tone="@("violet")" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Quality.Stat.CheckedToday"].Value" param-Value="@o.CheckedToday.ToString()" param-IconName="@("circle-check")" param-Tone="@("info")" param-Footnote="@L["Quality.Stat.RejectedToday", o.RejectedToday].Value" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Quality.Stat.OpenAdjustments"].Value" param-Value="@o.OpenAdjustments.ToString()" param-IconName="@("wrench")" param-Tone="@("warning")" />
+    <component type="typeof(StatCard)" render-mode="Static" param-Label="@L["Quality.Stat.Remakes"].Value" param-Value="@o.RemakesThisMonth.ToString()" param-IconName="@("repeat")" />
+</div>
+@if (Model.Departments.Count > 1)
+{
+    <nav class="tabs" aria-label="@L["Fields.Department"]">
+        <a class="tab" href="/quality/queue" aria-current="@(Model.Dept is null ? "page" : null)">@L["Common.All"]</a>
+        @foreach (var d in Model.Departments)
+        {
+            <a class="tab" href="/quality/queue?dept=@d.Id" aria-current="@(d.Id == Model.Dept ? "page" : null)">@d.Name</a>
+        }
+    </nav>
+}
+<div class="@(Model.Departments.Count > 1 ? "tab-panel " : null)grid grid-main">
+    <section class="card">
+        <div class="card-header"><h2>@L["Quality.Waiting"]</h2><span class="badge badge-violet">@Model.Items.Count</span></div>
+        @if (Model.Items.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Quality.QueueEmpty"].Value" param-Description="@L["Quality.QueueEmptyText"].Value" param-IconName="@("microscope")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Number"]</th><th>@L["Fields.Stage"]</th><th>@L["Fields.Customer"]</th><th>@L["Quality.SubmittedBy"]</th><th>@L["Fields.DueDate"]</th><th class="actions"></th></tr></thead>
+                    <tbody>
+                    @foreach (var q in Model.Items)
+                    {
+                        <tr class="@(q.IsOverdue ? "row-late" : null)">
+                            <td class="cell-primary"><div class="cell-main"><span><a href="/workorders/@q.WorkOrderId"><strong class="ltr">@q.Number</strong></a>
+                                <span>@q.ServiceName@if (q.TeethCount > 0) {<text> · @L["Board.Teeth", q.TeethCount]</text>}</span></span></div>
+                                @if (q.Kind != "Original") {<span class="badge badge-violet">@L[$"WoKind.{q.Kind}"]</span>}
+                                @if (q.PreviousChecks > 0) {<span class="badge badge-warning" title="@L["Quality.PreviousChecks"]"><icon name="history" /> @q.PreviousChecks</span>}</td>
+                            <td data-label="@L["Fields.Stage"]"><strong>@q.StageName</strong>@if (q.DepartmentName is not null) {<div class="text-xs muted">@q.DepartmentName</div>}</td>
+                            <td data-label="@L["Fields.Customer"]">@q.CustomerName</td>
+                            <td data-label="@L["Quality.SubmittedBy"]">@(q.SubmittedBy ?? "—")@if (q.SubmittedAtUtc is { } at) {<div class="text-xs muted">@at.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div>}</td>
+                            <td data-label="@L["Fields.DueDate"]" class="nowrap @(q.IsOverdue ? "text-danger" : null)">@Fmt.Date(q.DueDate)@if (q.Priority != "Normal") {<div><partial name="_StatusBadge" model="StatusUi.Priority(q.Priority)" /></div>}</td>
+                            <td class="actions">
+                                @if (canInspect)
+                                {
+                                    <a class="btn btn-sm btn-primary" href="/quality/inspect/@q.WorkOrderId?stageId=@q.StageId"><icon name="microscope" class="icon-sm" /> @L["Quality.Inspect"]</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm" href="/workorders/@q.WorkOrderId"><icon name="eye" class="icon-sm" /> @L["Common.Open"]</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <section class="card" style="align-self:start">
+        <div class="card-header"><h2>@L["Quality.Recent"]</h2></div>
+        <div class="card-body">
+            @if (Model.Recent.Count == 0)
+            {
+                <p class="muted">—</p>
+            }
+            else
+            {
+                <ul class="activity">
+                    @foreach (var c in Model.Recent)
+                    {
+                        var look = StatusUi.Quality(c.Result);
+                        <li><span class="dot"><icon name="@look.Icon" class="icon-sm" /></span>
+                            <div><div class="what"><a href="/workorders/@c.WorkOrderId?tab=quality" class="ltr">@c.WorkOrderNumber</a> · <partial name="_StatusBadge" model="look" /></div>
+                                @if (c.ReasonName is not null) {<div class="text-sm">@c.ReasonName</div>}
+                                <div class="when">@(c.InspectorName ?? "—") · @c.CheckedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div></div></li>
+                    }
+                </ul>
+            }
+        </div>
+    </section>
+</div>

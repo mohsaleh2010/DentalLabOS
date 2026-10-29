@@ -1,0 +1,103 @@
+@page "/delivery/notes/{id:guid}"
+@model DentalLabOS.Web.Pages.Delivery.NoteModel
+@using DentalLabOS.Domain.Security
+@{
+    var n = Model.Note;
+    ViewData["Title"] = n.Number;
+    var canManage = Model.Can(Permissions.Delivery.Manage);
+    var canConfirm = Model.Can(Permissions.Delivery.Confirm);
+    var draft = n.Status == "Draft";
+    var active = n.Status is "Draft" or "OutForDelivery";
+    var checkedCount = n.Lines.Count(l => l.PackagingChecked);
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/delivery/notes">@L["Nav.DeliveryNotes"]</a><icon name="chevron-left" class="icon-dir" /><span class="ltr">@n.Number</span></nav>
+        <h1 class="flex items-center gap-3 wrap"><span class="ltr">@n.Number</span> <partial name="_StatusBadge" model="StatusUi.Delivery(n.Status)" /> <span class="screen-id">ORD-22</span></h1>
+        <p class="lead">@n.CustomerName · @Fmt.Date(n.DocumentDate) · @n.BranchName</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="/delivery/notes/@n.Id/print"><icon name="printer" /> @L["Common.Print"]</a>
+        @if (active && canConfirm)
+        {
+            <a class="btn btn-primary" href="/delivery/notes/@n.Id/confirm"><icon name="package-check" /> @L["Delivery.Confirm"]</a>
+        }
+        @if (draft && canManage)
+        {
+            <form method="post" asp-page-handler="Dispatch"><button class="btn btn-primary" type="submit" disabled="@(checkedCount < n.Lines.Count)" title="@(checkedCount < n.Lines.Count ? L["Errors.Delivery.PackagingNotChecked"].Value : null)"><icon name="truck" /> @L["Delivery.Dispatch"]</button></form>
+            <form method="post" asp-page-handler="Cancel"><button class="btn btn-ghost text-danger" type="submit" data-confirm="@L["Delivery.CancelConfirm", n.Number]"><icon name="ban" /> @L["Delivery.CancelNote"]</button></form>
+        }
+    </div>
+</div>
+@if (n.Status == "Failed")
+{
+    <div class="alert alert-danger mb-4"><icon name="triangle-alert" /><div><strong>@L["DeliveryStatus.Failed"]: @n.FailureReason</strong>@if (n.FailureNotes is not null) {<p>@n.FailureNotes</p>}<p>@L["Delivery.FailedText"]</p></div></div>
+}
+@if (n.Status == "Delivered")
+{
+    <div class="alert alert-success mb-4"><icon name="circle-check" /><div><strong>@L["Delivery.ReceivedBy", n.ReceivedByName ?? "—"]</strong>
+        <p>@n.DeliveredAtUtc?.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)@if (n.DeliveredBy is not null) {<text> · @n.DeliveredBy</text>}
+            @if (n.HasProof) {<text> · </text><a href="/delivery/notes/@n.Id?handler=Proof"><icon name="paperclip" class="icon-sm" /> @L["Delivery.Proof"]</a>}</p></div></div>
+}
+<div class="split">
+    <form method="post" asp-page-handler="Packaging" class="card">
+        <div class="card-header"><div><h2>@L["Delivery.Lines"]</h2><span class="sub">@L["Delivery.PackagingProgress", checkedCount, n.Lines.Count]</span></div>
+            @if (draft && canManage) {<button class="btn btn-sm ms-auto" type="submit"><icon name="check" class="icon-sm" /> @L["Delivery.SavePackaging"]</button>}</div>
+        <div class="meter" style="margin:0 var(--space-5)"><span style="width:@(n.Lines.Count == 0 ? 0 : checkedCount * 100 / n.Lines.Count)%"></span></div>
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr>
+                    <th class="check-col">@if (draft && canManage) {<input type="checkbox" data-check-all="lineIds" aria-label="@L["Common.SelectAll"]" />}</th>
+                    <th>@L["Fields.Number"]</th><th>@L["Fields.Service"]</th><th>@L["Fields.Teeth"]</th><th>@L["Fields.PatientReference"]</th><th>@L["Fields.Status"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var l in n.Lines)
+                {
+                    <tr>
+                        <td class="check-col">
+                            @if (draft && canManage) {<input type="checkbox" name="lineIds" value="@l.Id" checked="@l.PackagingChecked" aria-label="@L["Delivery.PackagingChecked"] @l.Number" />}
+                            else {<icon name="@(l.PackagingChecked ? "circle-check" : "circle")" class="@(l.PackagingChecked ? "text-success" : "muted")" />}
+                        </td>
+                        <td class="cell-primary nowrap"><a href="/workorders/@l.WorkOrderId"><strong class="ltr">@l.Number</strong></a></td>
+                        <td data-label="@L["Fields.Service"]">@l.ServiceName <span class="muted text-xs">× @l.Quantity</span></td>
+                        <td data-label="@L["Fields.Teeth"]" class="ltr nowrap">@(l.Teeth.Count == 0 ? "—" : string.Join(", ", l.Teeth))</td>
+                        <td data-label="@L["Fields.PatientReference"]">@(l.PatientReference ?? "—")</td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.WorkOrder(l.WorkOrderStatus)" /></td>
+                        <td class="actions">
+                            @if (draft && canManage)
+                            {
+                                <button class="btn btn-sm btn-ghost" type="submit" formaction="/delivery/notes/@n.Id?handler=RemoveLine&lineId=@l.Id" aria-label="@L["Delivery.RemoveLine"]" data-confirm="@L["Delivery.RemoveLineConfirm", l.Number]"><icon name="x" class="icon-sm" /></button>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </form>
+    <aside class="stack sticky-side">
+        <section class="card">
+            <div class="card-header"><h2>@L["Delivery.Destination"]</h2></div>
+            <div class="card-body">
+                <dl class="dl">
+                    <div><dt>@L["Fields.Customer"]</dt><dd><strong>@n.CustomerName</strong></dd></div>
+                    <div><dt>@L["Fields.Address"]</dt><dd>@(n.Address ?? "—")</dd></div>
+                    <div><dt>@L["Fields.Phone"]</dt><dd class="ltr">@(n.ContactPhone ?? "—")</dd></div>
+                    <div><dt>@L["Delivery.Run"]</dt><dd>@if (n.RunId is not null) {<a href="/delivery/runs/@n.RunId">@n.RunLabel</a><span class="muted"> #@n.RunSequence</span>} else {<span>—</span>}</dd></div>
+                    @if (n.DispatchedAtUtc is { } sent) {<div><dt>@L["Delivery.DispatchedAt"]</dt><dd>@sent.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</dd></div>}
+                    @if (n.Notes is not null) {<div><dt>@L["Fields.Notes"]</dt><dd class="prewrap">@n.Notes</dd></div>}
+                </dl>
+            </div>
+        </section>
+        <section class="card">
+            <div class="card-header"><h2>@L["Delivery.Steps"]</h2></div>
+            <div class="card-body">
+                <ul class="checks">
+                    <li class="ok"><icon name="circle-check" /> @L["Delivery.Step.Created"]</li>
+                    <li class="@(checkedCount == n.Lines.Count ? "ok" : "bad")"><icon name="@(checkedCount == n.Lines.Count ? "circle-check" : "circle")" /> @L["Delivery.Step.Packed"]</li>
+                    <li class="@(n.DispatchedAtUtc is not null ? "ok" : "bad")"><icon name="@(n.DispatchedAtUtc is not null ? "circle-check" : "circle")" /> @L["Delivery.Step.Dispatched"]</li>
+                    <li class="@(n.Status == "Delivered" ? "ok" : "bad")"><icon name="@(n.Status == "Delivered" ? "circle-check" : "circle")" /> @L["Delivery.Step.Delivered"]</li>
+                </ul>
+            </div>
+        </section>
+    </aside>
+</div>

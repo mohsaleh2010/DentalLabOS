@@ -13,7 +13,7 @@ namespace DentalLabOS.Application.Production;
 public sealed class ProductionSetupService(
     IApplicationDbContext db, IPermissionService permissions, ICurrentUser currentUser, IBranchSelection branchSelection)
 {
-    private static readonly WorkOrderStatus[] Closed = [WorkOrderStatus.Delivered, WorkOrderStatus.Cancelled];
+    private static readonly WorkOrderStatus[] Closed = [WorkOrderStatus.Delivered, WorkOrderStatus.Cancelled, WorkOrderStatus.Rejected];
 
     // ---- Reason codes ----
 

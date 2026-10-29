@@ -265,3 +265,164 @@ public sealed class LabCalendarTests
     public void Due_date_suggestion_uses_eight_hour_days(decimal hours, int days) =>
         Assert.Equal(new DateOnly(2026, 10, 26).AddDays(days), LabCalendar.SuggestDueDate(new DateOnly(2026, 10, 26), hours));
 }
+
+public sealed class QualityEngineTests
+{
+    private static readonly Guid User = Guid.NewGuid();
+    private static readonly DateTime Now = new(2026, 10, 29, 9, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>Build → QC (quality pass) → Pack.</summary>
+    private static WorkOrder NewOrder()
+    {
+        var wf = new WorkflowDefinition { Id = Guid.NewGuid(), Name = "QC route", RequireTeeth = false, RequireDentist = false };
+        wf.Stages.Add(new WorkflowStageDefinition { Id = Guid.NewGuid(), Step = 1, Name = "Build" });
+        wf.Stages.Add(new WorkflowStageDefinition { Id = Guid.NewGuid(), Step = 2, Name = "QC", RequiresQualityPass = true });
+        wf.Stages.Add(new WorkflowStageDefinition { Id = Guid.NewGuid(), Step = 3, Name = "Pack" });
+        var wo = new WorkOrder { Id = Guid.NewGuid(), Number = "WO-26-000009" };
+        WorkflowEngine.CopyStages(wo, wf);
+        WorkflowEngine.ApplyDataCheck(wo, [], User, Now);
+        return wo;
+    }
+
+    private static WorkOrderStage Stage(WorkOrder wo, string name) => wo.Stages.Single(s => s.Name == name);
+
+    private static void Work(WorkOrder wo, string name)
+    {
+        WorkflowEngine.Start(wo, Stage(wo, name), User, Now);
+        WorkflowEngine.Complete(wo, Stage(wo, name), User, Now);
+    }
+
+    private static WorkOrder AtQuality()
+    {
+        var wo = NewOrder();
+        Work(wo, "Build");
+        Work(wo, "QC");
+        return wo;
+    }
+
+    [Fact]
+    public void Completing_a_quality_stage_sends_it_to_inspection_instead_of_finishing_it()
+    {
+        var wo = AtQuality();
+        Assert.Equal(StageStatus.AwaitingQuality, Stage(wo, "QC").Status);
+        Assert.Equal(WorkOrderStatus.InQuality, wo.Status);
+        Assert.Null(Stage(wo, "QC").CompletedAtUtc);
+
+        // The next step stays closed until quality decides.
+        Assert.Equal([Stage(wo, "QC")], WorkflowEngine.AvailableStages(wo));
+        Assert.Throws<DomainException>(() => WorkflowEngine.Start(wo, Stage(wo, "Pack"), User, Now));
+    }
+
+    [Fact]
+    public void Acceptance_finishes_the_stage_and_opens_the_next_step()
+    {
+        var wo = AtQuality();
+        var log = WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.Accepted, false, null, User, Now, null);
+        Assert.Equal(TransitionAction.QualityAccepted, log.Action);
+        Assert.Equal(StageStatus.Done, Stage(wo, "QC").Status);
+        Assert.Equal(WorkOrderStatus.InProduction, wo.Status);
+        Assert.Equal(Stage(wo, "Pack").Id, wo.CurrentStageId);
+        Work(wo, "Pack");
+        Assert.Equal(WorkOrderStatus.ReadyForDelivery, wo.Status);
+    }
+
+    [Fact]
+    public void A_failed_critical_item_blocks_acceptance()
+    {
+        var wo = AtQuality();
+        var ex = Assert.Throws<DomainException>(() => WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.Accepted, true, null, User, Now, null));
+        Assert.Equal("Errors.Quality.CriticalFailed", ex.Message);
+        Assert.Equal(StageStatus.AwaitingQuality, Stage(wo, "QC").Status);
+    }
+
+    [Fact]
+    public void Rejection_needs_a_reason_and_returns_the_work_to_an_earlier_stage_keeping_history()
+    {
+        var wo = AtQuality();
+        Assert.Throws<DomainException>(() => WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.Rejected, true, Stage(wo, "Build"), User, Now, " "));
+        Assert.Throws<DomainException>(() => WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.Rejected, true, Stage(wo, "Pack"), User, Now, "Crack"));
+
+        var log = WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.Rejected, true, Stage(wo, "Build"), User, Now, "Crack");
+        Assert.Equal(TransitionAction.QualityRejected, log.Action);
+        Assert.Equal(WorkOrderStatus.InQuality, log.FromStatus);
+        Assert.Equal(WorkOrderStatus.InProduction, wo.Status);
+        Assert.Equal("Crack", log.Reason);
+        Assert.All(wo.Stages, s => Assert.Equal(StageStatus.Pending, s.Status));
+        Assert.Equal(Stage(wo, "Build").Id, wo.CurrentStageId);
+    }
+
+    [Fact]
+    public void An_adjustment_can_return_to_the_inspected_stage_itself()
+    {
+        var wo = AtQuality();
+        var log = WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.AdjustmentRequested, false, Stage(wo, "QC"), User, Now, "Contacts");
+        Assert.Equal(TransitionAction.AdjustmentRequested, log.Action);
+        Assert.Equal(StageStatus.Done, Stage(wo, "Build").Status);
+        Assert.Equal(StageStatus.Pending, Stage(wo, "QC").Status);
+        Assert.Equal([Stage(wo, "QC")], WorkflowEngine.AvailableStages(wo));
+    }
+
+    [Fact]
+    public void Only_a_stage_awaiting_quality_can_be_inspected()
+    {
+        var wo = NewOrder();
+        var ex = Assert.Throws<DomainException>(() => WorkflowEngine.Inspect(wo, Stage(wo, "Build"), QualityResult.Accepted, false, null, User, Now, null));
+        Assert.Equal("Errors.Quality.NotAwaiting", ex.Message);
+    }
+
+    [Fact]
+    public void A_remake_scraps_work_still_in_the_lab_but_keeps_a_delivered_order_delivered()
+    {
+        var inLab = AtQuality();
+        var log = WorkflowEngine.ReplaceByRemake(inLab, User, Now, "WO-26-000010 — broken");
+        Assert.Equal(WorkOrderStatus.Rejected, inLab.Status);
+        Assert.False(inLab.IsOpen);
+        Assert.Equal(TransitionAction.ReplacedByRemake, log.Action);
+        Assert.Throws<DomainException>(() => WorkflowEngine.ReplaceByRemake(inLab, User, Now, "again"));
+
+        var delivered = AtQuality();
+        WorkflowEngine.Inspect(delivered, Stage(delivered, "QC"), QualityResult.Accepted, false, null, User, Now, null);
+        Work(delivered, "Pack");
+        WorkflowEngine.MarkDelivered(delivered, User, Now, "Reception");
+        WorkflowEngine.ReplaceByRemake(delivered, User, Now, "remake");
+        Assert.Equal(WorkOrderStatus.Delivered, delivered.Status);
+    }
+
+    [Fact]
+    public void Orders_on_a_delivery_note_cannot_be_moved_held_or_cancelled_and_only_ready_orders_are_delivered()
+    {
+        var wo = AtQuality();
+        Assert.Throws<DomainException>(() => WorkflowEngine.MarkDelivered(wo, User, Now, null));
+        WorkflowEngine.Inspect(wo, Stage(wo, "QC"), QualityResult.Accepted, false, null, User, Now, null);
+        Work(wo, "Pack");
+        wo.DeliveryNoteId = Guid.NewGuid();
+        Assert.Equal("Errors.WorkOrder.InDelivery",
+            Assert.Throws<DomainException>(() => WorkflowEngine.MoveBack(wo, Stage(wo, "Build"), User, Now, "why")).Message);
+        Assert.Throws<DomainException>(() => WorkflowEngine.Hold(wo, Guid.NewGuid(), null, User, Now));
+        Assert.Throws<DomainException>(() => WorkflowEngine.Cancel(wo, User, Now, "why"));
+
+        var log = WorkflowEngine.MarkDelivered(wo, User, Now, "Dr. Sara");
+        Assert.Equal(WorkOrderStatus.Delivered, wo.Status);
+        Assert.Null(wo.DeliveryNoteId);
+        Assert.Equal(Now, wo.DeliveredAtUtc);
+        Assert.Equal("Dr. Sara", log.Reason);
+    }
+
+    [Fact]
+    public void A_parallel_stage_can_still_be_worked_while_its_sibling_waits_for_inspection()
+    {
+        var wf = new WorkflowDefinition { Id = Guid.NewGuid(), Name = "P", RequireTeeth = false, RequireDentist = false };
+        wf.Stages.Add(new WorkflowStageDefinition { Id = Guid.NewGuid(), Step = 1, Name = "A", RequiresQualityPass = true });
+        wf.Stages.Add(new WorkflowStageDefinition { Id = Guid.NewGuid(), Step = 1, Name = "B" });
+        var wo = new WorkOrder { Id = Guid.NewGuid(), Number = "WO-26-000011" };
+        WorkflowEngine.CopyStages(wo, wf);
+        WorkflowEngine.ApplyDataCheck(wo, [], User, Now);
+        Work(wo, "A");
+        Assert.Equal(WorkOrderStatus.InQuality, wo.Status);
+        WorkflowEngine.Start(wo, Stage(wo, "B"), User, Now);
+        Assert.Equal(WorkOrderStatus.InQuality, wo.Status);
+        WorkflowEngine.Complete(wo, Stage(wo, "B"), User, Now);
+        WorkflowEngine.Inspect(wo, Stage(wo, "A"), QualityResult.Accepted, false, null, User, Now, null);
+        Assert.Equal(WorkOrderStatus.ReadyForDelivery, wo.Status);
+    }
+}
