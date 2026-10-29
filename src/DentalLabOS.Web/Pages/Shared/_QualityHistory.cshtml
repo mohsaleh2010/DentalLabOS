@@ -1,0 +1,92 @@
+@* Work order quality tab: inspections with their checklist answers, adjustments and remakes linked to the order. *@
+@using DentalLabOS.Contracts.Production
+@model (IReadOnlyList<QualityCheckDto> Checks, IReadOnlyList<AdjustmentDto> Adjustments, IReadOnlyList<RemakeListItemDto> Remakes, Guid WorkOrderId)
+<div class="grid grid-main">
+    <section class="card">
+        <div class="card-header"><h2>@L["Quality.Inspections"]</h2><span class="badge">@Model.Checks.Count</span></div>
+        @if (Model.Checks.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Quality.NoChecks"].Value" param-IconName="@("microscope")" />
+        }
+        else
+        {
+            <div class="card-body stack">
+                @foreach (var c in Model.Checks)
+                {
+                    <details class="check-card" open="@(c == Model.Checks[0])">
+                        <summary>
+                            <partial name="_StatusBadge" model="StatusUi.Quality(c.Result)" />
+                            <strong>@(c.StageName ?? "—")</strong>
+                            <span class="muted text-sm">@(c.InspectorName ?? "—") · @c.CheckedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</span>
+                            @if (c.Items.Any(i => !i.Passed)) {<span class="badge badge-danger ms-auto">@L["Quality.FailedItems", c.Items.Count(i => !i.Passed)]</span>}
+                        </summary>
+                        @if (c.ReasonName is not null)
+                        {
+                            <p class="mt-2"><strong>@L["Fields.Reason"]:</strong> @c.ReasonName@if (c.Category is not null) {<span class="muted"> · @L[$"ReasonCategory.{c.Category}"]</span>}@if (c.ReturnToStageName is not null) {<span class="muted"> · @L["Quality.ReturnedTo", c.ReturnToStageName]</span>}</p>
+                        }
+                        @if (c.Notes is not null) {<p class="prewrap text-sm">@c.Notes</p>}
+                        @if (c.Items.Count > 0)
+                        {
+                            <ul class="check-items">
+                                @foreach (var i in c.Items)
+                                {
+                                    <li class="@(i.Passed ? "ok" : "bad")"><icon name="@(i.Passed ? "check" : "x")" class="icon-sm" /> @i.Text
+                                        @if (i.IsCritical) {<span class="badge badge-danger">@L["Checklists.CriticalShort"]</span>}
+                                        @if (i.Note is not null) {<span class="muted"> — @i.Note</span>}</li>
+                                }
+                            </ul>
+                        }
+                    </details>
+                }
+            </div>
+        }
+    </section>
+    <div class="stack" style="align-self:start">
+        <section class="card">
+            <div class="card-header"><h2>@L["Nav.Adjustments"]</h2><span class="badge">@Model.Adjustments.Count</span></div>
+            <div class="card-body">
+                @if (Model.Adjustments.Count == 0)
+                {
+                    <p class="muted">—</p>
+                }
+                else
+                {
+                    <ul class="activity">
+                        @foreach (var a in Model.Adjustments)
+                        {
+                            <li><span class="dot"><icon name="wrench" class="icon-sm" /></span>
+                                <div><div class="what"><partial name="_StatusBadge" model="StatusUi.Adjustment(a.Status)" /> @L[$"AdjustmentSource.{a.Source}"]</div>
+                                    <div class="text-sm">@a.ReasonName@if (a.Notes is not null) {<text> — @a.Notes</text>}</div>
+                                    @if (a.AdjustmentWorkOrderId is not null) {<div class="text-sm"><a href="/workorders/@a.AdjustmentWorkOrderId" class="ltr">@a.AdjustmentWorkOrderNumber</a></div>}
+                                    <div class="when">@(a.RequestedBy ?? "—") · @a.RequestedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div></div></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+        <section class="card">
+            <div class="card-header"><h2>@L["Nav.Remakes"]</h2><span class="badge">@Model.Remakes.Count</span></div>
+            <div class="card-body">
+                @if (Model.Remakes.Count == 0)
+                {
+                    <p class="muted">—</p>
+                }
+                else
+                {
+                    <ul class="activity">
+                        @foreach (var r in Model.Remakes)
+                        {
+                            var isOriginal = r.OriginalWorkOrderId == Model.WorkOrderId;
+                            <li><span class="dot"><icon name="repeat" class="icon-sm" /></span>
+                                <div><div class="what">@L[isOriginal ? "Remakes.ReplacedBy" : "Remakes.RemakeOf"]
+                                        <a href="/workorders/@(isOriginal ? r.RemakeWorkOrderId : r.OriginalWorkOrderId)" class="ltr">@(isOriginal ? r.RemakeNumber : r.OriginalNumber)</a></div>
+                                    <div class="text-sm">@r.ReasonName · <partial name="_StatusBadge" model="StatusUi.ChargeTo(r.ChargeTo)" /></div>
+                                    @if (r.Decision is not null) {<div class="text-sm muted">@r.Decision</div>}
+                                    <div class="when">@(r.DecidedBy ?? "—") · @r.DecidedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div></div></li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+</div>

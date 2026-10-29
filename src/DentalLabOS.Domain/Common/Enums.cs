@@ -9,10 +9,15 @@ public enum ItemType { Service, Material, Consumable, FinishedGood, OutsourcedSe
 public enum WorkOrderStatus { Draft, Incomplete, Ready, InProduction, OnHold, InQuality, Rejected, Completed, ReadyForDelivery, Delivered, Cancelled }
 public enum WorkOrderKind { Original, Remake, Adjustment }
 public enum PriorityLevel { Normal, High, Urgent }
-public enum StageStatus { Pending, InProgress, Paused, Done, Skipped }
+public enum StageStatus { Pending, InProgress, Paused, AwaitingQuality, Done, Skipped }
 public enum QualityResult { Pending, Accepted, Rejected, AdjustmentRequested }
+public enum AdjustmentSource { Quality, Customer }
+public enum AdjustmentStatus { Open, Closed }
+public enum RemakeChargeTo { Undecided, Lab, Customer, Supplier }
+public enum DeliveryStatus { Draft, OutForDelivery, Delivered, Failed, Cancelled }
+public enum DeliveryRunStatus { Planned, OnRoute, Completed }
 public enum ReasonCategory { DentistData, Design, Manufacturing, Material, Transport, Unspecified }
-public enum ReasonScope { Rejection, Adjustment, Remake, Hold, Waste, Cancellation, StockAdjustment }
+public enum ReasonScope { Rejection, Adjustment, Remake, Hold, Waste, Cancellation, StockAdjustment, DeliveryFailure }
 public enum MovementType { Receipt, Issue, IssueToWorkOrder, ReturnFromWorkOrder, TransferOut, TransferIn, AdjustmentIn, AdjustmentOut, PurchaseReturn, SalesReturn, Waste, OpeningBalance }
 public enum ValuationMethod { MovingAverage, Fifo }
 public enum PaymentDirection { In, Out }

@@ -65,6 +65,15 @@ public interface IApplicationDbContext
     DbSet<TaskTimeEntry> TimeEntries { get; }
     DbSet<HoldRecord> Holds { get; }
     DbSet<ReasonCode> ReasonCodes { get; }
+    DbSet<QualityTemplate> QualityTemplates { get; }
+    DbSet<QualityTemplateItem> QualityTemplateItems { get; }
+    DbSet<QualityCheck> QualityChecks { get; }
+    DbSet<QualityCheckItem> QualityCheckItems { get; }
+    DbSet<CaseAdjustment> Adjustments { get; }
+    DbSet<RemakeRecord> Remakes { get; }
+    DbSet<DeliveryNote> DeliveryNotes { get; }
+    DbSet<DeliveryNoteLine> DeliveryNoteLines { get; }
+    DbSet<DeliveryRun> DeliveryRuns { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

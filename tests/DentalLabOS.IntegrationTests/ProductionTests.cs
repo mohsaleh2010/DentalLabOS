@@ -12,18 +12,18 @@ namespace DentalLabOS.IntegrationTests;
 [Collection(SqlCollection.Name)]
 public sealed class ProductionTests(SqlServerFixture fx)
 {
-    private static async Task<T> Ok<T>(HttpResponseMessage response)
+    internal static async Task<T> Ok<T>(HttpResponseMessage response)
     {
         Assert.True(response.IsSuccessStatusCode, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
         return (await response.Content.ReadFromJsonAsync<T>())!;
     }
 
-    private static async Task Success(HttpResponseMessage response) =>
+    internal static async Task Success(HttpResponseMessage response) =>
         Assert.True(response.IsSuccessStatusCode, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
 
-    private sealed record Setup(Guid CustomerId, Guid DentistId, Guid ServiceId);
+    internal sealed record Setup(Guid CustomerId, Guid DentistId, Guid ServiceId);
 
-    private static async Task<Setup> SetupAsync(HttpClient client, string name)
+    internal static async Task<Setup> SetupAsync(HttpClient client, string name)
     {
         var customer = await Ok<CustomerDto>(await client.PostAsJsonAsync("/api/v1/customers", new CustomerUpsertRequest(null, name, "Clinic")));
         var dentist = await Ok<DentistDto>(await client.PostAsJsonAsync($"/api/v1/customers/{customer.Id}/dentists", new DentistUpsertRequest("Dr. " + name)));
@@ -34,7 +34,7 @@ public sealed class ProductionTests(SqlServerFixture fx)
         return new Setup(customer.Id, dentist.Id, service.Id);
     }
 
-    private static WorkOrderIntakeRequest Intake(Setup s, params string[] teeth) =>
+    internal static WorkOrderIntakeRequest Intake(Setup s, params string[] teeth) =>
         new(s.CustomerId, s.ServiceId, Guid.NewGuid(), s.DentistId, Shade: "A2", Teeth: teeth.Select(t => new ToothRequest(t)).ToList(), PatientReference: "P-1");
 
     [SqlFact]
@@ -77,6 +77,11 @@ public sealed class ProductionTests(SqlServerFixture fx)
             }
 
             await Success(await client.PostAsync($"/api/v1/workorders/{wo.Id}/stages/{stage.Id}/complete", null));
+            if (stage.RequiresQualityPass)
+            {
+                Assert.Equal("InQuality", (await client.GetFromJsonAsync<WorkOrderDto>($"/api/v1/workorders/{wo.Id}"))!.Status);
+                await QualityTests.AcceptAsync(client, wo.Id, stage.Id);
+            }
         }
 
         var done = (await client.GetFromJsonAsync<WorkOrderDto>($"/api/v1/workorders/{wo.Id}"))!;
@@ -95,7 +100,8 @@ public sealed class ProductionTests(SqlServerFixture fx)
 
         var timeline = (await client.GetFromJsonAsync<List<TimelineEntryDto>>($"/api/v1/workorders/{wo.Id}/timeline"))!;
         Assert.Contains(timeline, t => t.Action == "MovedBack" && t.Reason == "Contacts too tight");
-        Assert.Equal(done.Stages.Count, timeline.Count(t => t.Action == "Completed"));
+        Assert.Equal(done.Stages.Count - 1, timeline.Count(t => t.Action == "Completed"));
+        Assert.Contains(timeline, t => t.Action == "QualityAccepted");
     }
 
     [SqlFact]

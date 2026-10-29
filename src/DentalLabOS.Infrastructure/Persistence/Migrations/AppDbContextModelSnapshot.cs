@@ -2216,6 +2216,89 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.ToTable("TenantSubscriptions");
                 });
 
+            modelBuilder.Entity("DentalLabOS.Domain.Production.CaseAdjustment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AdjustmentWorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("QualityCheckId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ReasonCodeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RequestedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdjustmentWorkOrderId");
+
+                    b.HasIndex("ReasonCodeId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.HasIndex("TenantId", "WorkOrderId");
+
+                    b.HasIndex("TenantId", "Status", "RequestedAtUtc");
+
+                    b.ToTable("Adjustments");
+                });
+
             modelBuilder.Entity("DentalLabOS.Domain.Production.CustomerOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2321,6 +2404,239 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "CustomerId", "DocumentDate");
 
                     b.ToTable("CustomerOrders");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.DeliveryNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ClientOperationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeliveredByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DispatchedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FailureNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("FailureReasonCodeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid?>("ProofFileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReceivedByName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RunSequence")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("FailureReasonCodeId");
+
+                    b.HasIndex("ProofFileId");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ClientOperationId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "RunId", "RunSequence");
+
+                    b.HasIndex("TenantId", "Status", "DocumentDate");
+
+                    b.ToTable("DeliveryNotes");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.DeliveryNoteLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CheckedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DeliveryNoteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("PackagingChecked")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeliveryNoteId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.HasIndex("TenantId", "WorkOrderId");
+
+                    b.HasIndex("TenantId", "DeliveryNoteId", "WorkOrderId")
+                        .IsUnique();
+
+                    b.ToTable("DeliveryNoteLines");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.DeliveryRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CourierName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<Guid?>("CourierUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateOnly>("RunDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "RunDate");
+
+                    b.ToTable("DeliveryRuns");
                 });
 
             modelBuilder.Entity("DentalLabOS.Domain.Production.FileMetadata", b =>
@@ -2453,6 +2769,251 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.ToTable("Holds");
                 });
 
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityCheck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("CheckedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("InspectorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("ReasonCodeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<Guid?>("ReturnToStageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("StageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("StageName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TemplateName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReasonCodeId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.HasIndex("TenantId", "Result", "CheckedAtUtc");
+
+                    b.HasIndex("TenantId", "WorkOrderId", "CheckedAtUtc");
+
+                    b.ToTable("QualityChecks");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityCheckItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCritical")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Passed")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("QualityCheckId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("TemplateItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QualityCheckId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("QualityCheckItems");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_QualityTemplates_OneDefaultPerTenant")
+                        .HasFilter("[IsDefault] = 1");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("QualityTemplates");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityTemplateItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCritical")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("QualityTemplateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QualityTemplateId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("QualityTemplateItems");
+                });
+
             modelBuilder.Entity("DentalLabOS.Domain.Production.ReasonCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2505,6 +3066,88 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("ReasonCodes");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.RemakeRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ChargeTo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<decimal>("CostCharged")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DecidedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DecidedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Decision")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("OriginalWorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("QualityCheckId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ReasonCodeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RemakeWorkOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OriginalWorkOrderId");
+
+                    b.HasIndex("ReasonCodeId");
+
+                    b.HasIndex("RemakeWorkOrderId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "DecidedAtUtc");
+
+                    b.HasIndex("TenantId", "OriginalWorkOrderId");
+
+                    b.HasIndex("TenantId", "RemakeWorkOrderId")
+                        .IsUnique();
+
+                    b.ToTable("Remakes");
                 });
 
             modelBuilder.Entity("DentalLabOS.Domain.Production.StageTransitionLog", b =>
@@ -2687,6 +3330,9 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("DeliveredAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("DeliveryNoteId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("DentistId")
                         .HasColumnType("uniqueidentifier");
 
@@ -2792,6 +3438,8 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("CustomerOrderId");
 
+                    b.HasIndex("DeliveryNoteId");
+
                     b.HasIndex("DentistId");
 
                     b.HasIndex("OriginalWorkOrderId");
@@ -2807,6 +3455,8 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId", "Number")
                         .IsUnique();
+
+                    b.HasIndex("TenantId", "OriginalWorkOrderId");
 
                     b.HasIndex("TenantId", "CustomerId", "ReceivedAtUtc");
 
@@ -3009,6 +3659,9 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<Guid?>("QualityTemplateId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("RequiresQualityPass")
                         .HasColumnType("bit");
 
@@ -3055,6 +3708,8 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("QualityTemplateId");
 
                     b.HasIndex("StageDefinitionId");
 
@@ -3217,6 +3872,9 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<Guid?>("QualityTemplateId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("RequiresQualityPass")
                         .HasColumnType("bit");
 
@@ -3248,6 +3906,8 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("QualityTemplateId");
 
                     b.HasIndex("TenantId");
 
@@ -3707,6 +4367,26 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("DentalLabOS.Domain.Production.CaseAdjustment", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Production.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("AdjustmentWorkOrderId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("DentalLabOS.Domain.Production.ReasonCode", null)
+                        .WithMany()
+                        .HasForeignKey("ReasonCodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DentalLabOS.Domain.Production.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DentalLabOS.Domain.Production.CustomerOrder", b =>
                 {
                     b.HasOne("DentalLabOS.Domain.Organization.Branch", null)
@@ -3727,6 +4407,51 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("DentalLabOS.Domain.Production.DeliveryNote", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Organization.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DentalLabOS.Domain.Parties.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DentalLabOS.Domain.Production.ReasonCode", null)
+                        .WithMany()
+                        .HasForeignKey("FailureReasonCodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DentalLabOS.Domain.Production.FileMetadata", null)
+                        .WithMany()
+                        .HasForeignKey("ProofFileId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DentalLabOS.Domain.Production.DeliveryRun", null)
+                        .WithMany()
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.DeliveryNoteLine", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Production.DeliveryNote", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("DeliveryNoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DentalLabOS.Domain.Production.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DentalLabOS.Domain.Production.HoldRecord", b =>
                 {
                     b.HasOne("DentalLabOS.Domain.Production.ReasonCode", null)
@@ -3739,6 +4464,59 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("WorkOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityCheck", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Production.ReasonCode", null)
+                        .WithMany()
+                        .HasForeignKey("ReasonCodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DentalLabOS.Domain.Production.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityCheckItem", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Production.QualityCheck", null)
+                        .WithMany("Items")
+                        .HasForeignKey("QualityCheckId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityTemplateItem", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Production.QualityTemplate", null)
+                        .WithMany("Items")
+                        .HasForeignKey("QualityTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.RemakeRecord", b =>
+                {
+                    b.HasOne("DentalLabOS.Domain.Production.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("OriginalWorkOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DentalLabOS.Domain.Production.ReasonCode", null)
+                        .WithMany()
+                        .HasForeignKey("ReasonCodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DentalLabOS.Domain.Production.WorkOrder", null)
+                        .WithMany()
+                        .HasForeignKey("RemakeWorkOrderId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
 
@@ -3778,6 +4556,11 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .WithMany("WorkOrders")
                         .HasForeignKey("CustomerOrderId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DentalLabOS.Domain.Production.DeliveryNote", null)
+                        .WithMany()
+                        .HasForeignKey("DeliveryNoteId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("DentalLabOS.Domain.Parties.Dentist", null)
                         .WithMany()
@@ -3843,6 +4626,11 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("DentalLabOS.Domain.Production.QualityTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("QualityTemplateId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("DentalLabOS.Domain.Production.WorkflowStageDefinition", null)
                         .WithMany()
                         .HasForeignKey("StageDefinitionId")
@@ -3871,6 +4659,11 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
                     b.HasOne("DentalLabOS.Domain.Organization.Department", null)
                         .WithMany()
                         .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DentalLabOS.Domain.Production.QualityTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("QualityTemplateId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("DentalLabOS.Domain.Production.WorkflowDefinition", null)
@@ -3956,6 +4749,21 @@ namespace DentalLabOS.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("DentalLabOS.Domain.Production.CustomerOrder", b =>
                 {
                     b.Navigation("WorkOrders");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.DeliveryNote", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityCheck", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("DentalLabOS.Domain.Production.QualityTemplate", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("DentalLabOS.Domain.Production.WorkOrder", b =>

@@ -1,0 +1,37 @@
+@page "/admin/quality-templates"
+@model DentalLabOS.Web.Pages.Admin.QualityTemplates.IndexModel
+@{
+    ViewData["Title"] = L["Nav.QualityTemplates"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.QualityTemplates"] <span class="screen-id">ADM-17</span></h1>
+        <p class="lead">@L["Checklists.Lead"]</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="/admin/quality-templates/new"><icon name="plus" /> @L["Checklists.New"]</a></div>
+</div>
+@if (Model.Items.Count == 0)
+{
+    <section class="card"><component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Checklists.Empty"].Value" param-IconName="@("list-checks")" param-ActionText="@L["Checklists.New"].Value" param-ActionHref="@("/admin/quality-templates/new")" /></section>
+}
+else
+{
+    <div class="service-grid">
+        @foreach (var t in Model.Items)
+        {
+            <a class="service-card" href="/admin/quality-templates/@t.Id">
+                <div class="flex items-center gap-2 wrap">
+                    <h3>@t.Name</h3>
+                    @if (t.IsDefault) {<span class="badge badge-brand"><icon name="star" /> @L["Checklists.Default"]</span>}
+                    @if (!t.IsActive) {<partial name="_StatusBadge" model="StatusUi.Active(false)" />}
+                </div>
+                @if (t.Description is not null) {<p class="muted text-sm">@t.Description</p>}
+                <div class="meta">
+                    <span><icon name="list-checks" class="icon-sm" /> @L["Checklists.Items", t.ItemCount]</span>
+                    <span><icon name="shield-check" class="icon-sm" /> @L["Checklists.Critical", t.CriticalCount]</span>
+                    <span><icon name="route" class="icon-sm" /> @L["Checklists.Stages", t.StageCount]</span>
+                </div>
+            </a>
+        }
+    </div>
+}

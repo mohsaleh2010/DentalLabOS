@@ -1,0 +1,76 @@
+@page "/delivery/ready"
+@model DentalLabOS.Web.Pages.Delivery.ReadyModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.Delivery"];
+    var canManage = Model.Can(Permissions.Delivery.Manage);
+    var total = Model.Groups.Sum(g => g.WorkOrders.Count);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Delivery.ReadyTitle"] <span class="screen-id">ORD-21</span></h1>
+        <p class="lead">@L["Delivery.ReadyLead", total, Model.Groups.Count]</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="/delivery/notes"><icon name="clipboard-check" /> @L["Nav.DeliveryNotes"]</a>
+        <a class="btn" href="/delivery/runs"><icon name="truck" /> @L["Nav.DeliveryRuns"]</a>
+    </div>
+</div>
+<form method="get" class="toolbar mb-4" role="search">
+    <div class="search-input"><icon name="search" /><input class="input" type="search" name="search" value="@Model.Search" placeholder="@L["Delivery.SearchReady"]" aria-label="@L["Common.Search"]" /></div>
+    <button class="btn" type="submit">@L["Common.Search"]</button>
+</form>
+<partial name="_ValidationSummary" />
+@if (Model.Groups.Count == 0)
+{
+    <section class="card"><component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Delivery.ReadyEmpty"].Value" param-Description="@L["Delivery.ReadyEmptyText"].Value" param-IconName="@("package-check")" /></section>
+}
+else
+{
+    <div class="stack">
+        @foreach (var g in Model.Groups)
+        {
+            var key = $"g{g.CustomerId:N}";
+            <form method="post" class="card">
+                <input type="hidden" name="customerId" value="@g.CustomerId" />
+                <input type="hidden" name="clientOperationId" value="@Guid.NewGuid()" />
+                <div class="card-header">
+                    <div><h2><icon name="stethoscope" class="icon-sm" /> @g.CustomerName <span class="badge">@g.WorkOrders.Count</span></h2>
+                        <span class="sub">@(g.Address ?? L["Delivery.NoAddress"].Value)@if (g.Phone is not null) {<text> · </text><span class="ltr">@g.Phone</span>}</span></div>
+                    @if (canManage)
+                    {
+                        <div class="ms-auto flex gap-2 wrap items-center">
+                            @if (Model.Runs.Count > 0)
+                            {
+                                <select class="select select-sm" name="runId" aria-label="@L["Delivery.Run"]">
+                                    <option value="">@L["Delivery.NoRun"]</option>
+                                    @foreach (var r in Model.Runs) {<option value="@r.Id">@Fmt.Date(r.RunDate) · @r.Courier</option>}
+                                </select>
+                            }
+                            <button class="btn btn-sm btn-primary" type="submit"><icon name="clipboard-check" class="icon-sm" /> @L["Delivery.CreateNote"] (<span data-selected-count data-template="{0}">@g.WorkOrders.Count</span>)</button>
+                        </div>
+                    }
+                </div>
+                <div class="table-wrap">
+                    <table class="table table-responsive">
+                        <thead><tr>
+                            @if (canManage) {<th class="check-col"><input type="checkbox" data-check-all="workOrderIds" checked aria-label="@L["Common.SelectAll"]" /></th>}
+                            <th>@L["Fields.Number"]</th><th>@L["Fields.Service"]</th><th>@L["Fields.PatientReference"]</th><th>@L["Fields.DueDate"]</th></tr></thead>
+                        <tbody>
+                        @foreach (var w in g.WorkOrders)
+                        {
+                            <tr class="@(w.IsOverdue ? "row-late" : null)">
+                                @if (canManage) {<td class="check-col"><input type="checkbox" name="workOrderIds" value="@w.Id" checked aria-label="@w.Number" /></td>}
+                                <td class="cell-primary"><a href="/workorders/@w.Id"><strong class="ltr">@w.Number</strong></a>@if (w.Kind != "Original") {<span class="badge badge-violet">@L[$"WoKind.{w.Kind}"]</span>}</td>
+                                <td data-label="@L["Fields.Service"]">@w.ServiceName <span class="muted text-xs">× @w.Quantity</span></td>
+                                <td data-label="@L["Fields.PatientReference"]">@(w.PatientReference ?? "—")</td>
+                                <td data-label="@L["Fields.DueDate"]" class="nowrap @(w.IsOverdue ? "text-danger" : null)">@Fmt.Date(w.DueDate)</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        }
+    </div>
+}

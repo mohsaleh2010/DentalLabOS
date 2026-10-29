@@ -1,0 +1,79 @@
+@page "/delivery/notes/{id:guid}/confirm"
+@model DentalLabOS.Web.Pages.Delivery.ConfirmModel
+@{
+    var n = Model.Note;
+    ViewData["Title"] = L["Delivery.Confirm"];
+    var active = n.Status is "Draft" or "OutForDelivery";
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/delivery/notes">@L["Nav.DeliveryNotes"]</a><icon name="chevron-left" class="icon-dir" /><a href="/delivery/notes/@n.Id" class="ltr">@n.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["Delivery.Confirm"]</span></nav>
+        <h1>@L["Delivery.Confirm"] <span class="screen-id">ORD-24</span></h1>
+        <p class="lead">@L["Delivery.ConfirmLead"]</p>
+    </div>
+</div>
+<div class="action-card card">
+    <div class="card-body">
+        <div class="action-head"><span class="dialog-icon"><icon name="package-check" /></span>
+            <div><h2><span class="ltr">@n.Number</span> · @n.CustomerName</h2><p class="muted">@L["Delivery.LinesCount", n.Lines.Count] · <partial name="_StatusBadge" model="StatusUi.Delivery(n.Status)" /></p></div></div>
+        @if (!active)
+        {
+            <div class="alert mt-4"><icon name="info" /><div><p>@L["Errors.Delivery.Closed"]</p></div></div>
+        }
+        else
+        {
+            <form method="post" enctype="multipart/form-data" novalidate class="mt-4" data-guard>
+                <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+                <partial name="_ValidationSummary" />
+                @if (n.Status == "Draft")
+                {
+                    <div class="alert alert-warning mb-4"><icon name="info" /><div><p>@L["Delivery.DraftConfirmNote"]</p></div></div>
+                }
+                <fieldset class="option-list cols-2">
+                    <legend class="sr-only">@L["Delivery.Outcome"]</legend>
+                    <label class="option"><input type="radio" name="Outcome" value="Delivered" checked="@(Model.Outcome != "Failed")" />
+                        <span><strong><icon name="circle-check" class="icon-sm" /> @L["DeliveryStatus.Delivered"]</strong><small>@L["Delivery.DeliveredHint"]</small></span></label>
+                    <label class="option"><input type="radio" name="Outcome" value="Failed" checked="@(Model.Outcome == "Failed")" />
+                        <span><strong><icon name="triangle-alert" class="icon-sm" /> @L["DeliveryStatus.Failed"]</strong><small>@L["Delivery.FailedHint"]</small></span></label>
+                </fieldset>
+                <div class="form-grid cols-2 mt-4" data-show-when="Outcome=Delivered">
+                    <div class="field">
+                        <label class="label" for="ReceivedByName">@L["Delivery.ReceivedByLabel"]<span class="req">*</span></label>
+                        <input class="input" id="ReceivedByName" name="ReceivedByName" value="@Model.ReceivedByName" maxlength="150" autocomplete="off" />
+                        <span class="field-error">@Html.ValidationMessage("ReceivedByName")</span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="DeliveredAt">@L["Delivery.DeliveredAtLabel"]</label>
+                        <input class="input input-ltr" id="DeliveredAt" name="DeliveredAt" type="datetime-local" value="@Model.DeliveredAt?.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture)" dir="ltr" />
+                        <span class="field-error">@Html.ValidationMessage("DeliveredAtUtc")</span>
+                    </div>
+                    <label class="dropzone dropzone-sm span-all" data-dropzone>
+                        <icon name="camera" class="icon-lg" />
+                        <strong>@L["Delivery.ProofUpload"]</strong>
+                        <span class="muted text-sm">@L["Delivery.ProofHint"]</span>
+                        <input type="file" name="proof" accept=".jpg,.jpeg,.png,.webp,.pdf" />
+                        <span class="file-name" data-file-name></span>
+                    </label>
+                </div>
+                <div class="mt-4" data-show-when="Outcome=Failed">
+                    <div class="field">
+                        <label class="label" for="FailureReasonCodeId">@L["Fields.Reason"]<span class="req">*</span></label>
+                        <select class="select" id="FailureReasonCodeId" name="FailureReasonCodeId">
+                            <option value="">@L["Common.Choose"]</option>
+                            @foreach (var r in Model.Reasons) {<option value="@r.Id" selected="@(r.Id == Model.FailureReasonCodeId)">@r.Name</option>}
+                        </select>
+                        <span class="field-error">@Html.ValidationMessage("FailureReasonCodeId")</span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="FailureNotes">@L["Fields.Notes"]</label>
+                        <textarea class="textarea" id="FailureNotes" name="FailureNotes" rows="2" maxlength="500">@Model.FailureNotes</textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a class="btn btn-ghost" href="/delivery/notes/@n.Id">@L["Common.Cancel"]</a>
+                    <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Delivery.SaveOutcome"]</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

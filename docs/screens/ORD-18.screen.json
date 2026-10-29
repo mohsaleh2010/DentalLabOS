@@ -2,26 +2,63 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-18",
   "module": "quality",
-  "titleKey": "Nav.Quality",
+  "titleKey": "Quality.Inspect",
   "route": "/quality/inspect/{woId}",
-  "pattern": "Custom",
+  "pattern": "FormPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
     "view": "quality.inspect",
     "access": "permission"
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "QualityCheck",
+    "QualityCheckItem",
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog",
+    "CaseAdjustment",
+    "WorkOrderAttachment"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/inspect/{workOrderId}",
+      "purpose": "Stage, checklist, return targets and history"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quality/inspect/{workOrderId}",
+      "purpose": "Record the decision"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/attachments",
+      "purpose": "Evidence photos"
+    }
+  ],
+  "rules": [
+    "Every checklist item must be answered",
+    "A failed critical item blocks acceptance (engine rule, UI disables the option)",
+    "Rejected and AdjustmentRequested need a reason of the matching scope and a stage at or before the inspected one",
+    "Accepting finishes the stage and moves on; the order becomes ReadyForDelivery after the last stage",
+    "An adjustment request is listed under ORD-19 until the corrected work passes",
+    "Each decision keeps a snapshot of the checklist"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "validationError",
+    "notFound"
   ],
   "offline": {
     "mode": "blocked",
     "why": "requires live server-side checks"
   },
-  "sensitive": {},
+  "sensitive": {
+    "auditActions": [
+      "Create"
+    ]
+  },
   "aiAssist": {
     "allowed": [
       "explainScreen"
@@ -30,11 +67,60 @@
       "changeData",
       "changePermissions"
     ],
-    "contextFields": []
+    "contextFields": [
+      "checklist",
+      "history"
+    ]
   },
   "tests": [
     "ORD-18.happy",
-    "ORD-18.permissionDenied"
+    "ORD-18.permissionDenied",
+    "ORD-18.crossTenant",
+    "ORD-18.criticalBlocksAccept",
+    "ORD-18.rejectNeedsReason",
+    "ORD-18.notAwaiting"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-17",
+    "ADM-17"
+  ],
+  "fields": [
+    {
+      "name": "items[].passed",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "name": "items[].note",
+      "type": "text",
+      "maxLength": 500
+    },
+    {
+      "name": "result",
+      "type": "enum",
+      "required": true,
+      "source": "Accepted, AdjustmentRequested, Rejected"
+    },
+    {
+      "name": "reasonCodeId",
+      "type": "lookup",
+      "source": "ReasonCode (Rejection | Adjustment)"
+    },
+    {
+      "name": "returnToStageId",
+      "type": "lookup",
+      "source": "stages up to the inspected one"
+    },
+    {
+      "name": "notes",
+      "type": "textarea",
+      "maxLength": 2000
+    },
+    {
+      "name": "photos",
+      "type": "file",
+      "accept": ".jpg,.png,.webp,.pdf",
+      "maxSizeMb": 50
+    }
+  ]
 }

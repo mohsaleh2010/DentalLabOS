@@ -31,6 +31,7 @@ public static class WorkflowEngine
                 DepartmentId = s.DepartmentId,
                 TargetHours = s.TargetHours,
                 RequiresQualityPass = s.RequiresQualityPass,
+                QualityTemplateId = s.QualityTemplateId,
             });
         }
     }
@@ -131,7 +132,7 @@ public static class WorkflowEngine
         stage.AssignedUserId ??= userId;
         wo.CurrentStageId = stage.Id;
         wo.CurrentAssigneeUserId = stage.AssignedUserId;
-        var log = Log(wo, action, WorkOrderStatus.InProduction, userId, now, null, stage.Id);
+        var log = Log(wo, action, ActiveStatus(wo), userId, now, null, stage.Id);
         log.FromStageId = from;
         return log;
     }
@@ -155,6 +156,13 @@ public static class WorkflowEngine
         if (stage.Status is not (StageStatus.InProgress or StageStatus.Paused))
         {
             throw new DomainException("Errors.WorkOrder.StageState");
+        }
+
+        if (stage.RequiresQualityPass)
+        {
+            // The technician's part is done; the stage finishes only when quality accepts it (ORD-17/18).
+            stage.Status = StageStatus.AwaitingQuality;
+            return Log(wo, TransitionAction.SentToQuality, WorkOrderStatus.InQuality, userId, now, null, stage.Id);
         }
 
         stage.Status = StageStatus.Done;
@@ -189,9 +197,14 @@ public static class WorkflowEngine
     /// <summary>Returns the order to an earlier step. Later stages restart; history stays in the log and time entries.</summary>
     public static StageTransitionLog MoveBack(WorkOrder wo, WorkOrderStage target, Guid userId, DateTime now, string? reason)
     {
-        if (wo.Status is not (WorkOrderStatus.InProduction or WorkOrderStatus.ReadyForDelivery))
+        if (wo.Status is not (WorkOrderStatus.InProduction or WorkOrderStatus.InQuality or WorkOrderStatus.ReadyForDelivery))
         {
             throw new DomainException("Errors.WorkOrder.NotActive");
+        }
+
+        if (wo.DeliveryNoteId is not null)
+        {
+            throw new DomainException("Errors.WorkOrder.InDelivery");
         }
 
         RequireReason(reason);
@@ -201,6 +214,113 @@ public static class WorkflowEngine
             throw new DomainException("Errors.WorkOrder.MoveBackTarget");
         }
 
+        return Reopen(wo, target, TransitionAction.MovedBack, userId, now, reason);
+    }
+
+    /// <summary>
+    /// ORD-18: the inspector's decision on a stage awaiting quality. Acceptance finishes the stage and moves on;
+    /// a rejection or adjustment request sends the work back to <paramref name="returnTo"/> (the inspected stage or an
+    /// earlier one) with a reason. A failed critical item blocks acceptance.
+    /// </summary>
+    public static StageTransitionLog Inspect(
+        WorkOrder wo, WorkOrderStage stage, QualityResult result, bool criticalFailed, WorkOrderStage? returnTo, Guid userId, DateTime now, string? reason)
+    {
+        if (stage.Status != StageStatus.AwaitingQuality || !wo.Stages.Contains(stage))
+        {
+            throw new DomainException("Errors.Quality.NotAwaiting");
+        }
+
+        if (wo.Status is not (WorkOrderStatus.InQuality or WorkOrderStatus.InProduction))
+        {
+            throw new DomainException("Errors.WorkOrder.NotActive");
+        }
+
+        switch (result)
+        {
+            case QualityResult.Accepted:
+                if (criticalFailed)
+                {
+                    throw new DomainException("Errors.Quality.CriticalFailed");
+                }
+
+                stage.Status = StageStatus.Done;
+                stage.CompletedAtUtc = now;
+                var log = Log(wo, TransitionAction.QualityAccepted, wo.Status, userId, now, reason, stage.Id);
+                Advance(wo, now);
+                if (wo.Status != WorkOrderStatus.ReadyForDelivery)
+                {
+                    wo.Status = ActiveStatus(wo);
+                }
+
+                log.ToStatus = wo.Status;
+                log.ToStageId = wo.CurrentStageId;
+                return log;
+
+            case QualityResult.Rejected or QualityResult.AdjustmentRequested:
+                RequireReason(reason);
+                if (returnTo is null || !wo.Stages.Contains(returnTo) || returnTo.Step > stage.Step)
+                {
+                    throw new DomainException("Errors.WorkOrder.MoveBackTarget");
+                }
+
+                return Reopen(wo, returnTo, result == QualityResult.Rejected ? TransitionAction.QualityRejected : TransitionAction.AdjustmentRequested,
+                    userId, now, reason);
+
+            default:
+                throw new DomainException("Errors.Quality.Result");
+        }
+    }
+
+    /// <summary>
+    /// ORD-20: the original of a remake. Work still in the lab is scrapped (final <see cref="WorkOrderStatus.Rejected"/>);
+    /// a delivered order keeps its status. Either way the link is logged on the original.
+    /// </summary>
+    public static StageTransitionLog ReplaceByRemake(WorkOrder wo, Guid userId, DateTime now, string reason)
+    {
+        if (wo.Status is WorkOrderStatus.Cancelled or WorkOrderStatus.Rejected or WorkOrderStatus.Draft)
+        {
+            throw new DomainException("Errors.WorkOrder.NotActive");
+        }
+
+        if (wo.DeliveryNoteId is not null)
+        {
+            throw new DomainException("Errors.WorkOrder.InDelivery");
+        }
+
+        if (wo.Status == WorkOrderStatus.Delivered)
+        {
+            return Log(wo, TransitionAction.ReplacedByRemake, wo.Status, userId, now, reason);
+        }
+
+        foreach (var s in wo.Stages.Where(s => s.Status == StageStatus.InProgress))
+        {
+            s.Status = StageStatus.Paused;
+        }
+
+        wo.CurrentAssigneeUserId = null;
+        return Log(wo, TransitionAction.ReplacedByRemake, WorkOrderStatus.Rejected, userId, now, reason);
+    }
+
+    /// <summary>ORD-24: the clinic received the order.</summary>
+    public static StageTransitionLog MarkDelivered(WorkOrder wo, Guid userId, DateTime now, string? receivedBy)
+    {
+        if (wo.Status != WorkOrderStatus.ReadyForDelivery)
+        {
+            throw new DomainException("Errors.WorkOrder.NotReady");
+        }
+
+        wo.DeliveredAtUtc = now;
+        wo.DeliveryNoteId = null;
+        return Log(wo, TransitionAction.Delivered, WorkOrderStatus.Delivered, userId, now, receivedBy);
+    }
+
+    /// <summary>In production while nothing waits for inspection; in quality otherwise.</summary>
+    public static WorkOrderStatus ActiveStatus(WorkOrder wo) =>
+        wo.Stages.Any(s => s.Status == StageStatus.AwaitingQuality) ? WorkOrderStatus.InQuality : WorkOrderStatus.InProduction;
+
+    /// <summary>Restarts the work from <paramref name="target"/>'s step. History stays in the log and time entries.</summary>
+    private static StageTransitionLog Reopen(WorkOrder wo, WorkOrderStage target, TransitionAction action, Guid userId, DateTime now, string? reason)
+    {
         var from = wo.CurrentStageId;
         foreach (var s in wo.Stages.Where(s => s.Step >= target.Step))
         {
@@ -214,7 +334,7 @@ public static class WorkflowEngine
         wo.CompletedAtUtc = null;
         wo.CurrentStageId = target.Id;
         wo.CurrentAssigneeUserId = target.AssignedUserId;
-        var log = Log(wo, TransitionAction.MovedBack, WorkOrderStatus.InProduction, userId, now, reason, target.Id);
+        var log = Log(wo, action, WorkOrderStatus.InProduction, userId, now, reason, target.Id);
         log.FromStageId = from;
         return log;
     }
@@ -224,6 +344,11 @@ public static class WorkflowEngine
         if (!wo.IsOpen || wo.Status == WorkOrderStatus.OnHold)
         {
             throw new DomainException("Errors.WorkOrder.NotActive");
+        }
+
+        if (wo.DeliveryNoteId is not null)
+        {
+            throw new DomainException("Errors.WorkOrder.InDelivery");
         }
 
         var hold = new HoldRecord
@@ -264,6 +389,11 @@ public static class WorkflowEngine
         }
 
         RequireReason(reason);
+        if (wo.DeliveryNoteId is not null)
+        {
+            throw new DomainException("Errors.WorkOrder.InDelivery");
+        }
+
         wo.CancelReason = reason!.Trim();
         wo.CancelledByUserId = userId;
         wo.CancelledAtUtc = now;
@@ -305,7 +435,7 @@ public static class WorkflowEngine
 
     private static void EnsureWorkable(WorkOrder wo)
     {
-        if (wo.Status is not (WorkOrderStatus.Ready or WorkOrderStatus.InProduction))
+        if (wo.Status is not (WorkOrderStatus.Ready or WorkOrderStatus.InProduction or WorkOrderStatus.InQuality))
         {
             throw new DomainException(wo.Status == WorkOrderStatus.Incomplete ? "Errors.WorkOrder.DataIncomplete" : "Errors.WorkOrder.NotActive");
         }

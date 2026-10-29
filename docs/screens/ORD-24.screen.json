@@ -2,26 +2,55 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-24",
   "module": "delivery",
-  "titleKey": "Nav.Delivery",
+  "titleKey": "Delivery.Confirm",
   "route": "/delivery/notes/{id}/confirm",
-  "pattern": "Custom",
+  "pattern": "FormPage",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
     "view": "delivery.confirm",
     "access": "permission"
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "DeliveryNote",
+    "DeliveryNoteLine",
+    "WorkOrder",
+    "StageTransitionLog",
+    "CaseAdjustment",
+    "FileMetadata"
+  ],
+  "api": [
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/notes/{id}/confirm",
+      "purpose": "Delivered or failed"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/notes/{id}/proof",
+      "purpose": "Signed note photo or PDF"
+    }
+  ],
+  "rules": [
+    "Delivered needs who received it; the time can't be in the future or before the note",
+    "A draft note is dispatched with the confirmation",
+    "Delivered orders become Delivered and their open clinic adjustments close",
+    "Failed needs a DeliveryFailure reason; the orders return to the ready list",
+    "Proof content is verified (image or PDF signature)"
+  ],
   "states": [
-    "loading"
+    "validationError",
+    "notFound"
   ],
   "offline": {
     "mode": "blocked",
-    "why": "requires live server-side checks"
+    "why": "the outcome changes order status on the server"
   },
-  "sensitive": {},
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ]
+  },
   "aiAssist": {
     "allowed": [
       "explainScreen"
@@ -34,7 +63,46 @@
   },
   "tests": [
     "ORD-24.happy",
-    "ORD-24.permissionDenied"
+    "ORD-24.permissionDenied",
+    "ORD-24.crossTenant",
+    "ORD-24.failedReleasesOrders",
+    "ORD-24.concurrency"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-22",
+    "ORD-23"
+  ],
+  "fields": [
+    {
+      "name": "outcome",
+      "type": "enum",
+      "required": true,
+      "source": "Delivered, Failed"
+    },
+    {
+      "name": "receivedByName",
+      "type": "text",
+      "maxLength": 150
+    },
+    {
+      "name": "deliveredAt",
+      "type": "datetime"
+    },
+    {
+      "name": "proof",
+      "type": "file",
+      "accept": ".jpg,.png,.webp,.pdf",
+      "maxSizeMb": 50
+    },
+    {
+      "name": "failureReasonCodeId",
+      "type": "lookup",
+      "source": "ReasonCode (DeliveryFailure)"
+    },
+    {
+      "name": "failureNotes",
+      "type": "textarea",
+      "maxLength": 500
+    }
+  ]
 }

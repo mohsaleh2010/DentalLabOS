@@ -1,0 +1,54 @@
+@page "/quality/remakes/new"
+@model DentalLabOS.Web.Pages.Quality.NewRemakeModel
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = L["Remakes.New"];
+    var inLab = w.Status is not "Delivered";
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/quality/remakes">@L["Nav.Remakes"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["Remakes.New"]</span></nav>
+        <h1>@L["Remakes.New"] <span class="screen-id">ORD-20</span></h1>
+        <p class="lead">@L["Remakes.NewLead"]</p>
+    </div>
+</div>
+<div class="action-card card">
+    <div class="card-body">
+        <div class="action-head"><span class="dialog-icon is-warning"><icon name="repeat" /></span>
+            <div><h2><span class="ltr">@w.Number</span> · @w.CustomerName</h2><p class="muted">@w.ServiceName × @w.Quantity · <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" /></p></div></div>
+        <div class="alert @(inLab ? "alert-warning" : "alert-info") mt-4"><icon name="info" /><div><p>@L[inLab ? "Remakes.InLabNote" : "Remakes.DeliveredNote"]</p></div></div>
+        <form method="post" novalidate class="mt-4" data-guard>
+            <input type="hidden" name="ClientOperationId" value="@Model.ClientOperationId" />
+            <partial name="_ValidationSummary" />
+            <div class="field">
+                <label class="label" for="ReasonCodeId">@L["Fields.Reason"]<span class="req">*</span></label>
+                <select class="select" id="ReasonCodeId" name="ReasonCodeId" required>
+                    <option value="">@L["Common.Choose"]</option>
+                    @foreach (var r in Model.Reasons) {<option value="@r.Id" selected="@(r.Id == Model.ReasonCodeId)">@r.Name · @L[$"ReasonCategory.{r.Category}"]</option>}
+                </select>
+                <span class="field-error">@Html.ValidationMessage("ReasonCodeId")</span>
+            </div>
+            <fieldset class="field">
+                <legend class="label">@L["Remakes.ChargeTo"]<span class="req">*</span></legend>
+                <div class="option-list cols-2">
+                    @foreach (var c in DentalLabOS.Web.Pages.Quality.NewRemakeModel.ChargeOptions)
+                    {
+                        <label class="option"><input type="radio" name="ChargeTo" value="@c" checked="@(Model.ChargeTo == c)" />
+                            <span><strong>@L[$"RemakeChargeTo.{c}"]</strong><small>@L[$"Remakes.Charge.{c}"]</small></span></label>
+                    }
+                </div>
+                <span class="field-error">@Html.ValidationMessage("ChargeTo")</span>
+            </fieldset>
+            <div class="field">
+                <label class="label" for="Decision">@L["Remakes.Decision"]</label>
+                <textarea class="textarea" id="Decision" name="Decision" rows="2" maxlength="1000" placeholder="@L["Remakes.DecisionHint"]">@Model.Decision</textarea>
+                <span class="field-error">@Html.ValidationMessage("Decision")</span>
+            </div>
+            <partial name="_LinkedOrderFields" model="(Model.Today, Model.DueDate, Model.Priority, Model.PriorityReason)" />
+            <div class="form-actions">
+                <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Cancel"]</a>
+                <button class="btn btn-danger" type="submit" data-confirm="@L["Remakes.Confirm", w.Number]"><icon name="repeat" /> @L["Remakes.Create"]</button>
+            </div>
+        </form>
+    </div>
+</div>

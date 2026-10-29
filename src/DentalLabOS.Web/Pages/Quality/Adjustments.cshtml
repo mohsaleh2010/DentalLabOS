@@ -1,0 +1,53 @@
+@page "/quality/adjustments"
+@model DentalLabOS.Web.Pages.Quality.AdjustmentsModel
+@{
+    ViewData["Title"] = L["Nav.Adjustments"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/quality/queue">@L["Nav.Quality"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Adjustments"]</span></nav>
+        <h1>@L["Nav.Adjustments"] <span class="screen-id">ORD-19</span></h1>
+        <p class="lead">@L["Adjustments.Lead"]</p>
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Fields.Status"]">
+    <a class="tab" href="/quality/adjustments" aria-current="@(Model.Show == "open" ? "page" : null)">@L["AdjustmentStatus.Open"]</a>
+    <a class="tab" href="/quality/adjustments?show=all" aria-current="@(Model.Show == "all" ? "page" : null)">@L["Common.All"]</a>
+</nav>
+<section class="card tab-panel">
+    @if (Model.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Adjustments.Empty"].Value" param-Description="@L["Adjustments.EmptyText"].Value" param-IconName="@("wrench")" />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table table-responsive">
+                <thead><tr><th>@L["Fields.Number"]</th><th>@L["Fields.Customer"]</th><th>@L["Adjustments.Source"]</th><th>@L["Fields.Reason"]</th><th>@L["Fields.Status"]</th><th>@L["Adjustments.RequestedAt"]</th><th class="actions"></th></tr></thead>
+                <tbody>
+                @foreach (var a in Model.Items)
+                {
+                    <tr>
+                        <td class="cell-primary"><div class="cell-main"><span><a href="/workorders/@a.WorkOrderId?tab=quality"><strong class="ltr">@a.WorkOrderNumber</strong></a><span>@a.ServiceName</span></span></div></td>
+                        <td data-label="@L["Fields.Customer"]">@a.CustomerName</td>
+                        <td data-label="@L["Adjustments.Source"]"><span class="badge @(a.Source == "Customer" ? "badge-info" : "badge-violet")"><icon name="@(a.Source == "Customer" ? "stethoscope" : "microscope")" /> @L[$"AdjustmentSource.{a.Source}"]</span></td>
+                        <td data-label="@L["Fields.Reason"]"><strong>@a.ReasonName</strong><div class="text-xs muted">@L[$"ReasonCategory.{a.Category}"]@if (a.Notes is not null) {<text> · @a.Notes</text>}</div></td>
+                        <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Adjustment(a.Status)" />@if (a.ClosedAtUtc is { } closed) {<div class="text-xs muted">@closed.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</div>}</td>
+                        <td data-label="@L["Adjustments.RequestedAt"]">@a.RequestedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)<div class="text-xs muted">@(a.RequestedBy ?? "—")</div></td>
+                        <td class="actions">
+                            @if (a.AdjustmentWorkOrderId is not null)
+                            {
+                                <a class="btn btn-sm" href="/workorders/@a.AdjustmentWorkOrderId"><icon name="clipboard-list" class="icon-sm" /> <span class="ltr">@a.AdjustmentWorkOrderNumber</span></a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm" href="/workorders/@a.WorkOrderId?tab=stages"><icon name="eye" class="icon-sm" /> @L["Common.Open"]</a>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

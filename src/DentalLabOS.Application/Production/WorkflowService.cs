@@ -21,7 +21,7 @@ public sealed class WorkflowService(IApplicationDbContext db, IPermissionService
         return await db.Workflows.AsNoTracking().OrderByDescending(w => w.IsDefault).ThenByDescending(w => w.IsActive).ThenBy(w => w.Name)
             .Select(w => new WorkflowListItemDto(w.Id, w.Name, w.Description, w.Version, w.IsActive, w.IsDefault, w.Stages.Count,
                 db.Items.Count(i => i.DefaultWorkflowId == w.Id),
-                db.WorkOrders.Count(o => o.WorkflowDefinitionId == w.Id && o.Status != WorkOrderStatus.Delivered && o.Status != WorkOrderStatus.Cancelled)))
+                db.WorkOrders.Count(o => o.WorkflowDefinitionId == w.Id && o.Status != WorkOrderStatus.Delivered && o.Status != WorkOrderStatus.Cancelled && o.Status != WorkOrderStatus.Rejected)))
             .ToListAsync(ct);
     }
 
@@ -44,8 +44,11 @@ public sealed class WorkflowService(IApplicationDbContext db, IPermissionService
                 ?? throw new NotFoundException(nameof(WorkflowDefinition));
         var deptIds = w.Stages.Where(s => s.DepartmentId != null).Select(s => s.DepartmentId!.Value).Distinct().ToList();
         var depts = await db.Departments.AsNoTracking().Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, ct);
-        return Map(w, depts);
+        return Map(w, depts, await TemplateNamesAsync(ct));
     }
+
+    private Task<Dictionary<Guid, string>> TemplateNamesAsync(CancellationToken ct) =>
+        db.QualityTemplates.AsNoTracking().ToDictionaryAsync(t => t.Id, t => t.Name, ct);
 
     public async Task<WorkflowDto> SaveAsync(Guid? id, WorkflowUpsertRequest request, CancellationToken ct = default)
     {
@@ -67,6 +70,9 @@ public sealed class WorkflowService(IApplicationDbContext db, IPermissionService
         var deptIds = stages.Where(s => s.DepartmentId != null).Select(s => s.DepartmentId!.Value).Distinct().ToList();
         var knownDepts = await db.Departments.Where(d => deptIds.Contains(d.Id)).CountAsync(ct);
         v.When(knownDepts != deptIds.Count, nameof(request.Stages), "Validation.Required");
+        var templateIds = stages.Where(s => s.RequiresQualityPass && s.QualityTemplateId != null).Select(s => s.QualityTemplateId!.Value).Distinct().ToList();
+        var knownTemplates = await db.QualityTemplates.Where(t => templateIds.Contains(t.Id) && t.IsActive).CountAsync(ct);
+        v.When(knownTemplates != templateIds.Count, nameof(request.Stages), "Validation.QualityTemplate");
         v.When(name is not null && await db.Workflows.AnyAsync(w => w.Name == name && w.Id != id, ct), nameof(request.Name), "Validation.NameTaken");
 
         WorkflowDefinition? wf = null;
@@ -128,6 +134,7 @@ public sealed class WorkflowService(IApplicationDbContext db, IPermissionService
                 row.DepartmentId = s.DepartmentId;
                 row.TargetHours = s.TargetHours;
                 row.RequiresQualityPass = s.RequiresQualityPass;
+                row.QualityTemplateId = s.RequiresQualityPass ? s.QualityTemplateId : null;
             }
 
             var removed = wf.Stages.Where(x => !keep.Contains(x.Id)).ToList();
@@ -147,7 +154,7 @@ public sealed class WorkflowService(IApplicationDbContext db, IPermissionService
 
             await db.SaveChangesAsync(innerCt);
             var names = await db.Departments.AsNoTracking().Where(d => deptIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Name, innerCt);
-            return Map(wf, names);
+            return Map(wf, names, await TemplateNamesAsync(innerCt));
         }, ct);
     }
 
@@ -159,12 +166,13 @@ public sealed class WorkflowService(IApplicationDbContext db, IPermissionService
         }
     }
 
-    private static WorkflowDto Map(WorkflowDefinition w, IReadOnlyDictionary<Guid, string> depts) =>
+    private static WorkflowDto Map(WorkflowDefinition w, IReadOnlyDictionary<Guid, string> depts, IReadOnlyDictionary<Guid, string> templates) =>
         new(w.Id, w.Name, w.Description, w.Version, w.IsActive, w.IsDefault, w.RequireDentist, w.RequireTeeth, w.RequireShade, w.RequireMaterial,
             w.RequirePatientReference, w.RequireAttachment,
             w.Stages.OrderBy(s => s.Step).ThenBy(s => s.Name, StringComparer.Ordinal)
                 .Select(s => new WorkflowStageDto(s.Id, s.Step, s.Name, s.DepartmentId, s.DepartmentId is { } d && depts.TryGetValue(d, out var n) ? n : null,
-                    s.TargetHours, s.RequiresQualityPass))
+                    s.TargetHours, s.RequiresQualityPass, s.QualityTemplateId,
+                    s.QualityTemplateId is { } t && templates.TryGetValue(t, out var tn) ? tn : null))
                 .ToList(),
             RowVersions.Encode(w.RowVersion));
 }

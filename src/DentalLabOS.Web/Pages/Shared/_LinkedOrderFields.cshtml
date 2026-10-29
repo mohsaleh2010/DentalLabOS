@@ -1,0 +1,24 @@
+@* Fields shared by the remake and customer-adjustment forms: the new order's due date and priority. *@
+@model (DateOnly Today, DateOnly? DueDate, string Priority, string? PriorityReason)
+<div class="form-grid cols-2">
+    <div class="field">
+        <label class="label" for="DueDate">@L["Fields.DueDate"]</label>
+        <input class="input" id="DueDate" name="DueDate" type="date" min="@Fmt.Input(Model.Today)" value="@(Model.DueDate is { } d ? Fmt.Input(d) : null)" />
+        <span class="hint">@L["Remakes.DueHint"]</span>
+        <span class="field-error">@Html.ValidationMessage("DueDate")</span>
+    </div>
+    <div class="field">
+        <span class="label">@L["Fields.Priority"]</span>
+        <div class="segmented" role="radiogroup" aria-label="@L["Fields.Priority"]">
+            @foreach (var p in new[] { "Normal", "High", "Urgent" })
+            {
+                <label class="seg seg-@p.ToLowerInvariant()"><input type="radio" name="Priority" value="@p" checked="@(Model.Priority == p)" data-priority /><span>@L[$"Priority.{p}"]</span></label>
+            }
+        </div>
+    </div>
+    <div class="field span-all" data-priority-reason hidden="@(Model.Priority == "Normal")">
+        <label class="label" for="PriorityReason">@L["Fields.PriorityReason"]</label>
+        <input class="input" id="PriorityReason" name="PriorityReason" value="@Model.PriorityReason" maxlength="200" />
+        <span class="field-error">@Html.ValidationMessage("PriorityReason")</span>
+    </div>
+</div>

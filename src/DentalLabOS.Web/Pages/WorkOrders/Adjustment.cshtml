@@ -1,0 +1,48 @@
+@page "/workorders/{id:guid}/adjustment"
+@model DentalLabOS.Web.Pages.WorkOrders.AdjustmentModel
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = L["Adjustments.NewCustomer"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["Adjustments.NewCustomer"]</span></nav>
+        <h1>@L["Adjustments.NewCustomer"] <span class="screen-id">ORD-19</span></h1>
+        <p class="lead">@L["Adjustments.NewCustomerLead"]</p>
+    </div>
+</div>
+<div class="action-card card">
+    <div class="card-body">
+        <div class="action-head"><span class="dialog-icon"><icon name="wrench" /></span>
+            <div><h2><span class="ltr">@w.Number</span> · @w.CustomerName</h2><p class="muted">@w.ServiceName × @w.Quantity · <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" /></p></div></div>
+        @if (w.Status != "Delivered")
+        {
+            <div class="alert mt-4"><icon name="info" /><div><p>@L["Errors.Adjustment.NotDelivered"]</p></div></div>
+        }
+        else
+        {
+            <form method="post" novalidate class="mt-4" data-guard>
+                <input type="hidden" name="ClientOperationId" value="@Model.ClientOperationId" />
+                <partial name="_ValidationSummary" />
+                <div class="field">
+                    <label class="label" for="ReasonCodeId">@L["Fields.Reason"]<span class="req">*</span></label>
+                    <select class="select" id="ReasonCodeId" name="ReasonCodeId" required>
+                        <option value="">@L["Common.Choose"]</option>
+                        @foreach (var r in Model.Reasons) {<option value="@r.Id" selected="@(r.Id == Model.ReasonCodeId)">@r.Name · @L[$"ReasonCategory.{r.Category}"]</option>}
+                    </select>
+                    <span class="field-error">@Html.ValidationMessage("ReasonCodeId")</span>
+                </div>
+                <div class="field">
+                    <label class="label" for="Notes">@L["Adjustments.WhatToFix"]</label>
+                    <textarea class="textarea" id="Notes" name="Notes" rows="3" maxlength="1000">@Model.Notes</textarea>
+                    <span class="field-error">@Html.ValidationMessage("Notes")</span>
+                </div>
+                <partial name="_LinkedOrderFields" model="(Model.Today, Model.DueDate, Model.Priority, Model.PriorityReason)" />
+                <div class="form-actions">
+                    <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Cancel"]</a>
+                    <button class="btn btn-primary" type="submit"><icon name="wrench" /> @L["Adjustments.Create"]</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

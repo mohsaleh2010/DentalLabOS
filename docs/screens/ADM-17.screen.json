@@ -1,0 +1,120 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-17",
+  "module": "admin",
+  "titleKey": "Nav.QualityTemplates",
+  "route": "/admin/quality-templates",
+  "pattern": "ListPage",
+  "phase": 4,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.quality.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "QualityTemplate",
+    "QualityTemplateItem"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/templates",
+      "purpose": "List"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/quality/templates/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/quality/templates",
+      "purpose": "Create"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/quality/templates/{id}",
+      "purpose": "Update (items replaced as a whole)"
+    }
+  ],
+  "rules": [
+    "Name unique per lab",
+    "One active default checklist per lab (filtered unique index)",
+    "A checklist used by a route stage can't be deactivated",
+    "Past inspections keep a snapshot of item texts",
+    "A failed critical item blocks acceptance"
+  ],
+  "states": [
+    "loading",
+    "empty",
+    "validationError"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-17.happy",
+    "ADM-17.permissionDenied",
+    "ADM-17.crossTenant",
+    "ADM-17.concurrency"
+  ],
+  "relatedScreens": [
+    "ADM-16",
+    "ORD-18"
+  ],
+  "routes": [
+    "/admin/quality-templates/{id}"
+  ],
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "maxLength": 150
+    },
+    {
+      "name": "description",
+      "type": "textarea",
+      "maxLength": 500
+    },
+    {
+      "name": "isActive",
+      "type": "boolean"
+    },
+    {
+      "name": "isDefault",
+      "type": "boolean"
+    },
+    {
+      "name": "items",
+      "type": "list",
+      "required": true,
+      "source": "text (300) + isCritical",
+      "maxItems": 60
+    }
+  ],
+  "columns": [
+    "name",
+    "default",
+    "items",
+    "critical",
+    "stages"
+  ]
+}

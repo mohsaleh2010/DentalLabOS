@@ -42,6 +42,7 @@ public static class Permissions
         public const string ImportManage = "admin.import.manage";
         public const string WorkflowsManage = "admin.workflows.manage";
         public const string ReasonsManage = "admin.reasons.manage";
+        public const string QualityManage = "admin.quality.manage";
         public const string CostingManage = "admin.costing.manage";
     }
 
@@ -104,6 +105,22 @@ public static class Permissions
         /// <summary>Assign work, and act on any stage (skip, move back, work outside one's own department).</summary>
         public const string Assign = "production.assign";
         public const string OwnTasks = "tasks.own.read";
+    }
+
+    public static class Quality
+    {
+        public const string Read = "quality.read";
+        public const string Inspect = "quality.inspect";
+
+        /// <summary>Open remakes and post-delivery adjustments, and decide who bears a remake's cost.</summary>
+        public const string RemakeManage = "quality.remake.manage";
+    }
+
+    public static class Delivery
+    {
+        public const string Read = "delivery.read";
+        public const string Manage = "delivery.manage";
+        public const string Confirm = "delivery.confirm";
     }
 
     /// <summary>Every tenant-level permission key (platform keys are in <see cref="PlatformKeys"/>).</summary>

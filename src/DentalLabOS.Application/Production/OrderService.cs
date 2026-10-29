@@ -33,7 +33,7 @@ public sealed class OrderService(
 
         if (openOnly)
         {
-            query = query.Where(o => o.WorkOrders.Any(w => w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled));
+            query = query.Where(o => o.WorkOrders.Any(w => w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected));
         }
 
         return await query.OrderByDescending(o => o.DocumentDate).ThenByDescending(o => o.Number)
@@ -41,7 +41,7 @@ public sealed class OrderService(
                 db.Customers.Where(c => c.Id == o.CustomerId).Select(c => c.Name).First(),
                 db.Dentists.Where(d => d.Id == o.DentistId).Select(d => d.FullName).FirstOrDefault(),
                 o.Priority.ToString(), o.RequestedDeliveryDate, o.WorkOrders.Count,
-                o.WorkOrders.Count(w => w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled), o.Status.ToString()))
+                o.WorkOrders.Count(w => w.Status != WorkOrderStatus.Delivered && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected), o.Status.ToString()))
             .ToPagedAsync(page, ct);
     }
 
@@ -55,7 +55,7 @@ public sealed class OrderService(
         var branch = await db.Branches.AsNoTracking().Where(b => b.Id == o.BranchId).Select(b => b.Name).FirstOrDefaultAsync(ct);
         var lines = await workOrders.Project(db.WorkOrders.AsNoTracking().Where(w => w.CustomerOrderId == id).OrderBy(w => w.Number), today).ToListAsync(ct);
         decimal? total = await permissions.HasAsync(Permissions.PriceLists.Read, ct)
-            ? await db.WorkOrders.Where(w => w.CustomerOrderId == id && w.Status != WorkOrderStatus.Cancelled).SumAsync(w => w.QuotedPrice, ct)
+            ? await db.WorkOrders.Where(w => w.CustomerOrderId == id && w.Status != WorkOrderStatus.Cancelled && w.Status != WorkOrderStatus.Rejected).SumAsync(w => w.QuotedPrice, ct)
             : null;
         return new CustomerOrderDto(o.Id, o.Number, o.DocumentDate, o.BranchId, branch ?? string.Empty, o.CustomerId, customer, o.DentistId, dentist,
             o.ReceivedAtUtc, o.RequestedDeliveryDate, o.Priority.ToString(), o.DeliveryInstructions, o.Notes, o.Status.ToString(), lines, total);

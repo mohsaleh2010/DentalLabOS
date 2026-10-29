@@ -1,0 +1,57 @@
+@page "/delivery/runs"
+@model DentalLabOS.Web.Pages.Delivery.RunsModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.DeliveryRuns"];
+    var canManage = Model.Can(Permissions.Delivery.Manage);
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/delivery/ready">@L["Nav.Delivery"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.DeliveryRuns"]</span></nav>
+        <h1>@L["Nav.DeliveryRuns"] <span class="screen-id">ORD-23</span></h1>
+        <p class="lead">@L["Delivery.RunsLead"]</p>
+    </div>
+</div>
+<div class="@(canManage ? "split" : null)">
+    <section class="card">
+        @if (Model.Items.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Delivery.RunsEmpty"].Value" param-Description="@L["Delivery.RunsEmptyText"].Value" param-IconName="@("truck")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Date"]</th><th>@L["Delivery.Courier"]</th><th>@L["Fields.Status"]</th><th class="num">@L["Delivery.Stops"]</th><th>@L["Delivery.Progress"]</th><th class="actions"></th></tr></thead>
+                    <tbody>
+                    @foreach (var r in Model.Items)
+                    {
+                        <tr class="@(r.RunDate == Model.Today ? "row-current" : null)">
+                            <td class="cell-primary"><a href="/delivery/runs/@r.Id"><strong>@Fmt.Date(r.RunDate)</strong></a></td>
+                            <td data-label="@L["Delivery.Courier"]">@r.Courier</td>
+                            <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Run(r.Status)" /></td>
+                            <td data-label="@L["Delivery.Stops"]" class="num">@r.StopCount</td>
+                            <td data-label="@L["Delivery.Progress"]">
+                                <span class="text-success">@L["Delivery.DeliveredCount", r.Delivered]</span>@if (r.Failed > 0) {<text> · </text><span class="text-danger">@L["Delivery.FailedCount", r.Failed]</span>}
+                                <div class="meter"><span style="width:@(r.StopCount == 0 ? 0 : (r.Delivered + r.Failed) * 100 / r.StopCount)%"></span></div>
+                            </td>
+                            <td class="actions"><a class="btn btn-sm" href="/delivery/runs/@r.Id"><icon name="eye" class="icon-sm" /> @L["Common.Open"]</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    @if (canManage)
+    {
+        <form method="post" class="card" novalidate>
+            <div class="card-header"><h2>@L["Delivery.NewRun"]</h2></div>
+            <div class="card-body">
+                <partial name="_ValidationSummary" />
+                <partial name="_RunFields" model="(Model.RunDate, Model.CourierUserId, Model.CourierName, Model.Notes, Model.Couriers)" />
+                <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="plus" /> @L["Delivery.CreateRun"]</button></div>
+            </div>
+        </form>
+    }
+</div>

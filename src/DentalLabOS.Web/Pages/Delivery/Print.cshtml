@@ -1,0 +1,51 @@
+@page "/delivery/notes/{id:guid}/print"
+@model DentalLabOS.Web.Pages.Delivery.PrintModel
+@{
+    Layout = "_BareLayout";
+    var n = Model.Note;
+    ViewData["Title"] = L["Delivery.NoteTitle"] + " " + n.Number;
+}
+<div class="print-toolbar">
+    <a class="btn btn-ghost" href="/delivery/notes/@n.Id"><icon name="arrow-right" class="icon-dir-back" /> @L["Common.Back"]</a>
+    <span class="screen-id">ORD-22</span>
+    <button class="btn btn-primary" type="button" data-print><icon name="printer" /> @L["Common.Print"]</button>
+</div>
+<article class="ticket delivery-note">
+    <header class="ticket-head">
+        <div>
+            <div class="ticket-lab">@Model.LabName</div>
+            <div class="text-sm muted">@L["Delivery.NoteTitle"]</div>
+            <div class="ticket-no ltr">@n.Number</div>
+            <div class="text-sm">@Fmt.Date(n.DocumentDate) · @n.BranchName</div>
+        </div>
+        <div class="ticket-qr" role="img" aria-label="QR @n.Number">@Html.Raw(Model.QrSvg)</div>
+    </header>
+    <section class="ticket-grid">
+        <div class="span-2"><span>@L["Fields.Customer"]</span><strong>@n.CustomerName</strong></div>
+        <div><span>@L["Fields.Phone"]</span><strong class="ltr">@(n.ContactPhone ?? "—")</strong></div>
+        <div><span>@L["Delivery.Run"]</span><strong>@(n.RunLabel ?? "—")</strong></div>
+        <div class="span-2"><span>@L["Fields.Address"]</span><strong>@(n.Address ?? "—")</strong></div>
+    </section>
+    <section>
+        <table class="ticket-stages">
+            <thead><tr><th>#</th><th>@L["Fields.Number"]</th><th>@L["Fields.Service"]</th><th>@L["Fields.Teeth"]</th><th>@L["Fields.PatientReference"]</th><th>@L["Fields.Quantity"]</th></tr></thead>
+            <tbody>
+            @for (var k = 0; k < n.Lines.Count; k++)
+            {
+                var l = n.Lines[k];
+                <tr><td>@(k + 1)</td><td class="ltr">@l.Number</td><td>@l.ServiceName</td><td class="ltr">@string.Join(", ", l.Teeth)</td><td>@(l.PatientReference ?? "")</td><td>@l.Quantity</td></tr>
+            }
+            </tbody>
+        </table>
+    </section>
+    @if (n.Notes is not null)
+    {
+        <section class="ticket-notes"><span class="ticket-label">@L["Fields.Notes"]</span><p class="prewrap">@n.Notes</p></section>
+    }
+    <section class="sign-grid">
+        <div><span class="ticket-label">@L["Delivery.Sign.Courier"]</span><div class="sign-line"></div></div>
+        <div><span class="ticket-label">@L["Delivery.Sign.Receiver"]</span><div class="sign-line"></div></div>
+        <div><span class="ticket-label">@L["Delivery.Sign.Date"]</span><div class="sign-line"></div></div>
+    </section>
+    <footer class="ticket-foot">@L["Delivery.PrintFoot", n.Lines.Count]</footer>
+</article>

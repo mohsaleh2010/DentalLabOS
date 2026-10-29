@@ -2,26 +2,84 @@
   "$schema": "./_schema/screen.schema.json",
   "id": "ORD-22",
   "module": "delivery",
-  "titleKey": "Nav.Delivery",
+  "titleKey": "Delivery.NoteTitle",
   "route": "/delivery/notes/{id}",
-  "pattern": "Custom",
+  "pattern": "DetailsTabs",
   "phase": 4,
-  "status": "planned",
+  "status": "implemented",
   "permissions": {
-    "view": "delivery.manage",
-    "access": "permission"
+    "view": "delivery.read",
+    "access": "permission",
+    "actions": {
+      "manage": "delivery.manage",
+      "confirm": "delivery.confirm"
+    }
   },
-  "entities": [],
-  "api": [],
-  "rules": [],
+  "entities": [
+    "DeliveryNote",
+    "DeliveryNoteLine",
+    "WorkOrder",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/delivery/notes",
+      "purpose": "List (status, search)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/delivery/notes/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/notes/{id}/packaging",
+      "purpose": "Packaging check per line"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/delivery/notes/{id}/lines/{lineId}",
+      "purpose": "Remove a line"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/notes/{id}/dispatch",
+      "purpose": "Out for delivery"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/delivery/notes/{id}/cancel",
+      "purpose": "Cancel the note"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/delivery/notes/{id}/proof",
+      "purpose": "Proof of delivery"
+    }
+  ],
+  "rules": [
+    "Number from the DeliveryNote sequence (DN-YY-000001)",
+    "Lines change only while the note is a draft",
+    "Every line's packaging must be checked before dispatch",
+    "An order on an active note can't move back, be held or cancelled",
+    "Removing the last line or cancelling returns the orders to the ready list",
+    "The printed note's QR holds only the note number"
+  ],
   "states": [
-    "loading"
+    "loading",
+    "notFound"
   ],
   "offline": {
     "mode": "blocked",
     "why": "requires live server-side checks"
   },
-  "sensitive": {},
+  "sensitive": {
+    "auditActions": [
+      "Create",
+      "Update"
+    ]
+  },
   "aiAssist": {
     "allowed": [
       "explainScreen"
@@ -34,7 +92,17 @@
   },
   "tests": [
     "ORD-22.happy",
-    "ORD-22.permissionDenied"
+    "ORD-22.permissionDenied",
+    "ORD-22.crossTenant",
+    "ORD-22.packagingRequired",
+    "ORD-22.oneActiveNote"
   ],
-  "relatedScreens": []
+  "relatedScreens": [
+    "ORD-21",
+    "ORD-24"
+  ],
+  "routes": [
+    "/delivery/notes",
+    "/delivery/notes/{id}/print"
+  ]
 }

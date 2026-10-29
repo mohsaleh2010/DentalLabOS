@@ -2,7 +2,7 @@
 
 > ملف مولَّد آليًا من `docs/screens/*.screen.json` بواسطة `python3 tools/screens/generate.py`. لا تعدّله يدويًا.
 
-عدد الشاشات الموثقة: **91**. اختبارات المعمارية تفشل إذا وُجدت صفحة تحمل `[Screen]` بلا ملف مواصفات، أو ملف يخالف المخطط، أو صلاحية غير معرّفة في الكتالوج.
+عدد الشاشات الموثقة: **92**. اختبارات المعمارية تفشل إذا وُجدت صفحة تحمل `[Screen]` بلا ملف مواصفات، أو ملف يخالف المخطط، أو صلاحية غير معرّفة في الكتالوج.
 
 | ID | الوحدة | المسار | النمط | صلاحية العرض | الحالة |
 |---|---|---|---|---|---|
@@ -20,6 +20,7 @@
 | [ADM-14](../screens/ADM-14.screen.json) | admin | `/admin/units` | Custom | `admin.units.manage` | implemented |
 | [ADM-15](../screens/ADM-15.screen.json) | admin | `/admin/workflows` | ListPage | `admin.workflows.manage` | implemented |
 | [ADM-16](../screens/ADM-16.screen.json) | admin | `/admin/workflows/{id}` | FormPage | `admin.workflows.manage` | implemented |
+| [ADM-17](../screens/ADM-17.screen.json) | admin | `/admin/quality-templates` | ListPage | `admin.quality.manage` | implemented |
 | [ADM-18](../screens/ADM-18.screen.json) | admin | `/admin/reason-codes` | Custom | `admin.reasons.manage` | implemented |
 | [ADM-23](../screens/ADM-23.screen.json) | admin | `/admin/import` | Custom | `admin.import.manage` | implemented |
 | [ADM-25](../screens/ADM-25.screen.json) | admin | `/admin/audit` | ListPage | `admin.audit.read` | implemented |
@@ -67,14 +68,14 @@
 | [ORD-14](../screens/ORD-14.screen.json) | workorders | `/workorders/{id}/hold` | ActionDialog | `workorders.hold` | implemented |
 | [ORD-15](../screens/ORD-15.screen.json) | workorders | `/workorders/{id}/transition` | ActionDialog | `workorders.transition` | implemented |
 | [ORD-16](../screens/ORD-16.screen.json) | production | `/production/overdue` | ReportPage | `production.read` | implemented |
-| [ORD-17](../screens/ORD-17.screen.json) | quality | `/quality/queue` | Custom | `quality.read` | planned |
-| [ORD-18](../screens/ORD-18.screen.json) | quality | `/quality/inspect/{woId}` | Custom | `quality.inspect` | planned |
-| [ORD-19](../screens/ORD-19.screen.json) | quality | `/quality/adjustments` | Custom | `quality.read` | planned |
-| [ORD-20](../screens/ORD-20.screen.json) | quality | `/quality/remakes` | Custom | `quality.remake.manage` | planned |
-| [ORD-21](../screens/ORD-21.screen.json) | delivery | `/delivery/ready` | Custom | `delivery.read` | planned |
-| [ORD-22](../screens/ORD-22.screen.json) | delivery | `/delivery/notes/{id}` | Custom | `delivery.manage` | planned |
-| [ORD-23](../screens/ORD-23.screen.json) | delivery | `/delivery/runs` | Custom | `delivery.manage` | planned |
-| [ORD-24](../screens/ORD-24.screen.json) | delivery | `/delivery/notes/{id}/confirm` | Custom | `delivery.confirm` | planned |
+| [ORD-17](../screens/ORD-17.screen.json) | quality | `/quality/queue` | DashboardPage | `quality.read` | implemented |
+| [ORD-18](../screens/ORD-18.screen.json) | quality | `/quality/inspect/{woId}` | FormPage | `quality.inspect` | implemented |
+| [ORD-19](../screens/ORD-19.screen.json) | quality | `/quality/adjustments` | ListPage | `quality.read` | implemented |
+| [ORD-20](../screens/ORD-20.screen.json) | quality | `/quality/remakes` | ListPage | `quality.read` | implemented |
+| [ORD-21](../screens/ORD-21.screen.json) | delivery | `/delivery/ready` | ListPage | `delivery.read` | implemented |
+| [ORD-22](../screens/ORD-22.screen.json) | delivery | `/delivery/notes/{id}` | DetailsTabs | `delivery.read` | implemented |
+| [ORD-23](../screens/ORD-23.screen.json) | delivery | `/delivery/runs` | ListPage | `delivery.read` | implemented |
+| [ORD-24](../screens/ORD-24.screen.json) | delivery | `/delivery/notes/{id}/confirm` | FormPage | `delivery.confirm` | implemented |
 | [ORD-25](../screens/ORD-25.screen.json) | workorders | `/workorders/{id}/cost` | Custom | `workorders.cost.read` | planned |
 | [ORD-26](../screens/ORD-26.screen.json) | workorders | `/workorders/{id}/ticket` | Custom | `workorders.print` | implemented |
 | [ORD-27](../screens/ORD-27.screen.json) | workorders | `/scan` | Custom | `workorders.read` | implemented |

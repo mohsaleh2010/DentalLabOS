@@ -1,0 +1,95 @@
+@page "/delivery/runs/{id:guid}"
+@model DentalLabOS.Web.Pages.Delivery.RunModel
+@using DentalLabOS.Domain.Security
+@{
+    var r = Model.Run;
+    ViewData["Title"] = L["Delivery.RunTitle", Fmt.Date(r.RunDate)];
+    var canManage = Model.Can(Permissions.Delivery.Manage);
+    var canConfirm = Model.Can(Permissions.Delivery.Confirm);
+    var planned = r.Status == "Planned";
+    var open = r.Stops.Count(s => s.Status is "Draft" or "OutForDelivery");
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/delivery/runs">@L["Nav.DeliveryRuns"]</a><icon name="chevron-left" class="icon-dir" /><span>@Fmt.Date(r.RunDate)</span></nav>
+        <h1 class="flex items-center gap-3 wrap">@ViewData["Title"] <partial name="_StatusBadge" model="StatusUi.Run(r.Status)" /> <span class="screen-id">ORD-23</span></h1>
+        <p class="lead"><icon name="user" class="icon-sm" /> @r.Courier · @L["Delivery.StopsCount", r.Stops.Count]</p>
+    </div>
+    <div class="actions">
+        @if (canManage && planned)
+        {
+            <form method="post" asp-page-handler="Start"><button class="btn btn-primary" type="submit" disabled="@(r.Stops.Count == 0)" data-confirm="@L["Delivery.StartConfirm", r.Stops.Count]"><icon name="truck" /> @L["Delivery.StartRun"]</button></form>
+        }
+        @if (canManage && r.Status == "OnRoute")
+        {
+            <form method="post" asp-page-handler="Complete"><button class="btn btn-primary" type="submit" disabled="@(open > 0)" title="@(open > 0 ? L["Errors.Delivery.RunOpenStops"].Value : null)"><icon name="circle-check" /> @L["Delivery.CompleteRun"]</button></form>
+        }
+    </div>
+</div>
+<div class="@(canManage && r.Status != "Completed" ? "split" : null)">
+    <div class="stack">
+        <form method="post" asp-page-handler="Stops" class="card" data-row-list="stops">
+            <div class="card-header"><div><h2>@L["Delivery.Stops"]</h2><span class="sub">@L[planned ? "Delivery.StopsHint" : "Delivery.StopsLocked"]</span></div>
+                @if (canManage && planned && r.Stops.Count > 0) {<button class="btn btn-sm ms-auto" type="submit"><icon name="check" class="icon-sm" /> @L["Delivery.SaveStops"]</button>}</div>
+            @if (r.Stops.Count == 0)
+            {
+                <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Delivery.NoStops"].Value" param-Description="@L["Delivery.NoStopsText"].Value" param-IconName="@("map-pin")" />
+                <div hidden data-rows></div>
+            }
+            else
+            {
+                <ol class="stop-list" data-rows>
+                    @foreach (var s in r.Stops)
+                    {
+                        <li class="stop" data-row>
+                            <input type="hidden" name="noteIds" value="@s.Id" />
+                            <span class="step-no" data-row-no>@s.RunSequence</span>
+                            <div class="stop-main">
+                                <div><a href="/delivery/notes/@s.Id"><strong class="ltr">@s.Number</strong></a> · <strong>@s.CustomerName</strong></div>
+                                <div class="text-xs muted">@L["Delivery.LinesCount", s.LineCount]@if (s.ReceivedByName is not null) {<text> · @L["Delivery.ReceivedBy", s.ReceivedByName]</text>}</div>
+                            </div>
+                            <partial name="_StatusBadge" model="StatusUi.Delivery(s.Status)" />
+                            <div class="inline-actions">
+                                @if (canConfirm && s.Status == "OutForDelivery")
+                                {
+                                    <a class="btn btn-sm btn-primary" href="/delivery/notes/@s.Id/confirm"><icon name="package-check" class="icon-sm" /> @L["Delivery.Confirm"]</a>
+                                }
+                                @if (canManage && planned)
+                                {
+                                    <button class="btn btn-sm btn-ghost" type="button" data-row-up aria-label="@L["Workflows.MoveUp"]" hidden><icon name="arrow-up" class="icon-sm" /></button>
+                                    <button class="btn btn-sm btn-ghost" type="button" data-row-down aria-label="@L["Workflows.MoveDown"]" hidden><icon name="arrow-down" class="icon-sm" /></button>
+                                    <button class="btn btn-sm btn-ghost" type="button" data-row-remove aria-label="@L["Delivery.RemoveStop"]" hidden><icon name="x" class="icon-sm" /></button>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ol>
+            }
+            @if (canManage && planned && Model.Unplanned.Count > 0)
+            {
+                <div class="card-body border-top">
+                    <h3 class="text-sm muted mb-2">@L["Delivery.AddStops"]</h3>
+                    <ul class="check-list">
+                        @foreach (var n in Model.Unplanned)
+                        {
+                            <li><label class="check"><input type="checkbox" name="noteIds" value="@n.Id" /> <span class="ltr">@n.Number</span> · @n.CustomerName <span class="muted text-xs">(@L["Delivery.LinesCount", n.LineCount])</span></label></li>
+                        }
+                    </ul>
+                    <div class="form-actions"><button class="btn btn-sm btn-primary" type="submit"><icon name="plus" class="icon-sm" /> @L["Delivery.SaveStops"]</button></div>
+                </div>
+            }
+        </form>
+    </div>
+    @if (canManage && r.Status != "Completed")
+    {
+        <form method="post" class="card sticky-side" novalidate style="align-self:start">
+            <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+            <div class="card-header"><h2>@L["Delivery.RunDetails"]</h2></div>
+            <div class="card-body">
+                <partial name="_ValidationSummary" />
+                <partial name="_RunFields" model="(Model.RunDate, Model.CourierUserId, Model.CourierName, Model.Notes, Model.Couriers)" />
+                <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="check" /> @L["Common.Save"]</button></div>
+            </div>
+        </form>
+    }
+</div>
