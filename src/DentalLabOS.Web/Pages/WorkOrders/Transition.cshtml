@@ -1,0 +1,70 @@
+@page "/workorders/{id:guid}/transition"
+@model DentalLabOS.Web.Pages.WorkOrders.TransitionModel
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = L["WorkOrders.Transition"];
+    var canWork = w.Status is "Ready" or "InProduction";
+    var canBack = w.Status is "InProduction" or "ReadyForDelivery" && Model.Earlier.Count > 0;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["WorkOrders.Transition"]</span></nav>
+        <h1>@L["WorkOrders.Transition"] <span class="screen-id">ORD-15</span></h1>
+        <p class="lead">@L["WorkOrders.TransitionLead"]</p>
+    </div>
+</div>
+<div class="action-card card">
+    <div class="card-body">
+        <div class="action-head"><span class="dialog-icon"><icon name="route" /></span>
+            <div><h2><span class="ltr">@w.Number</span> · @w.CustomerName</h2><p class="muted">@w.ServiceName · <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" /></p></div></div>
+        <ul class="checks mt-4">
+            <li class="@(w.DataComplete ? "ok" : "bad")"><icon name="@(w.DataComplete ? "circle-check" : "circle-x")" /> @L[w.DataComplete ? "WorkOrders.Check.DataOk" : "WorkOrders.Check.DataMissing"]
+                @if (!w.DataComplete) {<span class="muted"> — @string.Join("، ", w.MissingData.Select(m => L[$"IntakeField.{m}"].Value))</span>}</li>
+            <li class="@(w.Status != "OnHold" ? "ok" : "bad")"><icon name="@(w.Status != "OnHold" ? "circle-check" : "circle-x")" /> @L[w.Status != "OnHold" ? "WorkOrders.Check.NotHeld" : "WorkOrders.Check.Held"]</li>
+            <li class="@(Model.Available.Count > 0 ? "ok" : "bad")"><icon name="@(Model.Available.Count > 0 ? "circle-check" : "circle-x")" /> @L["WorkOrders.Check.Available", Model.Available.Count]</li>
+        </ul>
+        @if (!canWork && !canBack)
+        {
+            <div class="alert mt-4"><icon name="info" /><div><p>@L["WorkOrders.NoTransition"]</p></div></div>
+        }
+        else
+        {
+            <form method="post" novalidate class="mt-4" data-transition>
+                <partial name="_ValidationSummary" />
+                <fieldset class="option-list">
+                    <legend class="label">@L["WorkOrders.ChooseAction"]</legend>
+                    @if (canWork)
+                    {
+                        @foreach (var s in Model.Available)
+                        {
+                            var act = s.Status is "Pending" ? "start" : "complete";
+                            <label class="option"><input type="radio" name="pick" value="@act|@s.Id" checked="@(Model.StageId == s.Id && Model.Action == act || Model.StageId == Guid.Empty && s == Model.Available[0])" data-pick />
+                                <span><strong><icon name="@(act == "start" ? "play" : "check")" class="icon-sm" /> @L[act == "start" ? "WorkOrders.StartStage" : "WorkOrders.CompleteStage", s.Name]</strong><small>@(s.DepartmentName ?? "—") · <partial name="_StatusBadge" model="StatusUi.Stage(s.Status)" /></small></span></label>
+                        }
+                        @foreach (var s in Model.Available.Where(s => s.Status == "Pending"))
+                        {
+                            <label class="option"><input type="radio" name="pick" value="skip|@s.Id" checked="@(Model.StageId == s.Id && Model.Action == "skip")" data-pick data-needs-reason />
+                                <span><strong><icon name="skip-forward" class="icon-sm" /> @L["WorkOrders.SkipStage", s.Name]</strong><small>@L["WorkOrders.SkipHint"]</small></span></label>
+                        }
+                    }
+                    @if (canBack)
+                    {
+                        @foreach (var s in Model.Earlier)
+                        {
+                            <label class="option"><input type="radio" name="pick" value="back|@s.Id" checked="@(Model.StageId == s.Id && Model.Action == "back")" data-pick data-needs-reason />
+                                <span><strong><icon name="undo-2" class="icon-sm" /> @L["WorkOrders.MoveBackTo", s.Name]</strong><small>@L["WorkOrders.MoveBackHint"]</small></span></label>
+                        }
+                    }
+                </fieldset>
+                <div class="field" data-reason>
+                    <label class="label" for="Reason">@L["Fields.Reason"] <span class="muted text-xs">@L["WorkOrders.ReasonWhenNeeded"]</span></label>
+                    <textarea class="textarea" id="Reason" name="Reason" rows="2" maxlength="500">@Model.Reason</textarea>
+                </div>
+                <div class="form-actions">
+                    <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Cancel"]</a>
+                    <button class="btn btn-primary" type="submit"><icon name="check" /> @L["WorkOrders.Apply"]</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

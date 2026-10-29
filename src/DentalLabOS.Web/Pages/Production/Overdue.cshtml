@@ -1,0 +1,38 @@
+@page "/production/overdue"
+@model DentalLabOS.Web.Pages.Production.OverdueModel
+@{
+    ViewData["Title"] = L["Nav.Overdue"];
+    var d = Model.Data;
+    string? back = null;
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/production/board">@L["Nav.ProductionBoard"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Overdue"]</span></nav>
+        <h1>@L["Nav.Overdue"] <span class="screen-id">ORD-16</span></h1>
+        <p class="lead">@L["Overdue.Lead"]</p>
+    </div>
+</div>
+<div class="stack">
+    <section class="card">
+        <div class="card-header"><h2><icon name="alarm-clock" /> @L["Overdue.PastDue"]</h2><span class="badge badge-danger">@d.PastDue.Count</span></div>
+        @if (d.PastDue.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Overdue.NonePastDue"].Value" param-IconName="@("circle-check")" />
+        }
+        else
+        {
+            <partial name="_WorkOrderTable" model="d.PastDue" />
+        }
+    </section>
+    <section class="card">
+        <div class="card-header"><h2><icon name="timer" /> @L["Overdue.OverTarget"]</h2><span class="badge badge-warning">@d.OverTarget.Count</span><span class="sub">@L["Overdue.OverTargetHint"]</span></div>
+        @if (d.OverTarget.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Overdue.NoneOverTarget"].Value" param-IconName="@("circle-check")" />
+        }
+        else
+        {
+            <partial name="_TaskTable" model="(d.OverTarget, false, back)" />
+        }
+    </section>
+</div>

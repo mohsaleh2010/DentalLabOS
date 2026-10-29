@@ -48,6 +48,9 @@ public static class DependencyInjection
         services.AddScoped<IAuditWriter, AuditWriter>();
         services.AddScoped<INumberingService, NumberingService>();
         services.AddSingleton<ISpreadsheetService, ClosedXmlSpreadsheetService>();
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
+        services.AddSingleton<IQrCodeRenderer, QrCodeRenderer>();
+        services.AddScoped<IBranchSelection, HttpBranchSelection>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<DbInitializer>();
         services.AddSingleton<SetupTokenProvider>();

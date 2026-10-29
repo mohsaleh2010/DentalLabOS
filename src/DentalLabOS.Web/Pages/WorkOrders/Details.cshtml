@@ -1,0 +1,226 @@
+@page "/workorders/{id:guid}"
+@model DentalLabOS.Web.Pages.WorkOrders.DetailsModel
+@using DentalLabOS.Domain.Security
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = w.Number;
+    var open = w.Status is not ("Delivered" or "Cancelled");
+    var running = w.Status is "Ready" or "InProduction" or "ReadyForDelivery";
+    var teeth = w.Teeth.Select(t => t.Code).ToList();
+    var done = w.Stages.Count(s => s.Status is "Done" or "Skipped");
+    var progress = w.Stages.Count == 0 ? 0 : (int)Math.Round(100.0 * done / w.Stages.Count);
+    (string Key, int Phase)[] soon = [("WorkOrders.Tab.Quality", 4), ("WorkOrders.Tab.Materials", 5), ("WorkOrders.Tab.Cost", 10), ("WorkOrders.Tab.Invoice", 7)];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" />@if (w.CustomerOrderNumber is not null) {<a href="/orders/@w.CustomerOrderId" class="ltr">@w.CustomerOrderNumber</a><icon name="chevron-left" class="icon-dir" />}<span class="ltr">@w.Number</span></nav>
+        <h1 class="flex items-center gap-3 wrap">
+            <span class="ltr" id="wo-number">@w.Number</span>
+            <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" />
+            @if (w.Priority != "Normal") {<partial name="_StatusBadge" model="StatusUi.Priority(w.Priority)" />}
+            @if (w.Kind != "Original") {<span class="badge badge-violet"><icon name="refresh-cw" /> @L[$"WoKind.{w.Kind}"]</span>}
+            <span class="screen-id">ORD-07</span>
+        </h1>
+        <p class="lead">@w.CustomerName@if (w.DentistName is not null) {<text> · @w.DentistName</text>} · @w.ServiceName × @w.Quantity</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.WorkOrders.Print))
+        {
+            <a class="btn" href="/workorders/@w.Id/ticket"><icon name="printer" /> @L["WorkOrders.Ticket"]</a>
+        }
+        @if (open && Model.Can(Permissions.WorkOrders.Update))
+        {
+            <a class="btn" href="/workorders/@w.Id/edit"><icon name="pencil" /> @L["Common.Edit"]</a>
+        }
+        @if (w.Status == "OnHold" && Model.Can(Permissions.WorkOrders.Hold))
+        {
+            <form method="post" asp-page-handler="Release"><button class="btn btn-primary" type="submit"><icon name="play" /> @L["WorkOrders.Release"]</button></form>
+        }
+        @if (open || running)
+        {
+            <details class="menu">
+                <summary class="btn"><icon name="menu" /> @L["Common.More"]</summary>
+                <div class="menu-panel">
+                    @if (running && Model.Can(Permissions.WorkOrders.Transition))
+                    {
+                        <a class="menu-item" href="/workorders/@w.Id/transition"><icon name="route" /> @L["WorkOrders.Transition"]</a>
+                    }
+                    @if (open && w.Status != "OnHold" && Model.Can(Permissions.WorkOrders.Hold))
+                    {
+                        <a class="menu-item" href="/workorders/@w.Id/hold"><icon name="hand" /> @L["WorkOrders.Hold"]</a>
+                    }
+                    <a class="menu-item" href="/workorders/@w.Id/revisions"><icon name="history" /> @L["WorkOrders.Revisions"] <span class="badge">@w.RevisionNumber</span></a>
+                    <button class="menu-item" type="button" data-copy="#wo-number" data-copied-text="@L["Common.Copied"]"><icon name="copy" /> @L["WorkOrders.CopyNumber"]</button>
+                    @if (open && Model.Can(Permissions.WorkOrders.Cancel))
+                    {
+                        <div class="menu-sep"></div>
+                        <a class="menu-item text-danger" href="/workorders/@w.Id/cancel"><icon name="ban" /> @L["WorkOrders.Cancel"]</a>
+                    }
+                </div>
+            </details>
+        }
+    </div>
+</div>
+
+@if (w.ActiveHold is { } hold)
+{
+    <div class="alert alert-danger mb-4"><icon name="hand" /><div><strong>@L["WorkOrders.OnHoldSince", hold.HeldAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)]</strong><p>@hold.Reason@if (hold.Notes is not null) {<text> — @hold.Notes</text>}@if (hold.HeldBy is not null) {<text> · @hold.HeldBy</text>}</p></div></div>
+}
+@if (!w.DataComplete && open)
+{
+    <div class="alert alert-warning mb-4"><icon name="circle-alert" /><div><strong>@L["WorkOrders.DataMissing"]</strong>
+        <p>@string.Join("، ", w.MissingData.Select(m => L[$"IntakeField.{m}"].Value))</p>
+        @if (Model.Can(Permissions.WorkOrders.Update)) {<p><a href="/workorders/@w.Id/edit">@L["WorkOrders.CompleteData"]</a></p>}</div></div>
+}
+@if (w.Status == "Cancelled")
+{
+    <div class="alert mb-4"><icon name="ban" /><div><strong>@L["WoStatus.Cancelled"]</strong><p>@w.CancelReason</p></div></div>
+}
+
+<div class="wo-header card mb-6">
+    <div class="wo-meta">
+        <div><span>@L["WorkOrders.CurrentStage"]</span><strong>@(w.CurrentStageName ?? (w.Status == "ReadyForDelivery" ? L["WoStatus.ReadyForDelivery"].Value : "—"))</strong>@if (w.CurrentAssigneeName is not null) {<small><icon name="user" class="icon-sm" /> @w.CurrentAssigneeName</small>}</div>
+        <div class="@(w.IsOverdue ? "is-late" : null)"><span>@L["Fields.DueDate"]</span><strong>@Fmt.Date(w.DueDate)</strong>@if (w.IsOverdue) {<small><icon name="clock" class="icon-sm" /> @L["WorkOrders.DaysLate", w.DaysLate]</small>}</div>
+        <div><span>@L["Fields.ReceivedAt"]</span><strong>@w.ReceivedAtUtc.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)</strong><small>@w.BranchName</small></div>
+        <div><span>@L["WorkOrders.Progress"]</span><strong>@done / @w.Stages.Count</strong><div class="meter"><span style="width:@progress%"></span></div></div>
+        @if (w.QuotedPrice is { } total)
+        {
+            <div><span>@L["Fields.Price"]</span><strong class="money">@Fmt.Money(total)</strong><small class="money">@Fmt.Money(w.UnitPrice) × @w.Quantity</small></div>
+        }
+    </div>
+    <ol class="stage-track" aria-label="@L["WorkOrders.Route"]">
+        @foreach (var g in w.Stages.GroupBy(s => s.Step))
+        {
+            <li class="@(g.All(s => s.Status is "Done" or "Skipped") ? "is-done" : g.Any(s => s.IsAvailable) ? "is-current" : null)">
+                @foreach (var s in g) {<span>@s.Name</span>}
+            </li>
+        }
+    </ol>
+</div>
+
+<nav class="tabs" aria-label="@L["Common.Sections"]">
+    <a class="tab" href="/workorders/@w.Id" aria-current="@(Model.Tab == "overview" ? "page" : null)">@L["WorkOrders.Tab.Prescription"]</a>
+    <a class="tab" href="/workorders/@w.Id?tab=stages" aria-current="@(Model.Tab == "stages" ? "page" : null)">@L["WorkOrders.Tab.Stages"] <span class="badge">@w.Stages.Count</span></a>
+    <a class="tab" href="/workorders/@w.Id?tab=files" aria-current="@(Model.Tab == "files" ? "page" : null)">@L["WorkOrders.Tab.Files"] <span class="badge">@w.Attachments.Count</span></a>
+    <a class="tab" href="/workorders/@w.Id?tab=notes" aria-current="@(Model.Tab == "notes" ? "page" : null)">@L["WorkOrders.Tab.Notes"] <span class="badge">@w.Notes.Count</span></a>
+    <a class="tab" href="/workorders/@w.Id?tab=timeline" aria-current="@(Model.Tab == "timeline" ? "page" : null)">@L["WorkOrders.Tab.Timeline"]</a>
+    @foreach (var (key, phase) in soon)
+    {
+        <span class="tab is-soon" title="@L["Nav.SoonTitle", phase]">@L[key] <span class="badge">@L["Nav.Phase", phase]</span></span>
+    }
+</nav>
+<div class="tab-panel">
+@switch (Model.Tab)
+{
+    case "stages":
+        <partial name="_StageTable" model="(w, Model.Can(Permissions.WorkOrders.Transition))" />
+        break;
+    case "files":
+        <div class="@(open && Model.Can(Permissions.WorkOrders.Update) ? "split" : null)">
+            <section class="card">
+                <div class="card-header"><h2>@L["WorkOrders.Tab.Files"]</h2></div>
+                @if (w.Attachments.Count == 0)
+                {
+                    <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["WorkOrders.NoFiles"].Value" param-IconName="@("paperclip")" />
+                }
+                else
+                {
+                    <ul class="file-list">
+                        @foreach (var a in w.Attachments)
+                        {
+                            <li>
+                                <span class="file-icon kind-@a.Kind"><icon name="@(a.Kind switch { "photo" => "eye", "pdf" => "file-text", _ => "file-box" })" /></span>
+                                <div class="file-info"><a href="/workorders/@w.Id?handler=Download&fileId=@a.Id"><strong>@a.FileName</strong></a>
+                                    <span class="muted text-xs">@L[$"FileKind.{a.Kind}"] · @Fmt.Qty(Math.Round(a.SizeBytes / 1024m, 1)) KB · @a.UploadedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)@if (a.UploadedBy is not null) {<text> · @a.UploadedBy</text>}</span></div>
+                                <a class="btn btn-sm btn-ghost" href="/workorders/@w.Id?handler=Download&fileId=@a.Id" aria-label="@L["Common.Download"]"><icon name="download" class="icon-sm" /></a>
+                                @if (open && Model.Can(Permissions.WorkOrders.Update))
+                                {
+                                    <form method="post" asp-page-handler="DeleteFile" asp-route-fileId="@a.Id"><button class="btn btn-sm btn-ghost" type="submit" aria-label="@L["Common.Delete"]" data-confirm="@L["WorkOrders.DeleteFileConfirm", a.FileName]"><icon name="trash-2" class="icon-sm" /></button></form>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+            @if (open && Model.Can(Permissions.WorkOrders.Update))
+            {
+                <form method="post" asp-page-handler="Upload" enctype="multipart/form-data" class="card">
+                    <div class="card-header"><h2>@L["WorkOrders.AddFiles"]</h2></div>
+                    <div class="card-body">
+                        <label class="dropzone" data-dropzone>
+                            <icon name="upload" class="icon-xl" />
+                            <strong>@L["Intake.DropFiles"]</strong>
+                            <span class="muted text-sm">@L["Intake.FileTypes", DentalLabOS.Application.Common.FileInspector.MaxBytes / 1024 / 1024]</span>
+                            <input type="file" name="files" multiple required accept=".jpg,.jpeg,.png,.webp,.pdf,.stl,.ply,.zip" />
+                            <span class="file-name" data-file-name></span>
+                        </label>
+                        <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="upload" /> @L["WorkOrders.Upload"]</button></div>
+                    </div>
+                </form>
+            }
+        </div>
+        break;
+    case "notes":
+        <div class="split">
+            <section class="card">
+                <div class="card-header"><h2>@L["WorkOrders.Tab.Notes"]</h2></div>
+                @if (w.Notes.Count == 0)
+                {
+                    <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["WorkOrders.NoNotes"].Value" param-IconName="@("message-square")" />
+                }
+                else
+                {
+                    <ul class="activity card-body">
+                        @foreach (var n in w.Notes)
+                        {
+                            <li><span class="dot"><icon name="@(n.IsInternal ? "lock" : "message-square")" class="icon-sm" /></span>
+                                <div><div class="what">@n.Text</div><div class="when">@(n.Author ?? "—") · @n.CreatedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)@if (n.IsInternal) {<text> · @L["WorkOrders.InternalNote"]</text>}</div></div></li>
+                        }
+                    </ul>
+                }
+            </section>
+            <form method="post" asp-page-handler="Note" class="card">
+                <div class="card-header"><h2>@L["WorkOrders.AddNote"]</h2></div>
+                <div class="card-body">
+                    <div class="field"><label class="label" for="note-text">@L["Fields.Note"]</label><textarea class="textarea" id="note-text" name="text" rows="4" maxlength="2000" required></textarea></div>
+                    <label class="check"><input type="checkbox" name="isInternal" value="true" checked /> @L["WorkOrders.InternalNoteHint"]</label>
+                    <input type="hidden" name="isInternal" value="false" />
+                    <div class="form-actions"><button class="btn btn-primary" type="submit"><icon name="plus" /> @L["Common.Add"]</button></div>
+                </div>
+            </form>
+        </div>
+        break;
+    case "timeline":
+        <section class="card"><div class="card-header"><h2>@L["WorkOrders.Tab.Timeline"]</h2></div><div class="card-body"><partial name="_Timeline" model="Model.Timeline" /></div></section>
+        break;
+    default:
+        <div class="grid grid-main">
+            <section class="card">
+                <div class="card-header"><h2>@L["WorkOrders.Prescription"]</h2><span class="sub">@L["WorkOrders.RevisionNo", w.RevisionNumber]</span></div>
+                <div class="card-body">
+                    <dl class="dl mb-4">
+                        <div><dt>@L["Fields.Service"]</dt><dd>@w.ServiceName <code class="text-xs">@w.ServiceSku</code></dd></div>
+                        <div><dt>@L["Fields.PatientReference"]</dt><dd>@(w.PatientReference ?? "—")</dd></div>
+                        <div><dt>@L["Fields.Material"]</dt><dd>@(w.MaterialName ?? "—")</dd></div>
+                        <div><dt>@L["Fields.Shade"]</dt><dd class="ltr">@(w.Shade ?? "—")</dd></div>
+                        <div><dt>@L["Fields.Quantity"]</dt><dd>@w.Quantity</dd></div>
+                        @if (w.PriorityReason is not null) {<div><dt>@L["Fields.PriorityReason"]</dt><dd>@w.PriorityReason</dd></div>}
+                        <div><dt>@L["Intake.Workflow"]</dt><dd>@(w.WorkflowName ?? "—") <span class="muted text-xs">v@(w.WorkflowVersion)</span></dd></div>
+                    </dl>
+                    <h3 class="text-sm muted mb-2">@L["Fields.Teeth"]</h3>
+                    <partial name="_ToothMap" model="(IReadOnlyCollection<string>)teeth" />
+                    @if (w.Instructions is not null)
+                    {
+                        <h3 class="text-sm muted mt-4 mb-2">@L["Fields.Instructions"]</h3>
+                        <p class="prewrap">@w.Instructions</p>
+                    }
+                </div>
+            </section>
+            <section class="card" style="align-self:start">
+                <div class="card-header"><h2>@L["WorkOrders.RecentActivity"]</h2><a class="ms-auto text-sm" href="/workorders/@w.Id?tab=timeline">@L["Common.ViewAll"]</a></div>
+                <div class="card-body"><partial name="_Timeline" model="Model.Timeline.Take(6).ToList()" /></div>
+            </section>
+        </div>
+        break;
+}
+</div>

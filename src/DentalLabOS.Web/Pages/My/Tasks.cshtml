@@ -1,0 +1,46 @@
+@page "/my/tasks"
+@model DentalLabOS.Web.Pages.My.TasksModel
+@{
+    ViewData["Title"] = L["Nav.MyTasks"];
+    var t = Model.Tasks;
+    var running = t.Mine.Where(x => x.StageStatus == "InProgress").ToList();
+    string? back = "/my/tasks";
+    var canWork = Model.Can(DentalLabOS.Domain.Security.Permissions.WorkOrders.Transition);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.MyTasks"] <span class="screen-id">ORD-12</span></h1>
+        <p class="lead">@(t.DepartmentName is null ? L["Tasks.LeadNoDept"] : L["Tasks.Lead", t.DepartmentName])</p>
+    </div>
+    <div class="actions"><a class="btn" href="/scan"><icon name="qr-code" /> @L["Nav.Scan"]</a></div>
+</div>
+<div class="stats mb-6">
+    <div class="stat"><div class="stat-top"><span class="stat-label">@L["Tasks.Mine"]</span><span class="stat-icon"><icon name="list-checks" /></span></div><div class="stat-value">@t.Mine.Count</div></div>
+    <div class="stat"><div class="stat-top"><span class="stat-label">@L["Tasks.Running"]</span><span class="stat-icon tone-info"><icon name="play" /></span></div><div class="stat-value">@running.Count</div></div>
+    <div class="stat"><div class="stat-top"><span class="stat-label">@L["Tasks.Late"]</span><span class="stat-icon tone-warning"><icon name="alarm-clock" /></span></div><div class="stat-value">@t.Mine.Count(x => x.IsOverdue)</div></div>
+    <div class="stat"><div class="stat-top"><span class="stat-label">@L["Tasks.Available"]</span><span class="stat-icon tone-violet"><icon name="inbox" /></span></div><div class="stat-value">@t.Available.Count</div></div>
+</div>
+<div class="stack">
+    <section class="card">
+        <div class="card-header"><h2>@L["Tasks.Mine"]</h2></div>
+        @if (t.Mine.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Tasks.NoneMine"].Value" param-Description="@L["Tasks.NoneMineText"].Value" param-IconName="@("list-checks")" />
+        }
+        else
+        {
+            <partial name="_TaskTable" model="(t.Mine, canWork, back)" />
+        }
+    </section>
+    <section class="card">
+        <div class="card-header"><h2>@L["Tasks.Available"]</h2><span class="sub">@L["Tasks.AvailableHint"]</span></div>
+        @if (t.Available.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Tasks.NoneAvailable"].Value" param-IconName="@("inbox")" />
+        }
+        else
+        {
+            <partial name="_TaskTable" model="(t.Available, canWork, back)" />
+        }
+    </section>
+</div>

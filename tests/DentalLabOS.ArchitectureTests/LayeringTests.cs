@@ -106,7 +106,8 @@ public sealed class SecurityRulesTests
     [Fact]
     public void Admin_platform_and_master_data_pages_require_a_permission()
     {
-        string[] guarded = [".Pages.Admin", ".Pages.Platform", ".Pages.Customers", ".Pages.Suppliers", ".Pages.Items", ".Pages.PriceLists"];
+        string[] guarded = [".Pages.Admin", ".Pages.Platform", ".Pages.Customers", ".Pages.Suppliers", ".Pages.Items", ".Pages.PriceLists",
+            ".Pages.Orders", ".Pages.WorkOrders", ".Pages.Production", ".Pages.My"];
         var pages = typeof(Web.Infrastructure.AppPageModel).Assembly.GetTypes()
             .Where(t => t.Namespace is { } ns && guarded.Any(g => ns.Contains(g, StringComparison.Ordinal)))
             .Where(t => typeof(Microsoft.AspNetCore.Mvc.RazorPages.PageModel).IsAssignableFrom(t))
@@ -123,6 +124,17 @@ public sealed class SecurityRulesTests
         // script-src 'self': behaviour lives in dlos.js and is wired with data-* attributes.
         var offenders = Repo.SourceFiles("*.cshtml")
             .Where(f => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(f), @"<script(?![^>]*\bsrc=)[^>]*>", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            .Select(Repo.Relative)
+            .ToArray();
+        Assert.Empty(offenders);
+    }
+
+    [Fact]
+    public void Views_have_no_inline_event_handlers()
+    {
+        // Inline on*= handlers are also blocked by script-src 'self'; use data-* hooks in dlos.js.
+        var offenders = Repo.SourceFiles("*.cshtml")
+            .Where(f => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(f), @"<[a-z][^>]*\son[a-z]+\s*=", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             .Select(Repo.Relative)
             .ToArray();
         Assert.Empty(offenders);

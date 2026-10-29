@@ -1,0 +1,68 @@
+@page "/production/assign"
+@model DentalLabOS.Web.Pages.Production.AssignModel
+@{
+    ViewData["Title"] = L["Nav.Assign"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/production/board">@L["Nav.ProductionBoard"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Nav.Assign"]</span></nav>
+        <h1>@L["Nav.Assign"] <span class="screen-id">ORD-13</span></h1>
+        <p class="lead">@L["Assign.Lead"]</p>
+    </div>
+</div>
+<section class="card">
+    <form class="toolbar" method="get">
+        <select class="select" name="dept" aria-label="@L["Fields.Department"]" data-autosubmit>
+            <option value="">@L["Board.AllDepartments"]</option>
+            @foreach (var d in Model.Departments)
+            {
+                <option value="@d.Id" selected="@(Model.Dept == d.Id)">@d.Name</option>
+            }
+        </select>
+        <label class="check"><input type="checkbox" name="all" value="true" checked="@Model.All" data-autosubmit /> @L["Assign.IncludeAssigned"]</label>
+        <noscript><button class="btn" type="submit">@L["Common.Apply"]</button></noscript>
+    </form>
+    @if (Model.Tasks.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Assign.Empty"].Value" param-Description="@L["Assign.EmptyText"].Value" param-IconName="@("user-check")" />
+    }
+    else
+    {
+        <form method="post" asp-route-dept="@Model.Dept" asp-route-all="@Model.All" novalidate>
+            <partial name="_ValidationSummary" />
+            <div class="assign-bar">
+                <label class="check"><input type="checkbox" data-check-all="StageIds" /> @L["Assign.SelectAll"]</label>
+                <span class="badge" data-selected-count data-template="@L["Assign.Selected", "{0}"]">@L["Assign.Selected", 0]</span>
+                <span class="spacer"></span>
+                <select class="select" name="UserId" aria-label="@L["Fields.Technician"]">
+                    @* Technicians first so the default choice assigns; clearing an assignment is a deliberate last option. *@
+                    @foreach (var t in Model.Technicians)
+                    {
+                        <option value="@t.UserId">@t.FullName@if (t.DepartmentName is not null) {<text> · @t.DepartmentName</text>} (@L["Assign.OpenTasks", t.OpenTasks])</option>
+                    }
+                    <option value="">@L["Assign.Unassign"]</option>
+                </select>
+                <button class="btn btn-primary" type="submit"><icon name="user-check" /> @L["Assign.Apply"]</button>
+            </div>
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th class="check-col"></th><th>@L["Fields.Number"]</th><th>@L["Fields.Stage"]</th><th>@L["Fields.Customer"]</th><th>@L["Fields.Status"]</th><th>@L["Fields.AssignedTo"]</th><th>@L["Fields.DueDate"]</th></tr></thead>
+                    <tbody>
+                    @foreach (var t in Model.Tasks)
+                    {
+                        <tr class="@(t.IsOverdue ? "row-late" : null)">
+                            <td class="check-col"><input type="checkbox" name="StageIds" value="@t.StageId" aria-label="@t.Number @t.StageName" /></td>
+                            <td class="cell-primary"><a href="/workorders/@t.WorkOrderId?tab=stages"><strong class="ltr">@t.Number</strong></a><div class="text-xs muted">@t.ServiceName</div></td>
+                            <td data-label="@L["Fields.Stage"]">@t.StageName@if (t.DepartmentName is not null) {<div class="text-xs muted">@t.DepartmentName</div>}</td>
+                            <td data-label="@L["Fields.Customer"]">@t.CustomerName</td>
+                            <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Stage(t.StageStatus)" />@if (!t.IsAvailable) {<span class="badge" title="@L["Assign.NotYet"]"><icon name="clock" /></span>}</td>
+                            <td data-label="@L["Fields.AssignedTo"]">@(t.AssigneeName ?? "—")</td>
+                            <td data-label="@L["Fields.DueDate"]" class="nowrap">@Fmt.Date(t.DueDate)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    }
+</section>

@@ -1,0 +1,57 @@
+@page "/orders/{id:guid}"
+@model DentalLabOS.Web.Pages.Orders.DetailsModel
+@using DentalLabOS.Domain.Security
+@{
+    var o = Model.Order;
+    ViewData["Title"] = o.Number;
+    var open = o.WorkOrders.Count(w => w.Status is not ("Delivered" or "Cancelled"));
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/orders">@L["Nav.Orders"]</a><icon name="chevron-left" class="icon-dir" /><span class="ltr">@o.Number</span></nav>
+        <h1 class="flex items-center gap-3 wrap"><span class="ltr">@o.Number</span> <partial name="_StatusBadge" model="StatusUi.Priority(o.Priority)" /> <span class="screen-id">ORD-03</span></h1>
+        <p class="lead">@o.CustomerName@if (o.DentistName is not null) {<text> · @o.DentistName</text>} · @o.BranchName</p>
+    </div>
+    <div class="actions">
+        @if (Model.Can(Permissions.WorkOrders.Create))
+        {
+            <a class="btn btn-primary" href="/workorders/intake?order=@o.Id"><icon name="plus" /> @L["Orders.AddWorkOrder"]</a>
+        }
+    </div>
+</div>
+<div class="kpis mb-6">
+    <div class="kpi"><span>@L["Fields.Date"]</span><strong>@Fmt.Date(o.DocumentDate)</strong></div>
+    <div class="kpi"><span>@L["Fields.RequestedDelivery"]</span><strong>@Fmt.Date(o.RequestedDeliveryDate)</strong></div>
+    <div class="kpi"><span>@L["Orders.WorkOrders"]</span><strong>@o.WorkOrders.Count</strong></div>
+    <div class="kpi"><span>@L["Orders.Open"]</span><strong>@open</strong></div>
+    @if (o.Total is { } total)
+    {
+        <div class="kpi"><span>@L["Orders.Total"]</span><strong class="money">@Fmt.Money(total)</strong></div>
+    }
+</div>
+<div class="grid grid-main">
+    <section class="card">
+        <div class="card-header"><h2>@L["Orders.WorkOrders"]</h2></div>
+        @if (o.WorkOrders.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Orders.NoWorkOrders"].Value" param-Description="@L["Orders.NoWorkOrdersText"].Value"
+                       param-IconName="@("clipboard-list")" param-ActionText="@(Model.Can(Permissions.WorkOrders.Create) ? L["Orders.AddWorkOrder"].Value : null)" param-ActionHref="@($"/workorders/intake?order={o.Id}")" />
+        }
+        else
+        {
+            <partial name="_WorkOrderTable" model="o.WorkOrders" />
+        }
+    </section>
+    <section class="card" style="align-self:start">
+        <div class="card-header"><h2>@L["Orders.Info"]</h2></div>
+        <div class="card-body">
+            <dl class="dl">
+                <div><dt>@L["Fields.Customer"]</dt><dd>@o.CustomerName</dd></div>
+                <div><dt>@L["Fields.Dentist"]</dt><dd>@(o.DentistName ?? "—")</dd></div>
+                <div><dt>@L["Fields.ReceivedAt"]</dt><dd>@o.ReceivedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</dd></div>
+                <div><dt>@L["Fields.DeliveryInstructions"]</dt><dd>@(o.DeliveryInstructions ?? "—")</dd></div>
+                <div><dt>@L["Fields.Notes"]</dt><dd>@(o.Notes ?? "—")</dd></div>
+            </dl>
+        </div>
+    </section>
+</div>

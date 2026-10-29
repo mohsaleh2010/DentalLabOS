@@ -1,0 +1,52 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-26",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Ticket",
+  "route": "/workorders/{id}/ticket",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.print",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/{id}",
+      "purpose": "Details"
+    }
+  ],
+  "rules": [
+    "QR holds only the work-order number (no patient data)",
+    "A5 print layout with route sign-off table"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-26.happy",
+    "ORD-26.permissionDenied",
+    "ORD-26.crossTenant"
+  ],
+  "relatedScreens": []
+}

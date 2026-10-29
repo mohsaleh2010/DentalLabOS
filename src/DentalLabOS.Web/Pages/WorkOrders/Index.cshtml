@@ -1,0 +1,51 @@
+@page "/workorders"
+@model DentalLabOS.Web.Pages.WorkOrders.IndexModel
+@using DentalLabOS.Domain.Security
+@{
+    ViewData["Title"] = L["Nav.WorkOrders"];
+    var r = Model.Result;
+    string[] views = ["open", "overdue", "all"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.WorkOrders"] <span class="screen-id">ORD-04</span></h1>
+        <p class="lead">@L["WorkOrders.Lead"]</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="/workorders/incomplete"><icon name="circle-alert" /> @L["Nav.Incomplete"]</a>
+        <a class="btn" href="/scan"><icon name="qr-code" /> @L["Nav.Scan"]</a>
+        @if (Model.Can(Permissions.WorkOrders.Create))
+        {
+            <a class="btn btn-primary" href="/workorders/intake"><icon name="scan-line" /> @L["Nav.Intake"]</a>
+        }
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Common.Sections"]">
+    @foreach (var v in views)
+    {
+        <a class="tab" href="/workorders?view=@v" aria-current="@(Model.View == v && Model.Status is null ? "page" : null)">@L[$"WorkOrders.View.{v}"]</a>
+    }
+</nav>
+<section class="card mt-4">
+    <form class="toolbar" method="get">
+        <input type="hidden" name="view" value="@Model.View" />
+        <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["WorkOrders.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" data-autosubmit>
+            <option value="">@L["Common.AllStatuses"]</option>
+            @foreach (var s in DentalLabOS.Web.Pages.WorkOrders.IndexModel.Statuses)
+            {
+                <option value="@s" selected="@(Model.Status == s)">@L[StatusUi.WorkOrder(s).LabelKey]</option>
+            }
+        </select>
+    </form>
+    @if (r.Items.Count == 0)
+    {
+        <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["WorkOrders.Empty"].Value" param-Description="@L["WorkOrders.EmptyText"].Value" param-IconName="@("clipboard-list")"
+                   param-ActionText="@(Model.Can(Permissions.WorkOrders.Create) ? L["Nav.Intake"].Value : null)" param-ActionHref="@("/workorders/intake")" />
+    }
+    else
+    {
+        <partial name="_WorkOrderTable" model="r.Items" />
+        <partial name="_Pager" model="(r.Page, r.TotalPages, r.TotalCount, Model.PageUrl)" />
+    }
+</section>

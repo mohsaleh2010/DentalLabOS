@@ -1,0 +1,62 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-10",
+  "module": "production",
+  "titleKey": "Nav.ProductionBoard",
+  "route": "/production/board",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "production.read",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/production/board",
+      "purpose": "Board"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/production/departments",
+      "purpose": "Department filter"
+    }
+  ],
+  "rules": [
+    "Columns: incomplete, ready, one per current stage (route order), on hold, ready for delivery (last 7 days)",
+    "Cards show priority, lateness, missing-data count and assignee; color is always paired with text or icons"
+  ],
+  "states": [
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-10.happy",
+    "ORD-10.permissionDenied",
+    "ORD-10.crossTenant"
+  ],
+  "relatedScreens": [],
+  "filters": [
+    "department"
+  ]
+}

@@ -1,0 +1,62 @@
+@page "/orders/new"
+@model DentalLabOS.Web.Pages.Orders.NewModel
+@{
+    ViewData["Title"] = L["Orders.New"];
+    string[] priorities = ["Normal", "High", "Urgent"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/orders">@L["Nav.Orders"]</a><icon name="chevron-left" class="icon-dir" /><span>@L["Orders.New"]</span></nav>
+        <h1>@L["Orders.New"] <span class="screen-id">ORD-02</span></h1>
+        <p class="lead">@L["Orders.NewLead"]</p>
+    </div>
+</div>
+<form method="post" class="card" style="max-width: 860px" data-guard novalidate>
+    <div class="card-body">
+        <partial name="_ValidationSummary" />
+        <input type="hidden" asp-for="Input.ClientOperationId" />
+        <div class="form-grid cols-2">
+            <partial name="_CustomerPicker" model="(Model.Customers, Model.Input.CustomerId, Model.Dentists, Model.Input.DentistId)" />
+            <div class="field">
+                <label class="label" asp-for="Input.Priority">@L["Fields.Priority"]</label>
+                <select class="select" asp-for="Input.Priority">
+                    @foreach (var p in priorities)
+                    {
+                        <option value="@p">@L[$"Priority.{p}"]</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.RequestedDeliveryDate">@L["Fields.RequestedDelivery"]</label>
+                <input class="input" asp-for="Input.RequestedDeliveryDate" type="date" />
+                <span class="field-error" asp-validation-for="Input.RequestedDeliveryDate"></span>
+            </div>
+            @if (Model.Branches.Count > 1)
+            {
+                <div class="field">
+                    <label class="label" asp-for="Input.BranchId">@L["Fields.Branch"]</label>
+                    <select class="select" asp-for="Input.BranchId">
+                        <option value="">@L["Context.Current"]</option>
+                        @foreach (var b in Model.Branches)
+                        {
+                            <option value="@b.Id">@b.Name</option>
+                        }
+                    </select>
+                    <span class="field-error" asp-validation-for="Input.BranchId"></span>
+                </div>
+            }
+            <div class="field span-all">
+                <label class="label" asp-for="Input.DeliveryInstructions">@L["Fields.DeliveryInstructions"]</label>
+                <textarea class="textarea" asp-for="Input.DeliveryInstructions" rows="2" maxlength="1000"></textarea>
+            </div>
+            <div class="field span-all">
+                <label class="label" asp-for="Input.Notes">@L["Fields.Notes"]</label>
+                <textarea class="textarea" asp-for="Input.Notes" rows="3" maxlength="2000"></textarea>
+            </div>
+        </div>
+        <div class="form-actions">
+            <a class="btn btn-ghost" href="/orders">@L["Common.Cancel"]</a>
+            <button class="btn btn-primary" type="submit"><icon name="check" /> @L["Orders.CreateAndAdd"]</button>
+        </div>
+    </div>
+</form>

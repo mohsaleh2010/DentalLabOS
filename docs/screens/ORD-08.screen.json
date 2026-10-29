@@ -1,0 +1,51 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-08",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Revisions",
+  "route": "/workorders/{id}/revisions",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.read",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrderRevision"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/{id}/revisions",
+      "purpose": "Revisions"
+    }
+  ],
+  "rules": [
+    "Revisions are append-only snapshots of the prescription before each change"
+  ],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-08.happy",
+    "ORD-08.permissionDenied",
+    "ORD-08.crossTenant"
+  ],
+  "relatedScreens": []
+}

@@ -29,7 +29,7 @@
 <section class="card">
     <form class="toolbar" method="get">
         <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Customers.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
-        <select class="select" name="type" aria-label="@L["Fields.Type"]" onchange="this.form.submit()">
+        <select class="select" name="type" aria-label="@L["Fields.Type"]" data-autosubmit>
             <option value="">@L["Customers.AllTypes"]</option>
             @foreach (var t in types)
             {
@@ -38,7 +38,7 @@
         </select>
         @if (Model.Groups.Count > 0)
         {
-            <select class="select" name="group" aria-label="@L["Fields.Group"]" onchange="this.form.submit()">
+            <select class="select" name="group" aria-label="@L["Fields.Group"]" data-autosubmit>
                 <option value="">@L["Customers.AllGroups"]</option>
                 @foreach (var g in Model.Groups)
                 {
@@ -46,7 +46,7 @@
                 }
             </select>
         }
-        <select class="select" name="status" aria-label="@L["Fields.Status"]" onchange="this.form.submit()">
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" data-autosubmit>
             <option value="">@L["Common.AllStatuses"]</option>
             <option value="active" selected="@(Model.Status == "active")">@L["Common.Active"]</option>
             <option value="inactive" selected="@(Model.Status == "inactive")">@L["Common.Inactive"]</option>

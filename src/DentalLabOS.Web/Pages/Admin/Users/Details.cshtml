@@ -10,6 +10,10 @@
         <h1 class="flex items-center gap-3 wrap">@u.FullName <partial name="_StatusBadge" model="StatusUi.Active(u.IsActive)" /> <span class="screen-id">ADM-06</span></h1>
         <p class="lead ltr">@u.Email</p>
     </div>
+    @if (Model.Can(DentalLabOS.Domain.Security.Permissions.Admin.TechniciansManage))
+    {
+        <div class="actions"><a class="btn" href="/admin/users/@u.ProfileId/technician"><icon name="user-cog" /> @L["Technician.Title"]</a></div>
+    }
 </div>
 <partial name="_ValidationSummary" />
 <div class="grid grid-main">

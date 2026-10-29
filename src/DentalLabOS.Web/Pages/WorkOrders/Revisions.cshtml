@@ -1,0 +1,59 @@
+@page "/workorders/{id:guid}/revisions"
+@model DentalLabOS.Web.Pages.WorkOrders.RevisionsModel
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = L["WorkOrders.Revisions"];
+    var labels = new Dictionary<string, string>
+    {
+        ["patientReference"] = "Fields.PatientReference", ["materialName"] = "Fields.Material", ["shade"] = "Fields.Shade", ["instructions"] = "Fields.Instructions",
+        ["quantity"] = "Fields.Quantity", ["dueDate"] = "Fields.DueDate", ["priority"] = "Fields.Priority", ["priorityReason"] = "Fields.PriorityReason", ["teeth"] = "Fields.Teeth",
+    };
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["WorkOrders.Revisions"]</span></nav>
+        <h1>@L["WorkOrders.Revisions"] <span class="screen-id">ORD-08</span></h1>
+        <p class="lead">@L["WorkOrders.RevisionsLead"]</p>
+    </div>
+</div>
+<section class="card mb-6">
+    <div class="card-header"><h2>@L["WorkOrders.CurrentPrescription"]</h2><span class="badge badge-brand">@L["WorkOrders.RevisionNo", w.RevisionNumber]</span></div>
+    <div class="card-body">
+        <dl class="dl">
+            <div><dt>@L["Fields.PatientReference"]</dt><dd>@(w.PatientReference ?? "—")</dd></div>
+            <div><dt>@L["Fields.Material"]</dt><dd>@(w.MaterialName ?? "—")</dd></div>
+            <div><dt>@L["Fields.Shade"]</dt><dd class="ltr">@(w.Shade ?? "—")</dd></div>
+            <div><dt>@L["Fields.Teeth"]</dt><dd class="ltr">@(w.Teeth.Count == 0 ? "—" : string.Join(", ", w.Teeth.Select(t => t.Code)))</dd></div>
+            <div><dt>@L["Fields.Quantity"]</dt><dd>@w.Quantity</dd></div>
+            <div><dt>@L["Fields.DueDate"]</dt><dd>@Fmt.Date(w.DueDate)</dd></div>
+        </dl>
+    </div>
+</section>
+@if (Model.Revisions.Count == 0)
+{
+    <section class="card"><component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["WorkOrders.NoRevisions"].Value" param-Description="@L["WorkOrders.NoRevisionsText"].Value" param-IconName="@("history")" /></section>
+}
+else
+{
+    <ol class="revision-list">
+        @foreach (var r in Model.Revisions)
+        {
+            <li class="card">
+                <div class="card-header">
+                    <h2>@L["WorkOrders.RevisionNo", r.RevisionNumber]</h2>
+                    <span class="sub">@(r.ChangedBy ?? "—") · @r.CreatedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4"><icon name="pencil" class="icon-sm" /> <strong>@r.ChangeSummary</strong></p>
+                    <h3 class="text-sm muted mb-2">@L["WorkOrders.PrescriptionBefore"]</h3>
+                    <dl class="dl">
+                        @foreach (var (key, value) in DentalLabOS.Web.Pages.WorkOrders.RevisionsModel.Fields(r.PrescriptionJson))
+                        {
+                            <div><dt>@(labels.TryGetValue(key, out var lk) ? L[lk].Value : key)</dt><dd>@(string.IsNullOrEmpty(value) ? "—" : value)</dd></div>
+                        }
+                    </dl>
+                </div>
+            </li>
+        }
+    </ol>
+}

@@ -13,14 +13,14 @@ public sealed record ItemDto(
     Guid Id, string Sku, string Name, string? NameEn, string Type, Guid CategoryId, string CategoryName, Guid BaseUnitId, string BaseUnitCode,
     bool IsStockTracked, bool TracksBatches, bool TracksExpiry, decimal ReorderLevel, decimal ReorderQty, decimal? StandardCost,
     decimal DefaultSalesPrice, Guid? TaxCodeId, string? TaxCodeName, decimal StandardLeadHours, decimal DifficultyFactor, string? Barcode,
-    bool IsActive, DateTime CreatedAtUtc, string RowVersion);
+    bool IsActive, DateTime CreatedAtUtc, string RowVersion, Guid? DefaultWorkflowId = null, string? DefaultWorkflowName = null);
 
 /// <summary>Leave <see cref="Sku"/> empty to get the next number. A null <see cref="StandardCost"/> keeps the current cost.</summary>
 public sealed record ItemUpsertRequest(
     string? Sku, string Name, string Type, Guid CategoryId, Guid BaseUnitId, string? NameEn = null, bool TracksBatches = false,
     bool TracksExpiry = false, decimal ReorderLevel = 0, decimal ReorderQty = 0, decimal? StandardCost = null, decimal DefaultSalesPrice = 0,
     Guid? TaxCodeId = null, decimal StandardLeadHours = 0, decimal DifficultyFactor = 1, string? Barcode = null, bool IsActive = true,
-    string? RowVersion = null);
+    string? RowVersion = null, Guid? DefaultWorkflowId = null);
 
 public sealed record ItemCategoryDto(Guid Id, Guid? ParentId, string? ParentName, string Name, string? DefaultType, int ItemCount, string RowVersion);
 

@@ -33,21 +33,21 @@
 <section class="card">
     <form class="toolbar" method="get">
         <div class="search"><icon name="search" /><input class="input" name="q" value="@Model.Q" placeholder="@L["Items.SearchHint"]" aria-label="@L["Common.Search"]" /></div>
-        <select class="select" name="type" aria-label="@L["Fields.Type"]" onchange="this.form.submit()">
+        <select class="select" name="type" aria-label="@L["Fields.Type"]" data-autosubmit>
             <option value="">@L["Items.AllTypes"]</option>
             @foreach (var t in DentalLabOS.Web.Pages.Items.IndexModel.Types)
             {
                 <option value="@t" selected="@(Model.Type == t)">@L[$"ItemType.{t}"]</option>
             }
         </select>
-        <select class="select" name="category" aria-label="@L["Fields.Category"]" onchange="this.form.submit()">
+        <select class="select" name="category" aria-label="@L["Fields.Category"]" data-autosubmit>
             <option value="">@L["Items.AllCategories"]</option>
             @foreach (var c in Model.Categories)
             {
                 <option value="@c.Id" selected="@(Model.Category == c.Id)">@(c.ParentName is null ? c.Name : $"{c.ParentName} › {c.Name}")</option>
             }
         </select>
-        <select class="select" name="status" aria-label="@L["Fields.Status"]" onchange="this.form.submit()">
+        <select class="select" name="status" aria-label="@L["Fields.Status"]" data-autosubmit>
             <option value="">@L["Common.AllStatuses"]</option>
             <option value="active" selected="@(Model.Status == "active")">@L["Common.Active"]</option>
             <option value="inactive" selected="@(Model.Status == "inactive")">@L["Common.Inactive"]</option>

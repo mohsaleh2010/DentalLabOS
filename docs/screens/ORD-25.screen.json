@@ -1,0 +1,40 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-25",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Tab.Cost",
+  "route": "/workorders/{id}/cost",
+  "pattern": "Custom",
+  "phase": 10,
+  "status": "planned",
+  "permissions": {
+    "view": "workorders.cost.read",
+    "access": "permission"
+  },
+  "entities": [],
+  "api": [],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-25.happy",
+    "ORD-25.permissionDenied"
+  ],
+  "relatedScreens": []
+}

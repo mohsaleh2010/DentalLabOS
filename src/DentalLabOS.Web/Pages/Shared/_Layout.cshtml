@@ -105,6 +105,10 @@
                         <div class="menu-head"><strong>@info.UserName</strong><span>@(User.Identity?.Name)</span></div>
                         <a class="menu-item" href="/account"><icon name="user" /> @L["Nav.Profile"]</a>
                         <a class="menu-item" href="/account/preferences"><icon name="settings" /> @L["Nav.Preferences"]</a>
+                        @if (!info.IsPlatform)
+                        {
+                            <a class="menu-item" href="/context"><icon name="building-2" /> @L["Context.Title"]</a>
+                        }
                         <a class="menu-item" href="/account/password"><icon name="lock" /> @L["Nav.ChangePassword"]</a>
                         <div class="menu-sep"></div>
                         <button class="menu-item" type="button" data-theme-option="light"><icon name="sun" /> @L["Prefs.Theme.light"]</button>

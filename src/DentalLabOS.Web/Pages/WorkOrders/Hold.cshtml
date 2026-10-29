@@ -1,0 +1,56 @@
+@page "/workorders/{id:guid}/hold"
+@model DentalLabOS.Web.Pages.WorkOrders.HoldModel
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = L["WorkOrders.Hold"];
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["WorkOrders.Hold"]</span></nav>
+        <h1>@(w.Status == "OnHold" ? L["WorkOrders.Release"] : L["WorkOrders.Hold"]) <span class="screen-id">ORD-14</span></h1>
+    </div>
+</div>
+<div class="action-card card">
+    <div class="card-body">
+        <div class="action-head"><span class="dialog-icon is-warning"><icon name="hand" /></span>
+            <div><h2><span class="ltr">@w.Number</span> · @w.CustomerName</h2><p class="muted">@w.ServiceName · <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" /></p></div></div>
+        @if (w.ActiveHold is { } hold)
+        {
+            <div class="alert alert-danger mt-4"><icon name="hand" /><div><strong>@hold.Reason</strong><p>@(hold.Notes ?? string.Empty) · @(hold.HeldBy ?? "—") · @hold.HeldAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)</p></div></div>
+            <form method="post" asp-page-handler="Release" class="form-actions">
+                <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Back"]</a>
+                <button class="btn btn-primary" type="submit"><icon name="play" /> @L["WorkOrders.Release"]</button>
+            </form>
+        }
+        else if (w.Status is "Delivered" or "Cancelled")
+        {
+            <div class="alert mt-4"><icon name="info" /><div><p>@L["Errors.WorkOrder.NotActive"]</p></div></div>
+        }
+        else
+        {
+            <form method="post" novalidate class="mt-4">
+                <partial name="_ValidationSummary" />
+                <p class="muted mb-4">@L["WorkOrders.HoldText"]</p>
+                <div class="field">
+                    <label class="label" for="ReasonCodeId">@L["Fields.Reason"]<span class="req">*</span></label>
+                    <select class="select" id="ReasonCodeId" name="ReasonCodeId" required>
+                        <option value="">@L["Common.Choose"]</option>
+                        @foreach (var r in Model.Reasons)
+                        {
+                            <option value="@r.Id" selected="@(r.Id == Model.ReasonCodeId)">@r.Name</option>
+                        }
+                    </select>
+                    <span class="field-error">@Html.ValidationMessage("ReasonCodeId")</span>
+                </div>
+                <div class="field">
+                    <label class="label" for="Notes">@L["Fields.Notes"]</label>
+                    <textarea class="textarea" id="Notes" name="Notes" rows="3" maxlength="500">@Model.Notes</textarea>
+                </div>
+                <div class="form-actions">
+                    <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Cancel"]</a>
+                    <button class="btn btn-danger" type="submit"><icon name="hand" /> @L["WorkOrders.HoldConfirm"]</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

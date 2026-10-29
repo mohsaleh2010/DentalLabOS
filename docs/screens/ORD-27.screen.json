@@ -1,0 +1,61 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-27",
+  "module": "workorders",
+  "titleKey": "Nav.Scan",
+  "route": "/scan",
+  "pattern": "Custom",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.read",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "CustomerOrder"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/by-number/{number}",
+      "purpose": "Resolve scanned number"
+    }
+  ],
+  "rules": [
+    "Scanners act as keyboards: Enter submits",
+    "Opens the work order or order of the current lab only"
+  ],
+  "states": [
+    "notFound"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-27.happy",
+    "ORD-27.permissionDenied",
+    "ORD-27.crossTenant"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "code",
+      "type": "text",
+      "required": true,
+      "maxLength": 40
+    }
+  ]
+}

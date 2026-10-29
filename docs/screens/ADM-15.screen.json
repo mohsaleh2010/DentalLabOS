@@ -1,0 +1,57 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ADM-15",
+  "module": "admin",
+  "titleKey": "Nav.Workflows",
+  "route": "/admin/workflows",
+  "pattern": "ListPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "admin.workflows.manage",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkflowDefinition"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workflows",
+      "purpose": "List"
+    }
+  ],
+  "rules": [],
+  "states": [
+    "loading"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ADM-15.happy",
+    "ADM-15.permissionDenied",
+    "ADM-15.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "name",
+    "default",
+    "stages",
+    "services",
+    "running",
+    "version"
+  ]
+}

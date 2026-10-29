@@ -8,7 +8,7 @@ namespace DentalLabOS.Web.Pages.Items;
 
 [Screen("ITM-02")]
 [HasPermission(Permissions.Items.Manage)]
-public sealed class EditModel(ItemService items, ReferenceDataService reference) : AppPageModel
+public sealed class EditModel(ItemService items, ReferenceDataService reference, DentalLabOS.Application.Production.WorkflowService workflows) : AppPageModel
 {
     [BindProperty(SupportsGet = true)] public string Id { get; set; } = "new";
 
@@ -17,6 +17,7 @@ public sealed class EditModel(ItemService items, ReferenceDataService reference)
 
     public bool IsNew => !Guid.TryParse(Id, out _);
     public IReadOnlyList<ItemCategoryDto> Categories { get; private set; } = [];
+    public IReadOnlyList<OptionDto> Workflows { get; private set; } = [];
     public IReadOnlyList<UnitDto> Units { get; private set; } = [];
     public IReadOnlyList<TaxCodeDto> TaxCodes { get; private set; } = [];
     public IReadOnlyList<UnitConversionDto> Conversions { get; private set; } = [];
@@ -40,6 +41,7 @@ public sealed class EditModel(ItemService items, ReferenceDataService reference)
         public decimal DifficultyFactor { get; set; } = 1;
         public string? Barcode { get; set; }
         public bool IsActive { get; set; } = true;
+        public Guid? DefaultWorkflowId { get; set; }
         public string? RowVersion { get; set; }
     }
 
@@ -61,6 +63,7 @@ public sealed class EditModel(ItemService items, ReferenceDataService reference)
                 TracksBatches = i.TracksBatches, TracksExpiry = i.TracksExpiry, ReorderLevel = i.ReorderLevel, ReorderQty = i.ReorderQty,
                 StandardCost = i.StandardCost, DefaultSalesPrice = i.DefaultSalesPrice, TaxCodeId = i.TaxCodeId, StandardLeadHours = i.StandardLeadHours,
                 DifficultyFactor = i.DifficultyFactor, Barcode = i.Barcode, IsActive = i.IsActive, RowVersion = i.RowVersion,
+                DefaultWorkflowId = i.DefaultWorkflowId,
             };
         }
         else if (IndexModel.Types.Contains(type))
@@ -76,7 +79,7 @@ public sealed class EditModel(ItemService items, ReferenceDataService reference)
         var i = Input;
         var request = new ItemUpsertRequest(i.Sku, i.Name, i.Type, i.CategoryId, i.BaseUnitId, i.NameEn, i.TracksBatches, i.TracksExpiry, i.ReorderLevel,
             i.ReorderQty, Can(Permissions.Items.CostRead) ? i.StandardCost ?? 0 : null, i.DefaultSalesPrice, i.TaxCodeId, i.StandardLeadHours,
-            i.DifficultyFactor, i.Barcode, i.IsActive, i.RowVersion);
+            i.DifficultyFactor, i.Barcode, i.IsActive, i.RowVersion, i.DefaultWorkflowId);
         ItemDto? saved = null;
         if (!await TryExecuteAsync(async () => saved = IsNew ? await items.CreateAsync(request) : await items.UpdateAsync(Guid.Parse(Id), request)))
         {
@@ -114,6 +117,7 @@ public sealed class EditModel(ItemService items, ReferenceDataService reference)
         Categories = await items.ListCategoriesAsync();
         Units = await reference.ListUnitsAsync();
         TaxCodes = await reference.ListTaxCodesAsync(activeOnly: true);
+        Workflows = await workflows.OptionsAsync();
         if (!IsNew)
         {
             Conversions = await items.ListConversionsAsync(Guid.Parse(Id));

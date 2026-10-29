@@ -131,6 +131,7 @@ internal sealed class ItemConfiguration : IEntityTypeConfiguration<Item>
         b.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.BaseUnit).WithMany().HasForeignKey(x => x.BaseUnitId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<TaxCode>().WithMany().HasForeignKey(x => x.TaxCodeId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Domain.Production.WorkflowDefinition>().WithMany().HasForeignKey(x => x.DefaultWorkflowId).OnDelete(DeleteBehavior.Restrict);
         b.HasMany(x => x.BomLines).WithOne().HasForeignKey(x => x.ServiceItemId).OnDelete(DeleteBehavior.Cascade);
     }
 }

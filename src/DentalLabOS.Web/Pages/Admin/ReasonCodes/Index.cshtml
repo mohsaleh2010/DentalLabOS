@@ -1,0 +1,77 @@
+@page "/admin/reason-codes"
+@model DentalLabOS.Web.Pages.Admin.ReasonCodes.IndexModel
+@{
+    ViewData["Title"] = L["Nav.ReasonCodes"];
+    var editing = Model.Edit is not null && Model.Items.Any(r => r.Id == Model.Edit);
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.ReasonCodes"] <span class="screen-id">ADM-18</span></h1>
+        <p class="lead">@L["Reasons.Lead"]</p>
+    </div>
+</div>
+<nav class="tabs" aria-label="@L["Fields.Scope"]">
+    <a class="tab" href="/admin/reason-codes" aria-current="@(Model.Scope is null ? "page" : null)">@L["Common.All"]</a>
+    @foreach (var s in DentalLabOS.Web.Pages.Admin.ReasonCodes.IndexModel.Scopes)
+    {
+        <a class="tab" href="/admin/reason-codes?scope=@s" aria-current="@(Model.Scope == s ? "page" : null)">@L[$"ReasonScope.{s}"]</a>
+    }
+</nav>
+<div class="tab-panel split">
+    <section class="card">
+        @if (Model.Items.Count == 0)
+        {
+            <component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Reasons.Empty"].Value" param-IconName="@("list")" />
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-responsive">
+                    <thead><tr><th>@L["Fields.Name"]</th><th>@L["Fields.Scope"]</th><th>@L["Fields.Category"]</th><th class="num">@L["Reasons.Uses"]</th><th>@L["Fields.Status"]</th><th class="actions"></th></tr></thead>
+                    <tbody>
+                    @foreach (var r in Model.Items)
+                    {
+                        <tr class="@(r.Id == Model.Edit ? "row-current" : null)">
+                            <td class="cell-primary"><strong>@r.Name</strong></td>
+                            <td data-label="@L["Fields.Scope"]">@L[$"ReasonScope.{r.Scope}"]</td>
+                            <td data-label="@L["Fields.Category"]">@L[$"ReasonCategory.{r.Category}"]</td>
+                            <td data-label="@L["Reasons.Uses"]" class="num">@r.UseCount</td>
+                            <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Active(r.IsActive)" /></td>
+                            <td class="actions"><a class="btn btn-sm btn-ghost" href="/admin/reason-codes?scope=@Model.Scope&edit=@r.Id" aria-label="@L["Common.Edit"]"><icon name="pencil" class="icon-sm" /></a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+    <form method="post" asp-route-scope="@Model.Scope" asp-route-edit="@(editing ? Model.Edit : null)" class="card" novalidate>
+        <div class="card-header"><h2>@(editing ? L["Reasons.Edit"] : L["Reasons.New"])</h2></div>
+        <div class="card-body">
+            <partial name="_ValidationSummary" />
+            <input type="hidden" asp-for="Input.RowVersion" />
+            <div class="field">
+                <label class="label" asp-for="Input.Name">@L["Fields.Name"]<span class="req">*</span></label>
+                <input class="input" asp-for="Input.Name" maxlength="150" required />
+                <span class="field-error" asp-validation-for="Input.Name"></span>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Scope">@L["Fields.Scope"]</label>
+                <select class="select" asp-for="Input.Scope">
+                    @foreach (var s in DentalLabOS.Web.Pages.Admin.ReasonCodes.IndexModel.Scopes) {<option value="@s">@L[$"ReasonScope.{s}"]</option>}
+                </select>
+            </div>
+            <div class="field">
+                <label class="label" asp-for="Input.Category">@L["Fields.Category"]</label>
+                <select class="select" asp-for="Input.Category">
+                    @foreach (var s in DentalLabOS.Web.Pages.Admin.ReasonCodes.IndexModel.Categories) {<option value="@s">@L[$"ReasonCategory.{s}"]</option>}
+                </select>
+            </div>
+            <label class="switch"><input type="checkbox" asp-for="Input.IsActive" /> @L["Common.Active"]</label>
+            <div class="form-actions">
+                @if (editing) {<a class="btn btn-ghost" href="/admin/reason-codes?scope=@Model.Scope">@L["Common.Cancel"]</a>}
+                <button class="btn btn-primary" type="submit"><icon name="check" /> @(editing ? L["Common.Save"] : L["Common.Add"])</button>
+            </div>
+        </div>
+    </form>
+</div>

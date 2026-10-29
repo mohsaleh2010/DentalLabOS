@@ -1,0 +1,123 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-07",
+  "module": "workorders",
+  "titleKey": "WorkOrders.Prescription",
+  "route": "/workorders/{id}",
+  "pattern": "DetailsTabs",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.read",
+    "access": "permission",
+    "actions": {
+      "edit": "workorders.update",
+      "transition": "workorders.transition",
+      "hold": "workorders.hold",
+      "cancel": "workorders.cancel",
+      "print": "workorders.print",
+      "prices": "pricelists.read"
+    }
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog",
+    "WorkOrderAttachment",
+    "WorkOrderNote",
+    "HoldRecord",
+    "TaskTimeEntry"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/{id}",
+      "purpose": "Details"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/{id}/timeline",
+      "purpose": "Timeline"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/notes",
+      "purpose": "Add note"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/attachments",
+      "purpose": "Upload"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders/{id}/attachments/{fileId}",
+      "purpose": "Download"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/workorders/{id}/attachments/{fileId}",
+      "purpose": "Remove file"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/start",
+      "purpose": "Start stage"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/pause",
+      "purpose": "Pause stage"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/stages/{stageId}/complete",
+      "purpose": "Complete stage"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workorders/{id}/release",
+      "purpose": "Release hold"
+    }
+  ],
+  "rules": [
+    "Header: number, customer/dentist, current stage and assignee, due date with days late, priority, data completeness, remake badge",
+    "Tabs: prescription & teeth, stages & time, files, notes, timeline; quality, materials, cost and invoice arrive in phases 4, 5, 10 and 7",
+    "Stage actions are checked on the server: data complete, step order, status, and the user's scope (assigned to them or their department)",
+    "Every movement is logged with user, time and reason"
+  ],
+  "states": [
+    "notFound"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ],
+    "hidesCostFor": [
+      "unitPrice",
+      "quotedPrice"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-07.happy",
+    "ORD-07.permissionDenied",
+    "ORD-07.crossTenant",
+    "ORD-07.stageOrder",
+    "ORD-07.technicianScope"
+  ],
+  "relatedScreens": []
+}

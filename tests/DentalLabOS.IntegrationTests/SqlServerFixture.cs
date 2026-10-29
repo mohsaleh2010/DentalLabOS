@@ -68,6 +68,8 @@ public sealed class SqlServerFixture : IAsyncLifetime
             b.UseSetting("ConnectionStrings:DentalLabOS", _connectionString);
             b.UseSetting("Jwt:SigningKey", Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48)));
             b.UseSetting("Bootstrap:SetupToken", SetupToken);
+            b.UseSetting("RateLimits:UserBurst", "10000");
+            b.UseSetting("Storage:RootPath", Path.Combine(Path.GetTempPath(), "dlos-test-files", Guid.NewGuid().ToString("N")));
         });
 
         using (var scope = Api.Services.CreateScope())

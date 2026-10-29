@@ -1,0 +1,24 @@
+@page "/scan"
+@model DentalLabOS.Web.Pages.ScanModel
+@{
+    ViewData["Title"] = L["Nav.Scan"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Scan"] <span class="screen-id">ORD-27</span></h1>
+        <p class="lead">@L["Scan.Lead"]</p>
+    </div>
+</div>
+<form method="get" class="card scan-card">
+    <div class="card-body">
+        <div class="scan-art"><icon name="qr-code" class="icon-xl" /></div>
+        <label class="label" for="code">@L["Scan.Label"]</label>
+        <input class="input input-lg ltr" id="code" name="code" value="@Model.Code" autofocus autocomplete="off" dir="ltr" placeholder="WO-26-000001" required />
+        @if (Model.Missing)
+        {
+            <div class="alert alert-warning mt-4"><icon name="circle-alert" /><div><p>@L["Scan.NotFound", Model.Code ?? string.Empty]</p></div></div>
+        }
+        <button class="btn btn-primary btn-block mt-4" type="submit"><icon name="search" /> @L["Scan.Open"]</button>
+        <p class="hint mt-4">@L["Scan.Hint"]</p>
+    </div>
+</form>

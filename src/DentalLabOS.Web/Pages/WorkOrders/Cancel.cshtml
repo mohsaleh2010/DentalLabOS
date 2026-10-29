@@ -1,0 +1,50 @@
+@page "/workorders/{id:guid}/cancel"
+@model DentalLabOS.Web.Pages.WorkOrders.CancelModel
+@{
+    var w = Model.Wo;
+    ViewData["Title"] = L["WorkOrders.Cancel"];
+    var started = w.Stages.Any(s => s.StartedAtUtc is not null);
+}
+<div class="page-header">
+    <div class="titles">
+        <nav class="breadcrumbs"><a href="/workorders">@L["Nav.WorkOrders"]</a><icon name="chevron-left" class="icon-dir" /><a href="/workorders/@w.Id" class="ltr">@w.Number</a><icon name="chevron-left" class="icon-dir" /><span>@L["WorkOrders.Cancel"]</span></nav>
+        <h1>@L["WorkOrders.Cancel"] <span class="screen-id">ORD-28</span></h1>
+    </div>
+</div>
+<div class="action-card card">
+    <div class="card-body">
+        <div class="action-head"><span class="dialog-icon is-danger"><icon name="ban" /></span>
+            <div><h2><span class="ltr">@w.Number</span> · @w.CustomerName</h2><p class="muted">@w.ServiceName · <partial name="_StatusBadge" model="StatusUi.WorkOrder(w.Status)" /></p></div></div>
+        @if (w.Status is "Delivered" or "Cancelled")
+        {
+            <div class="alert mt-4"><icon name="info" /><div><p>@L["Errors.WorkOrder.NotActive"]</p></div></div>
+        }
+        else
+        {
+            <form method="post" novalidate class="mt-4">
+                <partial name="_ValidationSummary" />
+                <div class="alert alert-danger mb-4"><icon name="triangle-alert" /><div><strong>@L["WorkOrders.CancelWarnTitle"]</strong><p>@L["WorkOrders.CancelWarnText"]</p>
+                    @if (started) {<p>@L["WorkOrders.CancelStarted"]</p>}</div></div>
+                <div class="field">
+                    <label class="label" for="ReasonCodeId">@L["Fields.Reason"]<span class="req">*</span></label>
+                    <select class="select" id="ReasonCodeId" name="ReasonCodeId" required>
+                        <option value="">@L["Common.Choose"]</option>
+                        @foreach (var r in Model.Reasons)
+                        {
+                            <option value="@r.Id" selected="@(r.Id == Model.ReasonCodeId)">@r.Name</option>
+                        }
+                    </select>
+                    <span class="field-error">@Html.ValidationMessage("ReasonCodeId")</span>
+                </div>
+                <div class="field">
+                    <label class="label" for="Notes">@L["Fields.Notes"]</label>
+                    <textarea class="textarea" id="Notes" name="Notes" rows="3" maxlength="500">@Model.Notes</textarea>
+                </div>
+                <div class="form-actions">
+                    <a class="btn btn-ghost" href="/workorders/@w.Id">@L["Common.Back"]</a>
+                    <button class="btn btn-danger" type="submit" data-confirm="@L["WorkOrders.CancelConfirm", w.Number]"><icon name="ban" /> @L["WorkOrders.CancelConfirmButton"]</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

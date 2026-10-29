@@ -1,0 +1,55 @@
+@page "/workorders/{id:guid}/ticket"
+@model DentalLabOS.Web.Pages.WorkOrders.TicketModel
+@{
+    Layout = "_BareLayout";
+    var w = Model.Wo;
+    ViewData["Title"] = L["WorkOrders.Ticket"] + " " + w.Number;
+}
+<div class="print-toolbar">
+    <a class="btn btn-ghost" href="/workorders/@w.Id"><icon name="arrow-right" class="icon-dir-back" /> @L["Common.Back"]</a>
+    <span class="screen-id">ORD-26</span>
+    <button class="btn btn-primary" type="button" data-print><icon name="printer" /> @L["Common.Print"]</button>
+</div>
+<article class="ticket">
+    <header class="ticket-head">
+        <div>
+            <div class="ticket-lab">@Model.LabName</div>
+            <div class="ticket-no ltr">@w.Number</div>
+            <div class="chip-row mt-2">
+                <partial name="_StatusBadge" model="StatusUi.Priority(w.Priority)" />
+                @if (w.Kind != "Original") {<span class="badge badge-violet">@L[$"WoKind.{w.Kind}"]</span>}
+            </div>
+        </div>
+        <div class="ticket-qr" role="img" aria-label="QR @w.Number">@Html.Raw(Model.QrSvg)</div>
+    </header>
+    <section class="ticket-grid">
+        <div><span>@L["Fields.Customer"]</span><strong>@w.CustomerName</strong></div>
+        <div><span>@L["Fields.Dentist"]</span><strong>@(w.DentistName ?? "—")</strong></div>
+        <div><span>@L["Fields.PatientReference"]</span><strong>@(w.PatientReference ?? "—")</strong></div>
+        <div><span>@L["Fields.DueDate"]</span><strong>@Fmt.Date(w.DueDate)</strong></div>
+        <div class="span-2"><span>@L["Fields.Service"]</span><strong>@w.ServiceName × @w.Quantity</strong></div>
+        <div><span>@L["Fields.Material"]</span><strong>@(w.MaterialName ?? "—")</strong></div>
+        <div><span>@L["Fields.Shade"]</span><strong class="ltr">@(w.Shade ?? "—")</strong></div>
+    </section>
+    <section class="ticket-teeth">
+        <span class="ticket-label">@L["Fields.Teeth"]</span>
+        <partial name="_ToothMap" model="(IReadOnlyCollection<string>)w.Teeth.Select(t => t.Code).ToList()" />
+    </section>
+    @if (w.Instructions is not null)
+    {
+        <section class="ticket-notes"><span class="ticket-label">@L["Fields.Instructions"]</span><p class="prewrap">@w.Instructions</p></section>
+    }
+    <section>
+        <span class="ticket-label">@L["WorkOrders.Route"]</span>
+        <table class="ticket-stages">
+            <thead><tr><th>#</th><th>@L["Fields.Stage"]</th><th>@L["Fields.Department"]</th><th>@L["Ticket.Initials"]</th><th>@L["Fields.Date"]</th></tr></thead>
+            <tbody>
+            @foreach (var s in w.Stages)
+            {
+                <tr><td>@s.Step</td><td>@s.Name</td><td>@(s.DepartmentName ?? "")</td><td class="sign">@(s.Status == "Done" ? "✓" : "")</td><td></td></tr>
+            }
+            </tbody>
+        </table>
+    </section>
+    <footer class="ticket-foot">@L["Ticket.Received", w.ReceivedAtUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)] · @w.BranchName</footer>
+</article>

@@ -1,0 +1,72 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-04",
+  "module": "workorders",
+  "titleKey": "Nav.WorkOrders",
+  "route": "/workorders",
+  "pattern": "ListPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.read",
+    "access": "permission",
+    "actions": {
+      "intake": "workorders.create"
+    }
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog"
+  ],
+  "api": [
+    {
+      "method": "GET",
+      "path": "/api/v1/workorders",
+      "purpose": "List (status, overdue, incomplete, open, customer, order)"
+    }
+  ],
+  "rules": [
+    "Overdue rows are marked with text and an icon, not color alone",
+    "Server-side paging"
+  ],
+  "states": [
+    "loading",
+    "empty"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {},
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-04.happy",
+    "ORD-04.permissionDenied",
+    "ORD-04.crossTenant"
+  ],
+  "relatedScreens": [],
+  "columns": [
+    "number",
+    "customer",
+    "service",
+    "status",
+    "currentStage",
+    "priority",
+    "dueDate"
+  ],
+  "filters": [
+    "view",
+    "search",
+    "status"
+  ]
+}

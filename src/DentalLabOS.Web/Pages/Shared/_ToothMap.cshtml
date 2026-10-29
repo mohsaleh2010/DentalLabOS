@@ -1,0 +1,30 @@
+@* Read-only FDI map highlighting the prescribed teeth. *@
+@model IReadOnlyCollection<string>
+@{
+    int[][] rows = [[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28], [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]];
+    var set = Model.ToHashSet();
+    var upper = set.Contains("UPPER");
+    var lower = set.Contains("LOWER");
+    var primary = Model.Where(t => t.Length == 2 && t[0] is >= '5' and <= '8').ToList();
+}
+<div class="tooth-map" dir="ltr" role="img" aria-label="@string.Join(", ", Model)">
+    @for (var r = 0; r < 2; r++)
+    {
+        var whole = r == 0 ? upper : lower;
+        <div class="tooth-map-row">
+            @for (var k = 0; k < rows[r].Length; k++)
+            {
+                var t = rows[r][k];
+                <span class="tm @(set.Contains(t.ToString()) || whole ? "on" : null) @(k == 8 ? "mid" : null)">@t</span>
+            }
+        </div>
+    }
+</div>
+@if (primary.Count > 0 || upper || lower)
+{
+    <div class="chip-row mt-2">
+        @if (upper) {<span class="badge badge-brand">@L["Teeth.WholeUpper"]</span>}
+        @if (lower) {<span class="badge badge-brand">@L["Teeth.WholeLower"]</span>}
+        @foreach (var p in primary) {<span class="badge">@L["Teeth.PrimaryTooth", p]</span>}
+    </div>
+}

@@ -1,0 +1,38 @@
+@page "/admin/workflows"
+@model DentalLabOS.Web.Pages.Admin.Workflows.IndexModel
+@{
+    ViewData["Title"] = L["Nav.Workflows"];
+}
+<div class="page-header">
+    <div class="titles">
+        <h1>@L["Nav.Workflows"] <span class="screen-id">ADM-15</span></h1>
+        <p class="lead">@L["Workflows.Lead"]</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" href="/admin/workflows/new"><icon name="plus" /> @L["Workflows.New"]</a></div>
+</div>
+@if (Model.Items.Count == 0)
+{
+    <section class="card"><component type="typeof(EmptyState)" render-mode="Static" param-Title="@L["Workflows.Empty"].Value" param-IconName="@("route")" param-ActionText="@L["Workflows.New"].Value" param-ActionHref="@("/admin/workflows/new")" /></section>
+}
+else
+{
+    <div class="service-grid">
+        @foreach (var w in Model.Items)
+        {
+            <a class="service-card" href="/admin/workflows/@w.Id">
+                <div class="flex items-center gap-2 wrap">
+                    <h3>@w.Name</h3>
+                    @if (w.IsDefault) {<span class="badge badge-brand"><icon name="star" /> @L["Workflows.Default"]</span>}
+                    @if (!w.IsActive) {<partial name="_StatusBadge" model="StatusUi.Active(false)" />}
+                </div>
+                @if (w.Description is not null) {<p class="muted text-sm">@w.Description</p>}
+                <div class="meta">
+                    <span><icon name="list-ordered" class="icon-sm" /> @L["Workflows.Stages", w.StageCount]</span>
+                    <span><icon name="tag" class="icon-sm" /> @L["Workflows.Services", w.ServiceCount]</span>
+                    <span><icon name="clipboard-list" class="icon-sm" /> @L["Workflows.Open", w.OpenWorkOrders]</span>
+                    <span class="badge">v@(w.Version)</span>
+                </div>
+            </a>
+        }
+    </div>
+}

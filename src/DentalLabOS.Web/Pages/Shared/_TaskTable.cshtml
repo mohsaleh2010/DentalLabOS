@@ -1,0 +1,47 @@
+@* Production tasks (work-order stages). With actions, each row posts to the work order's stage handlers and returns to Back. *@
+@using DentalLabOS.Contracts.Production
+@model (IReadOnlyList<TaskDto> Tasks, bool Actions, string? Back)
+<div class="table-wrap">
+    <table class="table table-responsive">
+        <thead><tr><th>@L["Fields.Number"]</th><th>@L["Fields.Stage"]</th><th>@L["Fields.Customer"]</th><th>@L["Fields.Status"]</th><th>@L["Fields.AssignedTo"]</th><th>@L["Fields.DueDate"]</th><th class="num">@L["Tasks.Elapsed"]</th><th class="actions"></th></tr></thead>
+        <tbody>
+        @foreach (var t in Model.Tasks)
+        {
+            var over = t.TargetHours > 0 && t.ElapsedHours > (double)t.TargetHours;
+            <tr class="@(t.IsOverdue ? "row-late" : null)">
+                <td class="cell-primary"><div class="cell-main"><span><a href="/workorders/@t.WorkOrderId?tab=stages"><strong class="ltr">@t.Number</strong></a><span>@t.ServiceName@if (t.TeethCount > 0) {<text> · @L["Board.Teeth", t.TeethCount]</text>}</span></span></div></td>
+                <td data-label="@L["Fields.Stage"]"><strong>@t.StageName</strong>@if (t.DepartmentName is not null) {<div class="text-xs muted">@t.DepartmentName</div>}</td>
+                <td data-label="@L["Fields.Customer"]">@t.CustomerName</td>
+                <td data-label="@L["Fields.Status"]"><partial name="_StatusBadge" model="StatusUi.Stage(t.StageStatus)" />@if (t.Priority != "Normal") {<text> </text><partial name="_StatusBadge" model="StatusUi.Priority(t.Priority)" />}</td>
+                <td data-label="@L["Fields.AssignedTo"]">@(t.AssigneeName ?? "—")</td>
+                <td data-label="@L["Fields.DueDate"]" class="nowrap @(t.IsOverdue ? "text-danger" : null)">@Fmt.Date(t.DueDate)</td>
+                <td data-label="@L["Tasks.Elapsed"]" class="num @(over ? "text-danger" : null)">@Fmt.Qty(Math.Round((decimal)t.ElapsedHours, 1))@if (t.TargetHours > 0) {<span class="muted"> / @Fmt.Qty(t.TargetHours)</span>}</td>
+                <td class="actions">
+                    @if (Model.Actions && t.IsAvailable)
+                    {
+                        <form method="post" class="inline-actions" action="/workorders/@t.WorkOrderId?handler=Start">
+                            <input type="hidden" name="stageId" value="@t.StageId" /><input type="hidden" name="back" value="@Model.Back" />
+                            @if (t.StageStatus is "Pending" or "Paused")
+                            {
+                                <button class="btn btn-sm btn-primary" type="submit"><icon name="play" class="icon-sm" /> @L[t.StageStatus == "Paused" ? "WorkOrders.Resume" : "WorkOrders.Start"]</button>
+                            }
+                            @if (t.StageStatus == "InProgress")
+                            {
+                                <button class="btn btn-sm" type="submit" formaction="/workorders/@t.WorkOrderId?handler=Pause"><icon name="pause" class="icon-sm" /> @L["WorkOrders.Pause"]</button>
+                            }
+                            @if (t.StageStatus is "InProgress" or "Paused")
+                            {
+                                <button class="btn btn-sm btn-primary" type="submit" formaction="/workorders/@t.WorkOrderId?handler=Complete"><icon name="check" class="icon-sm" /> @L["WorkOrders.Complete"]</button>
+                            }
+                        </form>
+                    }
+                    else
+                    {
+                        <a class="btn btn-sm" href="/workorders/@t.WorkOrderId?tab=stages"><icon name="eye" class="icon-sm" /> @L["Common.Open"]</a>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

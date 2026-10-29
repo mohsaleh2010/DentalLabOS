@@ -113,6 +113,18 @@
                     <span class="field-error" asp-validation-for="Input.StandardLeadHours"></span>
                 </div>
                 <div class="field">
+                    <label class="label" asp-for="Input.DefaultWorkflowId">@L["Fields.Workflow"]</label>
+                    <select class="select" asp-for="Input.DefaultWorkflowId">
+                        <option value="">@L["Items.WorkflowDefault"]</option>
+                        @foreach (var w in Model.Workflows)
+                        {
+                            <option value="@w.Id">@w.Name@(w.Code == "*" ? " ★" : "")</option>
+                        }
+                    </select>
+                    <span class="hint">@L["Items.WorkflowHint"]</span>
+                    <span class="field-error" asp-validation-for="Input.DefaultWorkflowId"></span>
+                </div>
+                <div class="field">
                     <label class="label" asp-for="Input.DifficultyFactor">@L["Fields.DifficultyFactor"]</label>
                     <input class="input input-ltr" asp-for="Input.DifficultyFactor" type="number" step="0.1" min="0.1" max="10" dir="ltr" value="@Fmt.Input(Model.Input.DifficultyFactor)" />
                     <span class="hint">@L["Items.DifficultyHint"]</span>

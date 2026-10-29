@@ -1,0 +1,129 @@
+{
+  "$schema": "./_schema/screen.schema.json",
+  "id": "ORD-06",
+  "module": "workorders",
+  "titleKey": "WorkOrders.EditTitle",
+  "route": "/workorders/{id}/edit",
+  "pattern": "FormPage",
+  "phase": 3,
+  "status": "implemented",
+  "permissions": {
+    "view": "workorders.update",
+    "access": "permission"
+  },
+  "entities": [
+    "WorkOrder",
+    "WorkOrderStage",
+    "StageTransitionLog",
+    "WorkOrderRevision"
+  ],
+  "api": [
+    {
+      "method": "PUT",
+      "path": "/api/v1/workorders/{id}",
+      "purpose": "Update prescription"
+    }
+  ],
+  "rules": [
+    "After production starts a change summary is required and the previous prescription is kept as a revision",
+    "Completing the data moves an Incomplete order to Ready",
+    "Delivered and cancelled orders are locked",
+    "RowVersion detects concurrent edits"
+  ],
+  "states": [
+    "validationError",
+    "conflict"
+  ],
+  "offline": {
+    "mode": "blocked",
+    "why": "requires live server-side checks"
+  },
+  "sensitive": {
+    "auditActions": [
+      "Update"
+    ],
+    "hidesCostFor": [
+      "unitPrice",
+      "quotedPrice"
+    ]
+  },
+  "aiAssist": {
+    "allowed": [
+      "explainScreen"
+    ],
+    "forbidden": [
+      "changeData",
+      "changePermissions"
+    ],
+    "contextFields": []
+  },
+  "tests": [
+    "ORD-06.happy",
+    "ORD-06.permissionDenied",
+    "ORD-06.crossTenant",
+    "ORD-06.revisionCreated",
+    "ORD-06.concurrency"
+  ],
+  "relatedScreens": [],
+  "fields": [
+    {
+      "name": "dentistId",
+      "type": "lookup",
+      "source": "dentistsOfCustomer"
+    },
+    {
+      "name": "patientReference",
+      "type": "text",
+      "maxLength": 100
+    },
+    {
+      "name": "materialName",
+      "type": "text",
+      "maxLength": 100
+    },
+    {
+      "name": "shade",
+      "type": "text",
+      "maxLength": 30
+    },
+    {
+      "name": "teeth",
+      "type": "toothChart",
+      "source": "FDI 11-48, 51-85, UPPER, LOWER"
+    },
+    {
+      "name": "quantity",
+      "type": "integer",
+      "min": 1,
+      "max": 100
+    },
+    {
+      "name": "dueDate",
+      "type": "date"
+    },
+    {
+      "name": "priority",
+      "type": "enum",
+      "source": "PriorityLevel"
+    },
+    {
+      "name": "priorityReason",
+      "type": "text",
+      "maxLength": 200
+    },
+    {
+      "name": "instructions",
+      "type": "textarea",
+      "maxLength": 2000
+    },
+    {
+      "name": "changeSummary",
+      "type": "text",
+      "maxLength": 500
+    },
+    {
+      "name": "rowVersion",
+      "type": "hidden"
+    }
+  ]
+}
